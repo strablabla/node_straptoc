@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html>
+
+<meta charset="UTF-8">
+
+<title> nodejs straptoc </title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script  src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js"></script>
+<script  src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" ></script>
+<script src="https://cdn.rawgit.com/alertifyjs/alertify.js/v1.0.6/dist/js/alertify.js"></script>
+<script  src="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.11/js/min/perfect-scrollbar.min.js"></script>
+
+<script  src="http://d3js.org/queue.v1.min.js"></script>
+
+<script  src="https://cdn.rawgit.com/strablabla/Tinkering/9a148b3/js/straptoc/straptoc.js"></script>
+<link rel="stylesheet" href="https://cdn.rawgit.com/strablabla/Tinkering/9a148b3/js/straptoc/straptoc.css">
+
+<link rel="stylesheet" href='https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.11/css/perfect-scrollbar.css'>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.css">
+
+<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Enriqueta'>
+<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Londrina+Solid'>
+<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Pathway+Gothic+One'>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+
+<xmp theme="simplex" style="display:none;">
+
+
+§menu toto:#janv%202016_oo    text:text
+§noiframe
+§width_video 10%
+§width_pdf 90%
+§width_iframe 1000
+§col_sublist #ff6600
+§col_toc #ccccff
+§toggle_hide a
+§help true
+
+
+
+<div class="form-group">
+
+     <label for="comment">Comment:</label>
+     <textarea class="form-control" rows="10" id="comment" style="width: 1200px; height: 500px">aaaa</textarea>
+
+     <br/>
+
+    <div class="col-sm-10">
+       <button type="submit" class="btn btn-default" id='submit' >Submit</button>
+     </div>
+
+</div>
+
+<div class="col-sm-10">
+ <a type="button" class="btn btn-default" href='/' >go to strap</a>
+</div>
+
+
+
+ <script src="/socket.io/socket.io.js"></script>
+
+ <script>
+
+    var socket = io.connect();  //'http://localhost:3000'
+    var comment = false;
+
+    //------------- Scroll position
+
+    socket.on('scroll', function(line_number) {
+
+            if (comment){ alert('in the  client textarea, line_number is : '+ line_number) }
+            var h = $('#comment').height()
+            if (comment){ alert('height scroll  : '+ h) }
+            var pos = line_number*h/25
+            if (comment){ alert(' pos = ' + pos) }
+            $('#comment').scrollTop(pos)
+      })
+
+      //------------- just a message
+
+    socket.on('connection', function() {
+        socket.emit('join', 'This is a message from client textarea !!' );
+      });
+
+      //------------- from html to textarea
+
+    socket.on('message', function(message) {     // write html in textarea
+        $('#comment').val(message);
+        if (comment){ alert('received the text from html via the server !! ') }
+        //socket.emit('pos_scroll', 'what is it');
+      })
+
+    //------------- from textarea to html
+
+    $('#submit').click(function(){               // submit new text.. from text to html
+          var data = $('#comment').val()
+          socket.emit('return', data);
+        }) // end click
+
+</script>
+
+<script>
+
+$('#comment').keydown(function (e) {
+    var keyCode = e.keyCode || e.which;
+
+    if (keyCode === 9) {
+        e.preventDefault();
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+
+        // set textarea value to: text before caret + tab + text after caret
+        spaces = "    ";
+        this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+
+        // put caret at right position again
+        this.selectionStart = this.selectionEnd = start + spaces.length;
+    }
+  });
+
+
+</script>
+
+</html>
