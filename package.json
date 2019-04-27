@@ -1,0 +1,19 @@
+{
+  "name": "node_straptoc",
+  "version": "1.0.0",
+  "description": "straptoc with server",
+  "main": "html_app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/strablabla/node_straptoc.git"
+  },
+  "author": "LC",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/strablabla/node_straptoc/issues"
+  },
+  "homepage": "https://github.com/strablabla/node_straptoc#readme"
+}
