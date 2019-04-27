@@ -34,34 +34,34 @@ var io = require('socket.io')(server);
 // When a client connects, we note it in the consol
 
 var patt = '' // pattern for scroll position
-var comment = false;
+var scroll_html_pos = 0 //
+var comment = true;
 
 io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
       fs.readFile('views/strap_small.html', 'utf8', function (err,data) {
-              if (err) { return console.log(err); }
 
+              if (err) { return console.log(err); }
               socket.emit('message', data); // send the text read in html file to textarea
               if (comment){ console.log('blablabala in readFile !! ') }
-              // console.log('patt before emit !! ' + patt)
-              // socket.emit('scroll', patt);
-              // console.log('patt after emit !! ' + patt)
-
               var line_number = count.find_line_of_pattern(data, patt)
               if (comment){ console.log('line_number after find_line_of_pattern !! ' + line_number) }
               socket.emit('scroll', line_number);
+              socket.emit('scroll_html', scroll_html_pos)
+              if (comment){ console.log('scroll_html_pos ' + scroll_html_pos) }
               if (comment){ console.log('just after scrolllll !! ') }
 
           }); // end fs.readFile
 
-      util.save_regularly() // save the regularly the text..
+      //util.save_regularly() // save the regularly the text..
 
       socket.on('join', function(data) {
           //var a = 1
           console.log('client sent a message... ' + data);
           console.log('value of patt on server side ... ' + patt);
-          socket.emit('scroll',patt)
+          socket.emit('scroll', patt)
+
         }); // end socket.on join
 
       //-------------------------------- From textarea to html
@@ -84,6 +84,11 @@ io.sockets.on('connection', function (socket) {
       socket.on('scroll', function(pattern) {
           console.log('############ in html_apps pattern is :  ' + pattern)
           patt = pattern
+          })
+
+      socket.on('scroll_html', function(pos) {
+          console.log('############ viewed from server side,  scroll html pos is :  ' + pos)
+          scroll_html_pos = pos
           })
 
 

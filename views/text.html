@@ -3,60 +3,16 @@
 <html>
 
 <meta charset="UTF-8">
-<title> nodejs straptoc </title>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-<script  src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js"></script>
-<script  src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" ></script>
-<script src="https://cdn.rawgit.com/alertifyjs/alertify.js/v1.0.6/dist/js/alertify.js"></script>
-<script  src="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.11/js/min/perfect-scrollbar.min.js"></script>
-
-<script  src="http://d3js.org/queue.v1.min.js"></script>
-
-<script  src="https://cdn.rawgit.com/strablabla/Tinkering/9a148b3/js/straptoc/straptoc.js"></script>
-<link rel="stylesheet" href="https://cdn.rawgit.com/strablabla/Tinkering/9a148b3/js/straptoc/straptoc.css">
-
-<link rel="stylesheet" href='https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.11/css/perfect-scrollbar.css'>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.css">
-
-<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Enriqueta'>
-<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Londrina+Solid'>
-<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Pathway+Gothic+One'>
-
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
-</script>
-<script type="text/javascript" async
-  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
-</script>
-
-
- <div class="form-group">
-  <label for="comment">Comment:</label>
-  <textarea class="form-control" rows="10" id="comment" style="width: 1200px; height: 500px">aaaa</textarea>
-
-  <br/>
-
-  <div class="col-sm-10">
-     <button type="submit" class="btn btn-default" id='submit' >Submit</button>
-   </div>
-
-</div>
-
-<div class="col-sm-10">
-   <a type="button" class="btn btn-default" href='/' >go to strap</a>
- </div>
+{% include 'header.html' %}
+{% include 'textarea.html' %}
 
  <script src="/socket.io/socket.io.js"></script>
  <script>
 
     var socket = io.connect();  //'http://localhost:3000'
     var comment = false;
+    var scroll_html_pos = 0
 
     //------------- Scroll position
 
@@ -68,6 +24,11 @@
             var pos = line_number*h/25
             if (comment){ alert(' pos = ' + pos) }
             $('#comment').scrollTop(pos)
+      })
+
+    socket.on('scroll_html', function(pos) {
+            scroll_html_pos = pos
+            if (comment){ alert(' scroll_html pos = ' + pos) }
       })
 
       //------------- just a message
@@ -91,24 +52,28 @@
           socket.emit('return', data);
         }) // end click
 
-  //------------- Tab  equal four spaces in textarea..
+    $('#go_back').click(function(){               // submit new text.. from text to html
+          socket.emit('scroll_html', scroll_html_pos);
+        }) // end click
 
-  $('#comment').keydown(function (e) {
-      var keyCode = e.keyCode || e.which;
+    //------------- Tab  equal four spaces in textarea..
 
-      if (keyCode === 9) {
-          e.preventDefault();
-          var start = this.selectionStart;
-          var end = this.selectionEnd;
+    $('#comment').keydown(function (e) {
+        var keyCode = e.keyCode || e.which;
 
-          // set textarea value to: text before caret + tab + text after caret
-          spaces = "    ";
-          this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+        if (keyCode === 9) {
+            e.preventDefault();
+            var start = this.selectionStart;
+            var end = this.selectionEnd;
 
-          // put caret at right position again
-          this.selectionStart = this.selectionEnd = start + spaces.length;
-      }
-  });
+            // set textarea value to: text before caret + tab + text after caret
+            spaces = "    ";
+            this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+
+            // put caret at right position again
+            this.selectionStart = this.selectionEnd = start + spaces.length;
+        }
+      }); // end comment keydown
 
 </script>
 

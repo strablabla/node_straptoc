@@ -37,7 +37,7 @@ exports.find_line_of_pattern = function(text, pattern){
       astring.forEach(function (line, number) {
 
           if( line.match(pattern) == null & count){
-                console.log('##--## ' + line)
+                //console.log('##--## ' + line)
                 line_number += 1
           }
           else{ count = false }

@@ -7,6 +7,7 @@ var socket = io.connect();
 
 socket.on('connection', function() {
    socket.emit('join', 'This is a message from client' );
+
   });
 
 $('.date').click(function(){    // $('.date')
@@ -14,6 +15,15 @@ $('.date').click(function(){    // $('.date')
        //alert("patt is " + patt)
        window.location.href = 'text';
        socket.emit('scroll', patt );// noooothinggggggggggggggggg
+       //-------------- Current scroll_html_pos
+       var scroll_html_pos = $(document).scrollTop()
+       //alert('scroll_html_pos is : ' + scroll_html_pos)
+       socket.emit('scroll_html', scroll_html_pos);
   })// end click
+
+  socket.on('scroll_html', function(pos) {
+     $(document).scrollTop(pos)
+
+    });
 
 </script>
