@@ -3,7 +3,7 @@
 <html>
 
 <meta charset="UTF-8">
-<title>Straptoc_eg_distant</title>
+<title> nodejs straptoc </title>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 <script  src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js"></script>
@@ -35,33 +35,6 @@
   src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
 </script>
 
-<style>
-
-    /*
-    Panel with interpreted straptoc
-    */
-
-    div.strap{
-        position: fixed;
-        padding-left: 10px;
-        padding-right: 30px;
-        padding-bottom: 20px;
-        padding-top: 20px;
-        box-shadow: 0.5em 0.5em 0.7em;
-        top: 70px;
-        /*left: 1110px;*/
-        left: 620px;
-        max-height:1200px;
-        max-width:820px;
-        background-color: #ffd1b3 ; /*#ddcccc;*/ #ffe6e6 #ffd1b3
-        font-size:85%;
-        overflow: scroll;
-        text-align: left;
-        z-index: 15;
-        opacity: 0.9;
-        }
-
-</style>
 
  <div class="form-group">
   <label for="comment">Comment:</label>
@@ -84,19 +57,26 @@
 
     var socket = io.connect();  //'http://localhost:3000'
     var comment = false;
+
+    //------------- Scroll position
+
     socket.on('scroll', function(line_number) {
 
-        if (comment){ alert('in the  client textarea, line_number is : '+ line_number) }
-        var h = $('#comment').height()
-        if (comment){ alert('height scroll  : '+ h) }
-        var pos = line_number*h/25
-        if (comment){ alert(' pos = ' + pos) }
-        $('#comment').scrollTop(pos)
+            if (comment){ alert('in the  client textarea, line_number is : '+ line_number) }
+            var h = $('#comment').height()
+            if (comment){ alert('height scroll  : '+ h) }
+            var pos = line_number*h/25
+            if (comment){ alert(' pos = ' + pos) }
+            $('#comment').scrollTop(pos)
       })
+
+      //------------- just a message
 
     socket.on('connection', function() {
         socket.emit('join', 'This is a message from client textarea !!' );
       });
+
+    //------------- from html to textarea
 
     socket.on('message', function(message) {     // write html in textarea
         $('#comment').val(message);
@@ -104,12 +84,14 @@
         //socket.emit('pos_scroll', 'what is it');
       })
 
-    $('#submit').click(function(){               // submit new text..
+    //------------- from textarea to html
+
+    $('#submit').click(function(){               // submit new text.. from text to html
           var data = $('#comment').val()
           socket.emit('return', data);
         }) // end click
 
-  //------------- Tab in textarea
+  //------------- Tab  equal four spaces in textarea..
 
   $('#comment').keydown(function (e) {
       var keyCode = e.keyCode || e.which;

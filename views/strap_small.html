@@ -3,7 +3,7 @@
 <html>
 
 <meta charset="UTF-8">
-<title>Straptoc_eg_distant</title>
+<title> nodejs straptoc </title>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 <script  src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js"></script>
@@ -899,7 +899,8 @@ $menu_bim link:nm_Edit:ic_edit:href_baragouinage
 * prog ::
     * mov walls ::
         * vr fonctions pr circ électronique..
-            * graphes etc..
+            * graphes, ramifications etc..
+            * composants
     * repr projet d'éditeur de notes avec node.js..
         * rev code, éditeur qui s'ouvre au bon endroit !!!
         * passer de l'un à l'autre avec barre d'espace..
@@ -942,25 +943,7 @@ $menu_bim link:nm_Edit:ic_edit:href_baragouinage
 
 <script> maketoc()</script>
 
-<script src="/socket.io/socket.io.js"></script>
-
-<script>
-   var socket = io.connect();//'http://localhost:3000'
-
-   socket.on('connection', function() {
-       socket.emit('join', 'This is a message from client' );
-      });
-
-$('.date').click(function(){
-       var patt = $(this).attr('id').split('_')[1]
-       alert("patt is " + patt)
-       window.location.href = 'text';
-       socket.emit('scroll', patt );// noooothinggggggggggggggggg
-  })// end click
-
-
-
- </script>
+{% include 'scroll_socket.html' %}
 
 
 </html>
