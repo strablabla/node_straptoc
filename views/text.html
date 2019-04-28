@@ -75,6 +75,52 @@
         }
       }); // end comment keydown
 
+      $('#comment').bind('contextmenu', function(e){
+            e.preventDefault();
+            document.getElementById('submit').click();
+            return false;
+            });
+
+      socket.on('page_return_to_html', function(){
+            document.getElementById('go_back').click();
+      })
+
+      function wrapAsLink(){
+
+            /*
+            Passing from http to markdown notation
+            */
+
+            //alert('in wrap')
+            var textarea = document.getElementById("comment");
+            var len = textarea.value.length;
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            var sel = textarea.value.substring(start, end);
+            //alert(sel)
+            var subsel = sel.split('\/')
+            //alert(subsel)
+            if (subsel.slice(-1)[0].length < 5){
+               subsel = sel.split('\/').slice(-2,-1)
+            }
+            else{
+                subsel = sel.split('\/').slice(-1)
+            }
+            var subsubsel = subsel[0].split('.html')[0]
+            var name = '[' + subsubsel + ']'
+            var replace = name + '(' + sel + ')'
+            //alert(replace)
+            textarea.value = textarea.value.substring(0,start) + replace +
+            textarea.value.substring(end,len);
+
+      }
+
+      $('#wrap_url').click(function(){
+
+          wrapAsLink()
+
+      })
+
 </script>
 
 </html>

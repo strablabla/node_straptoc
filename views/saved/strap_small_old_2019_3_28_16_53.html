@@ -3,49 +3,9 @@
 <html>
 
 <meta charset="UTF-8">
-<title>Straptoc_eg_distant</title>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-<script  src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js"></script>
-<script  src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" ></script>
-<script src="https://cdn.rawgit.com/alertifyjs/alertify.js/v1.0.6/dist/js/alertify.js"></script>
-<script  src="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.11/js/min/perfect-scrollbar.min.js"></script>
-
-<script  src="http://d3js.org/queue.v1.min.js"></script>
-
-<script  src="https://cdn.rawgit.com/strablabla/Tinkering/9a148b3/js/straptoc/straptoc.js"></script>
-<link rel="stylesheet" href="https://cdn.rawgit.com/strablabla/Tinkering/9a148b3/js/straptoc/straptoc.css">
-
-<link rel="stylesheet" href='https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.11/css/perfect-scrollbar.css'>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.1.1/jquery.contextMenu.css">
-
-<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Enriqueta'>
-<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Londrina+Solid'>
-<link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Pathway+Gothic+One'>
-
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
-</script>
-<script type="text/javascript" async
-  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
-</script>
-
-<xmp theme="simplex" style="display:none;">
-
-§menu toto:#janv%202016_oo    text:text
-§noiframe
-§width_video 10%
-§width_pdf 90%
-§width_iframe 1000
-§col_sublist #ff6600
-§col_toc #ccccff
-§toggle_hide a
-§help true
+{% include 'header.html' %}
+{% include 'beg_straptoc.html' %}
 
 # Introduction
 
@@ -55,8 +15,6 @@
 	* hop..
 
 $menu_bim link:nm_Edit:ic_edit:href_baragouinage
-
-
 
 1/1/16
 
@@ -75,6 +33,8 @@ $menu_bim link:nm_Edit:ic_edit:href_baragouinage
 ## blablabla
 
 # barag
+
+# Avril 2019
 
 5/4/19
 
@@ -166,8 +126,10 @@ $menu_bim link:nm_Edit:ic_edit:href_baragouinage
 
 8/4/19
 
-* pr rdv otphtalmo..
-* prop Jérôme aller boire un coup..
+* santé :: 
+    * pr rdv otphtalmo..
+* peng :: 
+    * prop Jérôme aller boire un coup..
 * vr pr prép Meetup math..
 * visite ::
     * Le château du Haut-Andlau (30 min de Stras)
@@ -580,6 +542,7 @@ $menu_bim link:nm_Edit:ic_edit:href_baragouinage
     * http://framesfestival.fr/
 * société ::
     * http://sport24.lefigaro.fr/le-scan-sport/2019/04/18/27001-20190418ARTFIG00079-notre-dame-lilian-thuram-juge-bizarre-les-hierarchies-dans-les-emotions.php
+    * blabla
 
 20/4/19
 
@@ -928,40 +891,13 @@ $menu_bim link:nm_Edit:ic_edit:href_baragouinage
 
 27/4/19
 
-* Anniv K ..
 * node_straptoc ::
     * intégrer annyang pr perm d'avoir syntaxe, aide etc..
     * textarea, possib de faire des tabulation..
     * nvm install node
 
-
-</xmp>
-
-
-<script src="http://strapdownjs.com/v/0.2/strapdown.js"></script>
-
-
-<script> maketoc()</script>
-
-<script src="/socket.io/socket.io.js"></script>
-
-<script>
-   var socket = io.connect();//'http://localhost:3000'
-
-   socket.on('connection', function() {
-       socket.emit('join', 'This is a message from client' );
-      });
-
-$('.date').click(function(){
-       var patt = $(this).attr('id').split('_')[1]
-       alert("patt is " + patt)
-       window.location.href = 'text';
-       socket.emit('scroll', patt );// noooothinggggggggggggggggg
-  })// end click
-
-
-
- </script>
+{% include 'end_straptoc.html' %}
+{% include 'scroll_socket.html' %}
 
 
 </html>

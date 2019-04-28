@@ -58,25 +58,45 @@ exports.save_regularly = function(){
 
 exports.tab_textarea = function(){
 
-  /*
-  Transforming tab in four spaces
-  */
+      /*
+      Transforming TAB in four spaces
+      */
 
-  $('#comment').keydown(function (e) {
-      var keyCode = e.keyCode || e.which;
+      $('#comment').keydown(function (e) {
+          var keyCode = e.keyCode || e.which;
 
-      if (keyCode === 9) {
-          e.preventDefault();
-          var start = this.selectionStart;
-          var end = this.selectionEnd;
+          if (keyCode === 9) {   // Four spaces for TAB
+              e.preventDefault();
+              var start = this.selectionStart;
+              var end = this.selectionEnd;
+              // set textarea value to: text before caret + tab + text after caret
+              spaces = "    ";
+              this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+              // put caret at right position again
+              this.selectionStart = this.selectionEnd = start + spaces.length;
+          }
+        });
 
-          // set textarea value to: text before caret + tab + text after caret
-          spaces = "    ";
-          this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+} // end tab_textarea
 
-          // put caret at right position again
-          this.selectionStart = this.selectionEnd = start + spaces.length;
-      }
-    });
-
-}
+// function wrapAsLink(){
+//
+//       /*
+//       Passing from http to markdown notation
+//       */
+//
+//       var textarea = $('#comment');
+//       var len = textarea.value.length;
+//       var start = textarea.selectionStart;
+//       var end = textarea.selectionEnd;
+//       var sel = textarea.value.substring(start, end);
+//       alert(sel)
+//       var subsel = sel.split('\/')
+//       alert(subsel)
+//       var name = '[' + subsel.slice(-1)[0].slice(0,-5) + ']'
+//       var replace = name + '(' + sel + ')'
+//       alert(replace)
+//       textarea.value = textarea.value.substring(0,start) + replace +
+//       textarea.value.substring(end,len);
+//
+// }

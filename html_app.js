@@ -12,7 +12,9 @@ var server = require('http').createServer(app);
 
 nunjucks.configure('views', {
     autoescape: true,
-    express: app
+    express: app,
+    watch:true
+    // echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 });
 
 app.get('/', function(req, res){
@@ -71,7 +73,8 @@ io.sockets.on('connection', function (socket) {
             /*
             Change the text with the text from textarea when submitted
             */
-
+            //$(location).attr('href', '/')
+            socket.emit('page_return_to_html','') // send message back for changing page.. 
             console.log('Retrieving the whole text modified... ' + data);
             fs.writeFile("views/strap_small.html", data, function(err) {
                   if(err) { return console.log(err); }
