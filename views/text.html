@@ -5,28 +5,40 @@
 <meta charset="UTF-8">
 
 {% include 'header.html' %}
+<script  src="/edit_textarea.js"></script>
+<script  src="/highlight.js"></script>
 {% include 'textarea.html' %}
 
  <script src="/socket.io/socket.io.js"></script>
+
+
  <script>
 
     var socket = io.connect();  //'http://localhost:3000'
     var comment = false;
     var scroll_html_pos = 0
+    var pattern = ''
 
     //------------- Scroll position
 
-    socket.on('scroll', function(line_number) {
-
+    socket.on('scroll', function(code) {
+            //alert(code)
+            line_number = parseFloat(code.split('+++')[0])
+            var patt = code.split('+++')[1]
             if (comment){ alert('in the  client textarea, line_number is : '+ line_number) }
             var h = $('#comment').height()
             if (comment){ alert('height scroll  : '+ h) }
             var pos = line_number*h/25*0.96
             if (comment){ alert(' pos = ' + pos) }
+            if (comment){ alert(patt) }
+            $('#comment').highlightTextarea({
+                  words: [patt]
+                });
             $('#comment').scrollTop(pos)
+
       })
 
-    socket.on('scroll_html', function(pos) {
+    socket.on('scroll_html', function(pos) {  // save html position of scroll
             scroll_html_pos = pos
             if (comment){ alert(' scroll_html pos = ' + pos) }
       })
@@ -42,7 +54,12 @@
     socket.on('message', function(message) {     // write html in textarea
         $('#comment').val(message);
         if (comment){ alert('received the text from html via the server !! ') }
-        //socket.emit('pos_scroll', 'what is it');
+      })
+
+    // // //------------- color pattern
+    // //
+    socket.on('pattern', function(patt) {
+          pattern = patt
       })
 
     //------------- from textarea to html
@@ -56,70 +73,20 @@
           socket.emit('scroll_html', scroll_html_pos);
         }) // end click
 
-    //------------- Tab  equal four spaces in textarea..
+    text_area_redefine_cmds()
 
-    $('#comment').keydown(function (e) {
-        var keyCode = e.keyCode || e.which;
+    $('#comment').bind('contextmenu', function(e){  // when clicking right go back to html
+          e.preventDefault();
+          document.getElementById('submit').click();
+          return false;
+          });
 
-        if (keyCode === 9) {
-            e.preventDefault();
-            var start = this.selectionStart;
-            var end = this.selectionEnd;
+    socket.on('page_return_to_html', function(){
+          document.getElementById('go_back').click();
+    })
 
-            // set textarea value to: text before caret + tab + text after caret
-            spaces = "    ";
-            this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+    $('#wrap_url').click(function(){ wrap_as_link() })
 
-            // put caret at right position again
-            this.selectionStart = this.selectionEnd = start + spaces.length;
-        }
-      }); // end comment keydown
-
-      $('#comment').bind('contextmenu', function(e){
-            e.preventDefault();
-            document.getElementById('submit').click();
-            return false;
-            });
-
-      socket.on('page_return_to_html', function(){
-            document.getElementById('go_back').click();
-      })
-
-      function wrapAsLink(){
-
-            /*
-            Passing from http to markdown notation
-            */
-
-            //alert('in wrap')
-            var textarea = document.getElementById("comment");
-            var len = textarea.value.length;
-            var start = textarea.selectionStart;
-            var end = textarea.selectionEnd;
-            var sel = textarea.value.substring(start, end);
-            //alert(sel)
-            var subsel = sel.split('\/')
-            //alert(subsel)
-            if (subsel.slice(-1)[0].length < 5){
-               subsel = sel.split('\/').slice(-2,-1)
-            }
-            else{
-                subsel = sel.split('\/').slice(-1)
-            }
-            var subsubsel = subsel[0].split('.html')[0]
-            var name = '[' + subsubsel + ']'
-            var replace = name + '(' + sel + ')'
-            //alert(replace)
-            textarea.value = textarea.value.substring(0,start) + replace +
-            textarea.value.substring(end,len);
-
-      }
-
-      $('#wrap_url').click(function(){
-
-          wrapAsLink()
-
-      })
 
 </script>
 

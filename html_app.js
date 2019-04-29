@@ -1,6 +1,7 @@
 var express = require('express')
 var path = require("path");
 var fs = require('fs');
+//var $ = require('jQuery');
 var nunjucks  = require('nunjucks');
 var count = require('./static/js/count_lines');
 var util = require('./static/js/util');
@@ -28,6 +29,7 @@ app.get('/text', function(req, res){
 //--------------  address
 
 app.use(express.static('public'));
+app.use(express.static('scripts'));
 
 //--------------  websocket
 
@@ -49,10 +51,13 @@ io.sockets.on('connection', function (socket) {
               if (comment){ console.log('blablabala in readFile !! ') }
               var line_number = count.find_line_of_pattern(data, patt)
               if (comment){ console.log('line_number after find_line_of_pattern !! ' + line_number) }
-              socket.emit('scroll', line_number);
+              socket.emit('scroll', line_number+'+++'+patt);
               socket.emit('scroll_html', scroll_html_pos)
               if (comment){ console.log('scroll_html_pos ' + scroll_html_pos) }
               if (comment){ console.log('just after scrolllll !! ') }
+
+              socket.emit('pattern', patt); // send the text read in html file to textarea
+
 
           }); // end fs.readFile
 
@@ -93,6 +98,12 @@ io.sockets.on('connection', function (socket) {
           console.log('############ viewed from server side,  scroll html pos is :  ' + pos)
           scroll_html_pos = pos
           })
+
+      // socket.on('text_changed',function(message){
+      //    console.log('text_changed')
+      //   socket.emit('highlight_ok', message)
+      //
+      // })
 
 
 }); // sockets.on connection
