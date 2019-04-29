@@ -21,7 +21,7 @@
             if (comment){ alert('in the  client textarea, line_number is : '+ line_number) }
             var h = $('#comment').height()
             if (comment){ alert('height scroll  : '+ h) }
-            var pos = line_number*h/25
+            var pos = line_number*h/25*0.96
             if (comment){ alert(' pos = ' + pos) }
             $('#comment').scrollTop(pos)
       })

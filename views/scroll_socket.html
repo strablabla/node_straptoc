@@ -4,45 +4,30 @@
 <script>
 
 var socket = io.connect();
+var comment = false;
 
 socket.on('connection', function() {
    socket.emit('join', 'This is a message from client' );
 
   });
 
-$('.date').click(function(){    // $('.date')
-      pattern_and_flip($(this),1)
-  })// end click
+socket.on('scroll_html', function(pos) { $(document).scrollTop(pos) });
 
-  socket.on('scroll_html', function(pos) {
-     $(document).scrollTop(pos)
-    });
-
-  $('li li').click(function(){
-      pattern_and_flip($(this),0)
-  })
-
-  $('li:not(:has(span))').click(function(){
-      pattern_and_flip($(this),0)
-  })
+$('.date').click(function(){ pattern_and_flip($(this),1) })// end click
+$('li li').click(function(){ pattern_and_flip($(this),0) })
+$('li:not(:has(span))').click(function(){ pattern_and_flip($(this),0) })
 
 function pattern_and_flip(elem, take_elem){
 
-  //alert(elem.tagName )
-  if (elem.is('li')){
-      var patt = elem.text().split('\n')[0]
-  }
-  else if (elem.is('.date')){
-      var patt = elem.attr('id').split('_')[take_elem]
-  }
-
-  //alert("patt is " + patt)
-  window.location.href = 'text';
-  socket.emit('scroll', patt );// noooothinggggggggggggggggg
-  //-------------- Current scroll_html_pos
-  var scroll_html_pos = $(document).scrollTop()
-  //alert('scroll_html_pos is : ' + scroll_html_pos)
-  socket.emit('scroll_html', scroll_html_pos);
+    if (elem.is('li')){ var patt = elem.text().split('\n')[0] }
+    else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }
+    if (comment){ alert("patt is " + patt) }
+    window.location.href = 'text';      // flip to textarea
+    socket.emit('scroll', patt );  //  emit toward html_app.js
+    //-------------- Current scroll_html_pos
+    var scroll_html_pos = $(document).scrollTop()
+    //alert('scroll_html_pos is : ' + scroll_html_pos)
+    socket.emit('scroll_html', scroll_html_pos);
 
 }
 

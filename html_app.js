@@ -37,7 +37,7 @@ var io = require('socket.io')(server);
 
 var patt = '' // pattern for scroll position
 var scroll_html_pos = 0 //
-var comment = true;
+var comment = false;
 
 io.sockets.on('connection', function (socket) {
 
@@ -74,7 +74,7 @@ io.sockets.on('connection', function (socket) {
             Change the text with the text from textarea when submitted
             */
             //$(location).attr('href', '/')
-            socket.emit('page_return_to_html','') // send message back for changing page.. 
+            socket.emit('page_return_to_html','') // send message back for changing page..
             console.log('Retrieving the whole text modified... ' + data);
             fs.writeFile("views/strap_small.html", data, function(err) {
                   if(err) { return console.log(err); }
