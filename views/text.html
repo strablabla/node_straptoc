@@ -6,11 +6,17 @@
 
 {% include 'header.html' %}
 <script  src="/edit_textarea.js"></script>
-<script  src="/highlight.js"></script>
+
+<!-- Create a simple CodeMirror instance -->
+
+<link rel="stylesheet" href="codemirror.css">
+<script src="codemirror.js"></script>
+
+<link rel="stylesheet" href="highlight.css">
+
 {% include 'textarea.html' %}
 
  <script src="/socket.io/socket.io.js"></script>
-
 
  <script>
 
@@ -26,16 +32,36 @@
             line_number = parseFloat(code.split('+++')[0])
             var patt = code.split('+++')[1]
             if (comment){ alert('in the  client textarea, line_number is : '+ line_number) }
-            var h = $('#comment').height()
-            if (comment){ alert('height scroll  : '+ h) }
-            var pos = line_number*h/25*0.96
-            if (comment){ alert(' pos = ' + pos) }
-            if (comment){ alert(patt) }
-            $('#comment').highlightTextarea({
-                  words: [patt]
-                });
-            $('#comment').scrollTop(pos)
 
+            //-------------------------- CodeMirror
+
+            var editor = CodeMirror.fromTextArea(document.getElementById("comment"), {
+              lineNumbers: true,
+              mode: 'markdown'
+            });
+
+            function jumpToLine(i) {
+                  var t = editor.charCoords({line: i, ch: 0}, "local").top;
+                  var middleHeight = editor.getScrollerElement().offsetHeight / 2;
+                  editor.scrollTo(null, t - middleHeight - 5);
+                }
+
+            jumpToLine(line_number)
+
+            editor.addLineClass(line_number-1, "background", 'line_highlight')
+
+            $('#wrap_url').click(function(){
+                  var selection = editor.getSelection()
+                  var modified_selection = wrap_hyperlink(selection)
+                  editor.replaceSelection(modified_selection)
+             })
+
+             //------------- from textarea to html
+
+             $('#submit').click(function(){               // submit new text.. from text to html
+                   var new_text = editor.getValue()
+                   socket.emit('return', new_text);
+                 }) // end click
       })
 
     socket.on('scroll_html', function(pos) {  // save html position of scroll
@@ -53,29 +79,20 @@
 
     socket.on('message', function(message) {     // write html in textarea
         $('#comment').val(message);
-        if (comment){ alert('received the text from html via the server !! ') }
+        if (comment){ alert('received message via server !! ') }
       })
 
-    // // //------------- color pattern
-    // //
+    //------------- color pattern
+
     socket.on('pattern', function(patt) {
           pattern = patt
       })
-
-    //------------- from textarea to html
-
-    $('#submit').click(function(){               // submit new text.. from text to html
-          var data = $('#comment').val()
-          socket.emit('return', data);
-        }) // end click
 
     $('#go_back').click(function(){               // submit new text.. from text to html
           socket.emit('scroll_html', scroll_html_pos);
         }) // end click
 
-    text_area_redefine_cmds()
-
-    $('#comment').bind('contextmenu', function(e){  // when clicking right go back to html
+    $('.form-group').bind('contextmenu', function(e){  // when clicking right go back to html
           e.preventDefault();
           document.getElementById('submit').click();
           return false;
@@ -84,8 +101,6 @@
     socket.on('page_return_to_html', function(){
           document.getElementById('go_back').click();
     })
-
-    $('#wrap_url').click(function(){ wrap_as_link() })
 
 
 </script>

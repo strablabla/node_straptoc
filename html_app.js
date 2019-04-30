@@ -1,7 +1,6 @@
 var express = require('express')
 var path = require("path");
 var fs = require('fs');
-//var $ = require('jQuery');
 var nunjucks  = require('nunjucks');
 var count = require('./static/js/count_lines');
 var util = require('./static/js/util');
@@ -30,12 +29,12 @@ app.get('/text', function(req, res){
 
 app.use(express.static('public'));
 app.use(express.static('scripts'));
+app.use(express.static('lib'));
 
 //--------------  websocket
 
 // Loading socket.io
 var io = require('socket.io')(server);
-// When a client connects, we note it in the consol
 
 var patt = '' // pattern for scroll position
 var scroll_html_pos = 0 //
@@ -48,16 +47,11 @@ io.sockets.on('connection', function (socket) {
 
               if (err) { return console.log(err); }
               socket.emit('message', data); // send the text read in html file to textarea
-              if (comment){ console.log('blablabala in readFile !! ') }
               var line_number = count.find_line_of_pattern(data, patt)
-              if (comment){ console.log('line_number after find_line_of_pattern !! ' + line_number) }
-              socket.emit('scroll', line_number+'+++'+patt);
+              socket.emit('scroll', line_number + '+++' + patt);
               socket.emit('scroll_html', scroll_html_pos)
               if (comment){ console.log('scroll_html_pos ' + scroll_html_pos) }
-              if (comment){ console.log('just after scrolllll !! ') }
-
               socket.emit('pattern', patt); // send the text read in html file to textarea
-
 
           }); // end fs.readFile
 
@@ -73,19 +67,18 @@ io.sockets.on('connection', function (socket) {
 
       //-------------------------------- From textarea to html
 
-      socket.on('return', function(data) {
+      socket.on('return', function(new_text) {
 
             /*
             Change the text with the text from textarea when submitted
             */
-            //$(location).attr('href', '/')
-            socket.emit('page_return_to_html','') // send message back for changing page..
-            console.log('Retrieving the whole text modified... ' + data);
-            fs.writeFile("views/strap_small.html", data, function(err) {
-                  if(err) { return console.log(err); }
-                  util.save_current_version(data)  // save strap_small.html with a date in saved directory
-                  console.log("The file views/strap_small.html was modified and saved!");
 
+            socket.emit('page_return_to_html','') // send message back for sending the scroll pos.
+            console.log('Retrieving the whole text modified... ' + new_text);
+            fs.writeFile("views/strap_small.html", new_text, function(err) {
+                  if(err) { return console.log(err); }
+                  util.save_current_version(new_text)  // save strap_small.html with a date in saved directory
+                  console.log("The file views/strap_small.html was modified and saved!");
             }); // end write file
         }); // end socket.on return
 
@@ -98,12 +91,6 @@ io.sockets.on('connection', function (socket) {
           console.log('############ viewed from server side,  scroll html pos is :  ' + pos)
           scroll_html_pos = pos
           })
-
-      // socket.on('text_changed',function(message){
-      //    console.log('text_changed')
-      //   socket.emit('highlight_ok', message)
-      //
-      // })
 
 
 }); // sockets.on connection
