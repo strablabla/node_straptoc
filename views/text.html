@@ -6,16 +6,10 @@
 
 {% include 'header.html' %}
 <script  src="/edit_textarea.js"></script>
-
-<!-- Create a simple CodeMirror instance -->
-
 <link rel="stylesheet" href="codemirror.css">
 <script src="codemirror.js"></script>
-
 <link rel="stylesheet" href="highlight.css">
-
 {% include 'textarea.html' %}
-
  <script src="/socket.io/socket.io.js"></script>
 
  <script>
@@ -28,16 +22,16 @@
     //------------- Scroll position
 
     socket.on('scroll', function(code) {
-            //alert(code)
-            line_number = parseFloat(code.split('+++')[0])
-            var patt = code.split('+++')[1]
-            if (comment){ alert('in the  client textarea, line_number is : '+ line_number) }
+            var json_line_patt = JSON.parse(code);
+            line_number = json_line_patt['line']
+            var patt = json_line_patt['pattern']
+            if (comment){ alert('line_number is : '+ line_number) }
 
             //-------------------------- CodeMirror
 
             var editor = CodeMirror.fromTextArea(document.getElementById("comment"), {
-              lineNumbers: true,
-              mode: 'markdown'
+                  lineNumbers: true,
+                  mode: 'markdown'
             });
 
             function jumpToLine(i) {
@@ -82,7 +76,7 @@
         if (comment){ alert('received message  !! ') }
       })
 
-    //------------- color pattern
+    //-------------  pattern
 
     socket.on('pattern', function(patt) {
           pattern = patt

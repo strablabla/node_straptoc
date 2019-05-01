@@ -9,7 +9,6 @@ var comment = false;
 
 socket.on('connection', function() {
    socket.emit('join', 'This is a message from client' );
-
   });
 
 socket.on('scroll_html', function(pos) { $(document).scrollTop(pos) });
