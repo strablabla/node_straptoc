@@ -1,5 +1,6 @@
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="dbl_click_move_to_text.js"></script>
 
 <script>
 
@@ -15,34 +16,11 @@ socket.on('scroll_html', function(pos) { $(document).scrollTop(pos) });
 
 // ------------- Double click for switching to textarea
 
+var dic_modes_switch = { '.date': 1, 'li li': 0, 'li:not(:has(span))': 0 }
 
-function dblclick_to_text(elem, index){
+Object.entries(dic_modes_switch).forEach(([elem,i]) =>
+        dblclick_to_text(socket, $(elem), i)
+)
 
-      /*
-      Go to text
-      */
-
-      elem.dblclick(function(e){  // when clicking right go back to html
-            e.preventDefault();
-            pattern_and_flip($(this),index)
-            return false;
-            });
-}
-
-dblclick_to_text($('.date'), 1)
-dblclick_to_text($('li li'), 0)
-dblclick_to_text($('li:not(:has(span))'), 0)
-
-function pattern_and_flip(elem, take_elem){
-
-    if (elem.is('li')){ var patt = elem.text().split('\n')[0] }
-    else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }
-    if (comment){ alert("patt is " + patt) }
-    window.location.href = 'text';                    // flip from html to textarea
-    socket.emit('scroll', patt );                     //  emit pattern toward html_app.js
-    var scroll_html_pos = $(document).scrollTop()     // scroll pos in html
-    socket.emit('scroll_html', scroll_html_pos);
-
-}
 
 </script>

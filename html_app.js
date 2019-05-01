@@ -4,6 +4,8 @@ var fs = require('fs');
 var nunjucks  = require('nunjucks');
 var count = require('./static/js/count_lines');
 var util = require('./static/js/util');
+var re = require('./static/js/read_emit');
+var mh = require('./static/js/modify_html');
 
 //--------------  Server
 
@@ -25,7 +27,7 @@ app.get('/text', function(req, res){
     res.render('text.html');
 });
 
-//--------------  address
+//--------------  static addresses
 
 app.use(express.static('public'));
 app.use(express.static('scripts'));
@@ -43,16 +45,9 @@ var comment = false;
 io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
-      fs.readFile('views/strap_small.html', 'utf8', function (err,data) {
-
+      fs.readFile('views/strap_small.html', 'utf8', function (err,text) {
               if (err) { return console.log(err); }
-              socket.emit('message', data); // send the text read in html file to textarea
-              var line_number = count.find_line_of_pattern(data, patt)
-              socket.emit('scroll', line_number + '+++' + patt);
-              socket.emit('scroll_html', scroll_html_pos)
-              if (comment){ console.log('scroll_html_pos ' + scroll_html_pos) }
-              socket.emit('pattern', patt); // send the text read in html file to textarea
-
+              re.emit_from_read(socket, count, patt, text, scroll_html_pos)
           }); // end fs.readFile
 
       //util.save_regularly() // save the regularly the text..
@@ -73,13 +68,8 @@ io.sockets.on('connection', function (socket) {
             Change the text with the text from textarea when submitted
             */
 
-            socket.emit('page_return_to_html','') // send message back for sending the scroll pos.
-            console.log('Retrieving the whole text modified... ' + new_text);
-            fs.writeFile("views/strap_small.html", new_text, function(err) {
-                  if(err) { return console.log(err); }
-                  util.save_current_version(new_text)  // save strap_small.html with a date in saved directory
-                  console.log("The file views/strap_small.html was modified and saved!");
-            }); // end write file
+            mh.modify_html_with_newtext(socket, fs, util, new_text)
+
         }); // end socket.on return
 
       socket.on('scroll', function(pattern) {
