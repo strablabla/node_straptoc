@@ -33,6 +33,7 @@
                   lineNumbers: true,
                   mode: 'markdown'
             });
+            editor.setSize('100%',500);
 
             function jumpToLine(i) {
                   var t = editor.charCoords({line: i, ch: 0}, "local").top;
