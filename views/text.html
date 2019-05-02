@@ -35,6 +35,12 @@
             });
             editor.setSize('100%',500);
 
+            editor.on('gutterClick', function(editor, line, gutter) {
+              if (gutter === 'CodeMirror-linenumbers') {
+                return editor.setSelection(CodeMirror.Pos(line, 0), CodeMirror.Pos(line + 1, 0));
+              }
+            });
+
             function jumpToLine(i) {
                   var t = editor.charCoords({line: i, ch: 0}, "local").top;
                   var middleHeight = editor.getScrollerElement().offsetHeight / 2;
@@ -47,7 +53,10 @@
 
             $('#wrap_url').click(function(){
                   var selection = editor.getSelection()
-                  var modified_selection = wrap_hyperlink(selection)
+                  clean_selection = selection.split('* ')[1].slice(0,-1)
+                  aster = selection.split('* ')[0]
+                  console.log(clean_selection)
+                  var modified_selection = wrap_hyperlink(aster, clean_selection)
                   editor.replaceSelection(modified_selection)
              })
 

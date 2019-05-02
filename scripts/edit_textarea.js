@@ -2,7 +2,7 @@
 Textarea edition
 */
 
-function wrap_hyperlink(sel){
+function wrap_hyperlink(aster, sel){
 
       /*
       markdown syntax for hyperlink
@@ -17,7 +17,7 @@ function wrap_hyperlink(sel){
       }
       var subsubsel = subsel[0].split('.html')[0]
       var name = '[' + subsubsel + ']'
-      var replace = name + '(' + sel + ')'
+      var replace = aster + '* ' + name + '(' + sel + ')' +'\n'
 
       return replace
 
