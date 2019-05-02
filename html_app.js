@@ -1,5 +1,6 @@
 var express = require('express')
 var path = require("path");
+var open = require('open');
 var fs = require('fs');
 var nunjucks  = require('nunjucks');
 var count = require('./static/js/count_lines');
@@ -37,6 +38,14 @@ var patt = '' // pattern for scroll position
 var scroll_html_pos = 0 //
 var comment = false;
 
+String.prototype.format = function () {
+  var i = 0, args = arguments;
+  return this.replace(/{}/g, function () {
+    return typeof args[i] != 'undefined' ? args[i++] : '';
+  });
+};
+
+
 io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
@@ -59,6 +68,8 @@ io.sockets.on('connection', function (socket) {
 
 }); // sockets.on connection
 
-server.listen(3000);
-//Console will print the message
-console.log('Server running at http://127.0.0.1:3000/');
+var port = 3000
+server.listen(port);
+var addr = 'http://127.0.0.1:{}/'.format(port)
+console.log('Server running at {}'.format(addr));
+open(addr,"node-strap");
