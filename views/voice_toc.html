@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+
+<html>
+
+<meta charset="UTF-8">
+
+<script src="artyom.window.min.js"></script>
+
+<script>
+
+const artyom = new Artyom();
+
+artyom.initialize({
+  lang:'fr-FR',
+  continuous:true,
+  debug:false,
+  listen:true
+})
+
+var dic_simple =  {
+        indexes: ['table des matière'],
+        action: function() {
+            artyom.say("change le toc");
+            $('#toc').toggle()
+            }
+    }
+artyom.addCommands(dic_simple); // Add the command with addCommands method. Now
+
+
+</script>
+
+</html>
