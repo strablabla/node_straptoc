@@ -24,22 +24,28 @@ function make_date(){
 
 }
 
-exports.save_current_version = function(data){
+exports.save_current_version = function(data,with_date){
 
       /*
-      Save the current strap_small.html in a file with the date
+      Save the current strap_small.html in views/saved/strap_small_old.html
       */
 
+      var basename = 'views/saved/strap_small_old'
       txt_date = make_date()
-      console.log('saving the text with save_current_version !!!! ')
-      //console.log(data)
-      fs.writeFile("views/saved/strap_small_old_" + txt_date + ".html", data, function(err) {
-
+      if ( with_date ){
+          var namefile = basename + '_' + txt_date + ".html"
+          list_saved.push(txt_date)
+          if (list_saved.length > lim_nb_saved){
+              list_saved = list_saved.slice(1,-1)  // removing the oldest element
+          }
+      }
+      else{ var namefile = basename + ".html" }
+      fs.writeFile( namefile, data, function(err) {
             if(err) { return console.log(err); }
-            console.log("The file was saved!");
-
-      }); // end writeFile
-} // end save_current_version
+            console.log("The file was saved as {} !".format(namefile));
+            //console.log('list_saved.slice(-1)[0] is {} '.format(list_saved.slice(-1)[0]))
+      });    // end writeFile
+}         // end save_current_version
 
 exports.save_regularly = function(){
 
@@ -47,11 +53,14 @@ exports.save_regularly = function(){
       Saving regularly views/strap_small.html
       */
 
+      list_saved = []     // global
+      lim_nb_saved = 10   // max versions saved
+      var min_interv = 5  // intervall in minute
       setInterval(function() {
               fs.readFile('views/strap_small.html', 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
-                      exports.save_current_version(data)
+                      exports.save_current_version(data,true) // with date
                   });   // end fs.readFile
-        }, 300000);   // 5 min intervall
+        }, parseInt(min_interv*60*1000)); // 300000 5 min  //10000 10 sec //600000 10 min
 
 }

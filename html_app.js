@@ -45,7 +45,6 @@ String.prototype.format = function () {
   });
 };
 
-
 io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
@@ -53,8 +52,7 @@ io.sockets.on('connection', function (socket) {
               if (err) { return console.log(err); }
               re.emit_from_read(socket, count, patt, text, scroll_html_pos)
           }); // end fs.readFile
-      //util.save_regularly() // save the regularly the text..
-
+      util.save_regularly() // save the regularly the text..
       socket.on('join', function(data) { socket.emit('scroll', patt) }); // end socket.on join
 
       //-------------------------------- From textarea to html
