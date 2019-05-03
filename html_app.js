@@ -48,7 +48,7 @@ String.prototype.format = function () {
 io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
-      fs.readFile('views/strap_small.html', 'utf8', function (err,text) {
+      fs.readFile('views/main.html', 'utf8', function (err,text) {
               if (err) { return console.log(err); }
               re.emit_from_read(socket, count, patt, text, scroll_html_pos)
           }); // end fs.readFile

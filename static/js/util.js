@@ -27,10 +27,10 @@ function make_date(){
 exports.save_current_version = function(data,with_date){
 
       /*
-      Save the current strap_small.html in views/saved/strap_small_old.html
+      Save the current main.html in views/saved/main_old.html
       */
 
-      var basename = 'views/saved/strap_small_old'
+      var basename = 'views/saved/main_old'
       txt_date = make_date()
       if ( with_date ){
           var namefile = basename + '_' + txt_date + ".html"
@@ -50,14 +50,14 @@ exports.save_current_version = function(data,with_date){
 exports.save_regularly = function(){
 
       /*
-      Saving regularly views/strap_small.html
+      Saving regularly views/main.html
       */
 
       list_saved = []     // global
       lim_nb_saved = 10   // max versions saved
       var min_interv = 5  // intervall in minute
       setInterval(function() {
-              fs.readFile('views/strap_small.html', 'utf8', function (err,data) {
+              fs.readFile('views/main.html', 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
                       exports.save_current_version(data,true) // with date
                   });   // end fs.readFile
