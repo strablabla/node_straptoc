@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+<html>
+
+<meta charset="UTF-8">
+
+<script>
+
+$('li').hover(function(){
+     if ($(this).text().match(/[\u3400-\u9FBF]/)){
+            $(this).css({"font-size" : "large"})    // if chinese, magnify the text..
+     }
+})
+$('li').mouseleave(function(){
+      $(this).css({"font-size" : "100%"}) // normal size
+})
+
+</script>
+
+</html>
