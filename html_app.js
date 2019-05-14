@@ -67,7 +67,8 @@ io.sockets.on('connection', function (socket) {
 }); // sockets.on connection
 
 var port = 3000
-server.listen(port);
-var addr = 'http://127.0.0.1:{}/'.format(port)
+var host = '0.0.0.0' // 127.0.0.1
+server.listen(port, host);
+var addr = 'http://{}'.format(host) + ':{}/'.format(port) // access through 192.168.0.13.. 
 console.log('Server running at {}'.format(addr));
 open(addr,"node-strap");
