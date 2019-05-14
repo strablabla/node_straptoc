@@ -57,8 +57,8 @@ io.sockets.on('connection', function (socket) {
 
       //-------------------------------- From textarea to html
 
-      socket.on('return', function(new_text) { // change html with textarea
-            modify.modify_html_with_newtext(socket, fs, util, new_text)
+      socket.on('return', function(new_text) {        // change html with textarea
+            modify.modify_html_with_newtext(io, fs, util, new_text)
         }); // end socket.on return
 
       socket.on('scroll', function(pattern) { patt = pattern })
@@ -69,6 +69,6 @@ io.sockets.on('connection', function (socket) {
 var port = 3000
 var host = '0.0.0.0' // 127.0.0.1
 server.listen(port, host);
-var addr = 'http://{}'.format(host) + ':{}/'.format(port) // access through 192.168.0.13.. 
+var addr = 'http://{}'.format(host) + ':{}/'.format(port) // access through 192.168.0.13..
 console.log('Server running at {}'.format(addr));
 open(addr,"node-strap");
