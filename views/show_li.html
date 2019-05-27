@@ -1,0 +1,29 @@
+<script src="keymaster.js"></script>
+<script>
+
+var openul = true
+
+key('ctrl+q',function(){
+
+      //alert("opening on hover !! ")
+      if (openul){
+          $('li').hover(function(){
+              $(this).find('ul').show()
+          })
+      }
+      else{
+          $('li').hover(function(){
+              $(this).find('ul').hide()
+          })
+      }
+      openul = !openul
+
+})
+
+key('alt+q',function(){
+      alert("removing hover !! ")
+      $('li').off('mouseenter mouseleave')
+
+})
+
+</script>
