@@ -33,7 +33,6 @@ app.use(express.static('lib'));
 
 // Loading socket.io
 var io = require('socket.io')(server);
-
 var patt = '' // pattern for scroll position
 var scroll_html_pos = 0 //
 var comment = false;
@@ -63,6 +62,36 @@ io.sockets.on('connection', function (socket) {
 
       socket.on('scroll', function(pattern) { patt = pattern })
       socket.on('scroll_html', function(pos) { scroll_html_pos = pos })
+
+      // socket.on('folder_extract', function(name_folder) {
+      //       console.log('Received the address ' + name_folder)
+      //       var strap_addr = '* $pdf \n'
+      //       strap_addr += '+++ ' + name_folder  + '\n'
+      //       fs.readdir(name_folder, (err, files) => {
+      //           files.forEach(file => {
+      //              console.log(file);
+      //              strap_addr += '    * [' + file.split('.pdf')[0] + ' §§](' + file + ')\n'
+      //         });
+      //         console.log(strap_addr)
+      //         socket.emit('folder_extract', strap_addr)
+      //       });
+      //
+      //  })
+
+       socket.on('folder_extract', function(name_folder) {
+             console.log('Received the address ' + name_folder)
+             var strap_addr = ''
+             fs.readdir(name_folder, (err, files) => {
+                 files.forEach(file => {
+                    console.log(file);
+                    strap_addr += file + '\n'
+               });
+               console.log(strap_addr)
+               socket.emit('folder_extract', strap_addr)
+             });
+
+        })
+
 
 }); // sockets.on connection
 

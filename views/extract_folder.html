@@ -1,0 +1,69 @@
+<!-- <script src="/socket.io/socket.io.js"></script> -->
+
+<script>
+
+String.prototype.format = function () {
+  var i = 0, args = arguments;
+  return this.replace(/{}/g, function () {
+    return typeof args[i] != 'undefined' ? args[i++] : '';
+  });
+};
+
+$('li').each(function(){
+
+    var reg = /\!fold/
+    var txt = $(this).html().split('\n')[0]
+    var current_li = $(this)
+    //alert(txt)
+    if (txt.match(reg)){
+        var addr = txt.split('!fold')[1].trim()
+        //alert(addr)
+        socket.emit('folder_extract',addr)
+        socket.on('folder_extract',function(strap_addr){
+            var list_papers = $('<ul/>')
+            list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
+            list_pdf.forEach(function(elem){
+                make_li_embed(elem,list_papers)
+                })
+           current_li.parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
+           toggle_pdf() // when clicking on - or + open or close..
+        })
+    }
+
+})
+
+function make_li_embed(elem,list_papers){
+
+  /*
+  List of pdfs with embedding..
+  */
+
+  var obj = embed_pdf(elem)
+  var divpdf = $('<div/>').text(elem.split('.pdf')[0])
+  var divpdf_plus = divpdf.append($('<span/>').addClass('togpdf').append($('<a/>').text(' [-]')))
+  list_papers.append($('<li/>').append(divpdf_plus.append($('<div/>').html(obj).hide())))
+
+}
+
+function toggle_pdf(){
+  $('.togpdf').click(function(){
+          var taga = $(this).find('a')
+          if (taga.text() == ' [-]'){
+              taga.text(' [+]')
+          }
+          else{ taga.text(' [-]') }
+          $(this).next().toggle()
+      })
+}
+
+function embed_pdf(addr){         // embedded pdf..
+
+    var htm = '<br><object width="900" height="500" type="application/pdf"\
+            data="/pdf/Phys/{}?\
+            #zoom=85&scrollbar=0&toolbar=0&navpanes=0">  \
+            </object> <br><br>'.format(addr)
+
+    return htm
+}
+
+</script>
