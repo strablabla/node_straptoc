@@ -18,12 +18,14 @@ $('li').each(function(){
     if (txt.match(reg)){
         var addr = txt.split('!fold')[1].trim()
         //alert(addr)
+        addr_short = addr.split('/').slice(1).join('/')
+        //alert(addr_short)
         socket.emit('folder_extract',addr)
         socket.on('folder_extract',function(strap_addr){
             var list_papers = $('<ul/>')
             list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
             list_pdf.forEach(function(elem){
-                make_li_embed(elem,list_papers)
+                make_li_embed(addr_short,elem,list_papers)
                 })
            current_li.parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
            toggle_pdf() // when clicking on - or + open or close..
@@ -32,13 +34,13 @@ $('li').each(function(){
 
 })
 
-function make_li_embed(elem,list_papers){
+function make_li_embed(addr,elem,list_papers){
 
   /*
   List of pdfs with embedding..
   */
 
-  var obj = embed_pdf(elem)
+  var obj = embed_pdf(addr + '/' + elem)
   var divpdf = $('<div/>').text(elem.split('.pdf')[0])
   var divpdf_plus = divpdf.append($('<span/>').addClass('togpdf').append($('<a/>').text(' [-]')))
   list_papers.append($('<li/>').append(divpdf_plus.append($('<div/>').html(obj).hide())))
@@ -59,11 +61,11 @@ function toggle_pdf(){
 function embed_pdf(addr){         // embedded pdf..
 
     var htm = '<br><object width="900" height="500" type="application/pdf"\
-            data="/pdf/Phys/{}?\
+            data="{}?\
             #zoom=85&scrollbar=0&toolbar=0&navpanes=0">  \
             </object> <br><br>'.format(addr)
 
-    return htm
+    return htm // /pdf/Phys/
 }
 
 </script>
