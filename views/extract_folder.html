@@ -17,15 +17,20 @@ $('li').each(function(){
     //alert(txt)
     if (txt.match(reg)){
         var addr = txt.split('!fold')[1].trim()
-        //alert(addr)
+        alert(addr)
+        //var regexp = new RegExp('\\.{2}/\\w+');
+
+
         addr_short = addr.split('/').slice(1).join('/')
-        //alert(addr_short)
+        addr_relat = relative_addr(addr,addr_short)
+        alert(addr_short)
         socket.emit('folder_extract',addr)
         socket.on('folder_extract',function(strap_addr){
             var list_papers = $('<ul/>')
             list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
             list_pdf.forEach(function(elem){
-                make_li_embed(addr_short,elem,list_papers)
+
+                make_li_embed(addr_relat,elem,list_papers)
                 })
            current_li.parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
            toggle_pdf() // when clicking on - or + open or close..
@@ -34,16 +39,39 @@ $('li').each(function(){
 
 })
 
+function relative_addr(addr, addr_short){
+
+      /*
+      Relative address
+      */
+
+      try {
+        var reg = /\.{2}\/\w+.+\//
+        match = addr.match(reg)[0]
+        addr = addr.split(match)[1]
+        alert( "match is " + match )
+        alert( "adrr after split is " + addr )
+        //addr = addr.split(reg)[1]
+        //var after_up = addr.match(regexp)
+        //alert("after split " + addr)
+      }
+      catch{
+        alert('...nothing found...')
+        addr = addr_short
+      }
+      return addr
+}
+
 function make_li_embed(addr,elem,list_papers){
 
-  /*
-  List of pdfs with embedding..
-  */
+      /*
+      List of pdfs with embedding..
+      */
 
-  var obj = embed_pdf(addr + '/' + elem)
-  var divpdf = $('<div/>').text(elem.split('.pdf')[0])
-  var divpdf_plus = divpdf.append($('<span/>').addClass('togpdf').append($('<a/>').text(' [-]')))
-  list_papers.append($('<li/>').append(divpdf_plus.append($('<div/>').html(obj).hide())))
+      var obj = embed_pdf(addr + '/' + elem)
+      var divpdf = $('<div/>').text(elem.split('.pdf')[0])
+      var divpdf_plus = divpdf.append($('<span/>').addClass('togpdf').append($('<a/>').text(' [-]')))
+      list_papers.append($('<li/>').append(divpdf_plus.append($('<div/>').html(obj).hide())))
 
 }
 
