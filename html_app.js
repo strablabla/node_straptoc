@@ -63,22 +63,33 @@ io.sockets.on('connection', function (socket) {
       socket.on('scroll', function(pattern) { patt = pattern })
       socket.on('scroll_html', function(pos) { scroll_html_pos = pos })
 
-       socket.on('folder_extract', function(name_folder) {
+      socket.on('folder_extract', function(name_folder) {
              console.log('Received the address ' + name_folder)
-             var strap_addr = ''
-             fs.readdir(name_folder, (err, files) => {
-                 files.forEach(file => {
-                    console.log(file);
-                    strap_addr += file + '\n'
-               });
-               console.log(strap_addr)
-               socket.emit('folder_extract', strap_addr)
-             });
+             deals_with_folder(socket,name_folder)
 
         })
 
 
 }); // sockets.on connection
+
+function deals_with_folder(socket,name_folder){
+
+      var count_pdf = name_folder.split('§§')[1]
+      var name_folder = name_folder.split('§§')[0]
+
+      var strap_addr = ''
+      fs.readdir(name_folder, (err, files) => {
+          strap_addr +=  count_pdf + '§§'
+          files.forEach(file => {
+             console.log(file);
+             strap_addr += file + '\n'
+        });
+
+        console.log('######### sending ' + strap_addr)
+        socket.emit('folder_extract', strap_addr)
+      });
+
+}
 
 var port = 3001
 var host = '0.0.0.0' // 127.0.0.1

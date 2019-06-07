@@ -9,7 +9,6 @@ String.prototype.format = function () {
   });
 };
 
-
 var count_pdf = 0;
 var count_pdf_insocket = 0;
 var current_li = []
@@ -37,24 +36,30 @@ $('li').each(function(){
         // alert("addr_short " + addr_short)
         // alert("addr_relat " + addr_relat)
         count_pdf += 1;
-        socket.emit('folder_extract',addr)
+        //alert("count_pdf " + count_pdf)
+        var count = count_pdf-1
+        //alert('count ' + count)
+        addr_sent = addr + '§§' + count
+        //alert('emitting ' + addr_sent)
+        socket.emit('folder_extract', addr + '§§' + count)
         socket.on('folder_extract',function(strap_addr){
-              // alert("current count_pdf_insocket before " + count_pdf_insocket)
-              // alert( Number.isInteger((count_pdf_insocket)/2) )
-              if ( Number.isInteger((count_pdf_insocket)/2) ){
-                current_count = parseInt((count_pdf_insocket)/2)
+
+                //current_count = parseInt((count_pdf_insocket)/2)
+                //alert("strap_addr before" + strap_addr)
+                current_count = parseInt(strap_addr.split('§§')[0])
+                strap_addr = strap_addr.split('§§')[1]
                 //alert("current_count after parseInt " + current_count)
                 var list_papers = $('<ul/>')
-                //alert("strap_addr " + strap_addr)
+                // alert("strap_addr " + strap_addr)
+                // alert('addr_relat[current_count] ' +  addr_relat[current_count])
                 list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
                 list_pdf.forEach(function(elem){ make_li_embed(addr_relat[current_count],elem,list_papers) })
                 list_papers.hide()
+                //alert("changed html with pdfs.. ")
                 current_li[current_count].parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
                 if ( current_count == current_li.length-1){
                     toggle_pdf()            // when clicking on - or + open or close..
                 }
-              }
-              count_pdf_insocket += 1;
               //alert("current count_pdf_insocket after " + count_pdf_insocket)
             })
         } // if text.match

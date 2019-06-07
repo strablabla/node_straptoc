@@ -32,11 +32,25 @@ exports.save_current_version = function(data,with_date){
 
       var basename = 'views/saved/main_old'
       txt_date = make_date()
-      if ( with_date ){
+      if ( with_date ){             // case where it is saved with a date..
+          //console.log('txt_date ' + txt_date)
           var namefile = basename + '_' + txt_date + ".html"
           list_saved.push(txt_date)
-          if (list_saved.length > lim_nb_saved){
-              list_saved = list_saved.slice(1,-1)  // removing the oldest element
+          // console.log('list_saved.length ' + list_saved.length)
+          // console.log('lim_nb_saved ' + lim_nb_saved)
+          // console.log(list_saved)
+          while (list_saved.length > lim_nb_saved){
+              //console.log('removing the oldest element ' + list_saved[0] + '!!!')
+              var addr_removed = 'views/saved/main_old_' + list_saved[0] + '.html'
+              fs.unlinkSync(addr_removed)
+              var index = list_saved.indexOf(list_saved[0]);
+              // console.log('index is ' + index)
+              // console.log('list_saved.length ' + list_saved.length)
+              if (index > -1) {
+                list_saved.splice(index, 1);
+                //console.log('list_saved in while ' + list_saved)
+              }
+              //console.log('list_saved  ' + list_saved)
           }
       }
       else{ var namefile = basename + ".html" }
@@ -54,8 +68,8 @@ exports.save_regularly = function(){
       */
 
       list_saved = []     // global
-      lim_nb_saved = 10   // max versions saved
-      var min_interv = 5  // intervall in minute
+      lim_nb_saved = 3   // max versions saved
+      var min_interv = 1  // interval in minute
       setInterval(function() {
               fs.readFile('views/main.html', 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
