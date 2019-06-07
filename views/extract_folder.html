@@ -11,9 +11,10 @@ String.prototype.format = function () {
 
 var count_pdf = 0;
 var count_pdf_insocket = 0;
-var current_li = []
+var current_li = {}
 var addr_relat = []
 //var addr_short = []
+toggle_pdf_ok = false
 
 $('li').each(function(){
 
@@ -40,11 +41,10 @@ $('li').each(function(){
         var count = count_pdf-1
         //alert('count ' + count)
         addr_sent = addr + '§§' + count
-        //alert('emitting ' + addr_sent)
+        //alert('emitting from extract folder  ' + addr_sent)
         socket.emit('folder_extract', addr + '§§' + count)
         socket.on('folder_extract',function(strap_addr){
 
-                //current_count = parseInt((count_pdf_insocket)/2)
                 //alert("strap_addr before" + strap_addr)
                 current_count = parseInt(strap_addr.split('§§')[0])
                 strap_addr = strap_addr.split('§§')[1]
@@ -57,12 +57,14 @@ $('li').each(function(){
                 list_papers.hide()
                 //alert("changed html with pdfs.. ")
                 current_li[current_count].parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
-                if ( current_count == current_li.length-1){
+                if ( current_count == Object.keys(current_li).length-1 & !toggle_pdf_ok){
+                    //alert('toggle activated !!! ')
                     toggle_pdf()            // when clicking on - or + open or close..
+                    toggle_pdf_ok = true
                 }
-              //alert("current count_pdf_insocket after " + count_pdf_insocket)
             })
         } // if text.match
+        //var size = Object.keys(myObj).length;
 
   })
 

@@ -69,7 +69,6 @@ io.sockets.on('connection', function (socket) {
 
         })
 
-
 }); // sockets.on connection
 
 function deals_with_folder(socket,name_folder){
