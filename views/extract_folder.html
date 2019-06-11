@@ -1,6 +1,8 @@
 <!-- <script src="/socket.io/socket.io.js"></script> -->
-
 <script>
+
+
+socket.on('make_pdfs', function(){
 
 String.prototype.format = function () {
   var i = 0, args = arguments;
@@ -29,9 +31,19 @@ $('li').each(function(){
     //alert(txt)
     if (txt.match(reg)){
 
+        //alert('I am here !! ')
+        //var reg = /\!fold/
+        $('ul').each(function(){
+          var txt = $(this).html()
+          if (txt.match(reg)){
+              //alert(txt)
+              }
+        })
+
         current_li[count_pdf] = $(this)
         var addr = txt.split('!fold')[1].trim()
-        //alert("addr " + addr)
+        // alert("addr " + addr)
+        //alert($(this).html())
         addr_short = addr.split('/').slice(1).join('/')
         addr_relat[count_pdf] = relative_addr(addr,addr_short)
         // alert("addr_short " + addr_short)
@@ -75,7 +87,7 @@ function relative_addr(addr, addr_short){
       */
 
       try {
-        var reg = /\.{2}\/\w+.+\//
+        var reg = /\.{2}\/\w+.+\//     // pattern ../aaa
         root = addr.match(reg)[0]      // root
         addr = addr.split(root)[1]     // remove the root
       }
@@ -118,6 +130,10 @@ function toggle_pdf(){
 
 function embed_pdf(addr){         // embedded pdf..
 
+    /*
+    addr : folder + pdf name..
+    */
+
     var htm = '<br><object width="900" height="500" type="application/pdf"\
             data="{}?\
             #zoom=85&scrollbar=0&toolbar=0&navpanes=0">  \
@@ -125,5 +141,7 @@ function embed_pdf(addr){         // embedded pdf..
 
     return htm // /pdf/Phys/
 }
+
+}) //
 
 </script>

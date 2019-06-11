@@ -42,7 +42,13 @@ exports.save_current_version = function(data,with_date){
           while (list_saved.length > lim_nb_saved){
               //console.log('removing the oldest element ' + list_saved[0] + '!!!')
               var addr_removed = 'views/saved/main_old_' + list_saved[0] + '.html'
-              fs.unlinkSync(addr_removed)
+              try{
+                  fs.unlinkSync(addr_removed)
+                  console.log('addr_removed is ' + addr_removed)
+              }
+              catch{
+                  console.log('cannot erase ' + addr_removed)
+              }
               var index = list_saved.indexOf(list_saved[0]);
               // console.log('index is ' + index)
               // console.log('list_saved.length ' + list_saved.length)
@@ -50,7 +56,7 @@ exports.save_current_version = function(data,with_date){
                 list_saved.splice(index, 1);
                 //console.log('list_saved in while ' + list_saved)
               }
-              //console.log('list_saved  ' + list_saved)
+              console.log('list_saved  ' + list_saved)
           }
       }
       else{ var namefile = basename + ".html" }

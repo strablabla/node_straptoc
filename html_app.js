@@ -24,6 +24,7 @@ app.get('/', function(req, res){ res.render('strap_small.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
 
 //--------------  static addresses
+app.use(express.static('../../Téléchargements/test_with_pr_la_sc0'));
 app.use(express.static('../../Téléchargements'));
 app.use(express.static('public'));
 app.use(express.static('scripts'));
@@ -66,8 +67,16 @@ io.sockets.on('connection', function (socket) {
       socket.on('folder_extract', function(name_folder) {
              console.log('Received the address ' + name_folder)
              deals_with_folder(socket,name_folder)
-
         })
+
+      socket.on('list_folders', function(name_folder) {
+             console.log('################ addr list_folders.. ' + name_folder)
+             deals_with_list_folders(socket,name_folder)
+        })
+
+      socket.on('make_pdfs', function(){
+        socket.emit('make_pdfs','')
+      })
 
 }); // sockets.on connection
 
@@ -89,6 +98,27 @@ function deals_with_folder(socket,name_folder){
       });
 
 }
+
+function deals_with_list_folders(socket,name_folder){
+
+      var count_pdf = name_folder.split('§§')[1]
+      var name_folder = name_folder.split('§§')[0]
+      console.log('######################################')
+      var strap_addr = ''
+      fs.readdir(name_folder, (err, files) => {
+          strap_addr +=  count_pdf + '§§'
+          files.forEach(file => {
+             console.log(file);
+             strap_addr += file + '\n'
+        });
+
+        console.log('######### before sending for list ' + strap_addr)
+        socket.emit('list_folders', strap_addr)
+      });
+
+}
+
+
 
 var port = 3001
 var host = '0.0.0.0' // 127.0.0.1
