@@ -25,6 +25,7 @@ app.get('/text', function(req, res){ res.render('text.html'); });
 
 //--------------  static addresses
 app.use(express.static('../../Téléchargements/test_with_pr_la_sc0'));
+app.use(express.static('../../Téléchargements/test_with_pr_la_sc1'));
 app.use(express.static('../../Téléchargements'));
 app.use(express.static('public'));
 app.use(express.static('scripts'));
