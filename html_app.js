@@ -24,12 +24,22 @@ app.get('/', function(req, res){ res.render('strap_small.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
 
 //--------------  static addresses
-app.use(express.static('../../Téléchargements/test_with_pr_la_sc0'));
-app.use(express.static('../../Téléchargements/test_with_pr_la_sc1'));
-app.use(express.static('../../Téléchargements'));
-app.use(express.static('public'));
-app.use(express.static('scripts'));
-app.use(express.static('lib'));
+
+fs.readFile('static/addr.json', 'utf8', function (err,text) {
+        if (err) { return console.log(err); }
+         let dic_addr = JSON.parse(text);
+         for (i in dic_addr){
+             console.log(dic_addr[i])
+             app.use(express.static(dic_addr[i]));
+         }
+    }); // end fs.readFile
+
+// app.use(express.static('../../Téléchargements/test_with_pr_la_sc0'));
+// app.use(express.static('../../Téléchargements/test_with_pr_la_sc1'));
+// app.use(express.static('../../Téléchargements'));
+// app.use(express.static('public'));
+// app.use(express.static('scripts'));
+// app.use(express.static('lib'));
 
 //--------------  websocket
 
