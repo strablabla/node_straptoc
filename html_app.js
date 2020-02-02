@@ -51,6 +51,8 @@ var patt = '' // pattern for scroll position
 var scroll_html_pos = 0 //
 var comment = false;
 
+//----------- format strings..
+
 String.prototype.format = function () {
   var i = 0, args = arguments;
   return this.replace(/{}/g, function () {
@@ -65,7 +67,7 @@ io.sockets.on('connection', function (socket) {
               if (err) { return console.log(err); }
               re.emit_from_read(socket, count, patt, text, scroll_html_pos)
           }); // end fs.readFile
-      util.save_regularly() // save the regularly the text..
+      util.save_regularly()                                           // save the regularly the text..
       socket.on('join', function(data) { socket.emit('scroll', patt) }); // end socket.on join
 
       //-------------------------------- From textarea to html
@@ -77,6 +79,8 @@ io.sockets.on('connection', function (socket) {
       socket.on('scroll', function(pattern) { patt = pattern })
       socket.on('scroll_html', function(pos) { scroll_html_pos = pos })
 
+      //-------------------------------- Folders
+
       socket.on('folder_extract', function(name_folder) {
              console.log('Received the address ' + name_folder)
              folders.deals_with_folder(socket,name_folder)
@@ -87,13 +91,13 @@ io.sockets.on('connection', function (socket) {
              folders.deals_with_list_folders(socket,name_folder)
         })
 
+      //-------------------------------- pdf
+
       socket.on('make_pdfs', function(){
         socket.emit('make_pdfs','')
       })
 
 }); // sockets.on connection
-
-
 
 var port = 3001
 var host = '0.0.0.0' // 127.0.0.1
