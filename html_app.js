@@ -1,3 +1,5 @@
+const https = require('https')
+const http = require('http')
 var express = require('express')
 var path = require("path");
 var open = require('open');
@@ -7,11 +9,18 @@ var count = require('./static/js/count_lines');
 var util = require('./static/js/util');
 var re = require('./static/js/read_emit');
 var modify = require('./static/js/modify_html');
+var folders = require('./static/js/folders');
 
 //--------------  Server
 
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('server.crt')
+};
+
 var app = express()
-var server = require('http').createServer(app);
+//var server =  https.createServer(options, app)
+var server = http.createServer(app);
 
 nunjucks.configure('views', {
     autoescape: true,
@@ -33,13 +42,6 @@ fs.readFile('static/addr.json', 'utf8', function (err,text) {
              app.use(express.static(dic_addr[i]));
          }
     }); // end fs.readFile
-
-// app.use(express.static('../../Téléchargements/test_with_pr_la_sc0'));
-// app.use(express.static('../../Téléchargements/test_with_pr_la_sc1'));
-// app.use(express.static('../../Téléchargements'));
-// app.use(express.static('public'));
-// app.use(express.static('scripts'));
-// app.use(express.static('lib'));
 
 //--------------  websocket
 
@@ -77,12 +79,12 @@ io.sockets.on('connection', function (socket) {
 
       socket.on('folder_extract', function(name_folder) {
              console.log('Received the address ' + name_folder)
-             deals_with_folder(socket,name_folder)
+             folders.deals_with_folder(socket,name_folder)
         })
 
       socket.on('list_folders', function(name_folder) {
              console.log('################ addr list_folders.. ' + name_folder)
-             deals_with_list_folders(socket,name_folder)
+             folders.deals_with_list_folders(socket,name_folder)
         })
 
       socket.on('make_pdfs', function(){
@@ -90,44 +92,6 @@ io.sockets.on('connection', function (socket) {
       })
 
 }); // sockets.on connection
-
-function deals_with_folder(socket,name_folder){
-
-      var count_pdf = name_folder.split('§§')[1]
-      var name_folder = name_folder.split('§§')[0]
-
-      var strap_addr = ''
-      fs.readdir(name_folder, (err, files) => {
-          strap_addr +=  count_pdf + '§§'
-          files.forEach(file => {
-             console.log(file);
-             strap_addr += file + '\n'
-        });
-
-        console.log('######### sending ' + strap_addr)
-        socket.emit('folder_extract', strap_addr)
-      });
-
-}
-
-function deals_with_list_folders(socket,name_folder){
-
-      var count_pdf = name_folder.split('§§')[1]
-      var name_folder = name_folder.split('§§')[0]
-      console.log('######################################')
-      var strap_addr = ''
-      fs.readdir(name_folder, (err, files) => {
-          strap_addr +=  count_pdf + '§§'
-          files.forEach(file => {
-             console.log(file);
-             strap_addr += file + '\n'
-        });
-
-        console.log('######### before sending for list ' + strap_addr)
-        socket.emit('list_folders', strap_addr)
-      });
-
-}
 
 
 

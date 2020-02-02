@@ -24,6 +24,22 @@ function make_date(){
 
 }
 
+function date_day(){
+
+      /*
+      Build the text date
+      */
+
+      var date = new Date()
+      var day = date.getDate();
+      var month = date.getMonth();
+      var year = date.getFullYear();
+      var txt_date = [year, month, day].join('_')
+
+      return txt_date
+
+}
+
 exports.save_current_version = function(data,with_date){
 
       /*
