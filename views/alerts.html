@@ -68,7 +68,7 @@ postop = 70
 $('li').each(function(){
      txt = $(this).text()
      if (txt.match(reg)){
-            var date = txt.split(" ").slice(-1)[0]
+            var date = txt.trim().split(" ").slice(-1)[0]
             var currdate = date_day()
             var newtxt = txt.split(" ").slice(1,-1).join(" ")
             if (date == currdate){                                       // check date
