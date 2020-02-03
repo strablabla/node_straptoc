@@ -1,6 +1,5 @@
 <script src="smtp.js"></script>
 
-
 <script>
 
 function date_day(){
@@ -60,20 +59,21 @@ function alert_in_strap(elem, postop){
             //'font-size': '85%',
             'z-index': '3'
             })
+
     elem.draggable()
 }
 
 var reg = '!alert'
 postop = 70
 $('li').each(function(){
-     txt = $(this).text()
+     txt = $(this).text().trim()
      if (txt.match(reg)){
-            var date = txt.trim().split(" ").slice(-1)[0]
+            var date = txt.split(" ").slice(-1)[0]
             var currdate = date_day()
             var newtxt = txt.split(" ").slice(1,-1).join(" ")
             if (date == currdate){                                       // check date
                 $(this).text(newtxt)
-                send_mail('alert nodestrap', newtxt)
+                //send_mail('alert nodestrap', newtxt)
                 alert_in_strap($(this), postop)
                 postop += 30
             }
