@@ -62,7 +62,7 @@ exports.save_current_version = function(data,with_date){
                   fs.unlinkSync(addr_removed)
                   console.log('addr_removed is ' + addr_removed)
               }
-              catch{
+              catch(err){
                   console.log('cannot erase ' + addr_removed)
               }
               var index = list_saved.indexOf(list_saved[0]);
