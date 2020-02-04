@@ -57,10 +57,11 @@ function alert_in_strap(elem, postop){
             'max-width': '200px',
             'max-height': '300px',
             //'font-size': '85%',
-            'z-index': '3'
+            'z-index': '3',
+            'color': 'black'
             })
-
-    elem.draggable()
+      elem.parents().show()
+      elem.draggable()
 }
 
 var reg = '!alert'
@@ -74,7 +75,7 @@ $('li').each(function(){
             if (date == currdate){                                       // check date
                 $(this).text(newtxt)
                 //send_mail('alert nodestrap', newtxt)
-                alert_in_strap($(this), postop)
+                alert_in_strap($(this), postop) // $(this)
                 postop += 30
             }
      }
