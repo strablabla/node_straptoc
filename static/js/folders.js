@@ -7,7 +7,7 @@ Handle folders.
 
 var fs = require('fs');
 
-exports.deals_with_folder = function(socket,name_folder){
+function deals_with_folder(socket,name_folder){
 
       var count_pdf = name_folder.split('§§')[1]
       var name_folder = name_folder.split('§§')[0]
@@ -26,7 +26,7 @@ exports.deals_with_folder = function(socket,name_folder){
 
 }
 
-exports.deals_with_list_folders = function(socket,name_folder){
+function deals_with_list_folders(socket,name_folder){
 
       var count_pdf = name_folder.split('§§')[1]
       var name_folder = name_folder.split('§§')[0]
@@ -42,5 +42,24 @@ exports.deals_with_list_folders = function(socket,name_folder){
         console.log('######### before sending for list ' + strap_addr)
         socket.emit('list_folders', strap_addr)
       });
+
+}
+
+exports.deals_with_pdfs = function(socket){
+      /*
+
+
+      */
+
+      socket.on('folder_extract', function(name_folder) {
+             console.log('Received the address ' + name_folder)
+             deals_with_folder(socket,name_folder)
+        })
+
+      socket.on('list_folders', function(name_folder) {
+             console.log('################ addr list_folders.. ' + name_folder)
+             deals_with_list_folders(socket,name_folder)
+        })
+
 
 }
