@@ -10,6 +10,7 @@ var util = require('./static/js/util');
 var re = require('./static/js/read_emit');
 var modify = require('./static/js/modify_html');
 var folders = require('./static/js/folders');
+var init = require('./static/js/init');
 
 //--------------  Server
 
@@ -32,16 +33,7 @@ nunjucks.configure('views', {
 app.get('/', function(req, res){ res.render('strap_small.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
 
-//--------------  static addresses
-
-fs.readFile('static/addr.json', 'utf8', function (err,text) {
-        if (err) { return console.log(err); }
-         let dic_addr = JSON.parse(text);
-         for (i in dic_addr){
-             console.log(dic_addr[i])
-             app.use(express.static(dic_addr[i]));
-         }
-    }); // end fs.readFile
+init.static_addr(app,express)
 
 //--------------  websocket
 
@@ -70,13 +62,9 @@ io.sockets.on('connection', function (socket) {
       util.save_regularly()                                           // save the regularly the text..
       socket.on('join', function(data) { socket.emit('scroll', patt) }); // end socket.on join
 
-      //-------------------------------- From textarea to html
-
-      modify.textarea_html(socket, io, fs, util)
-
-      //-------------------------------- Folders
-
-      folders.deals_with_pdfs(socket)
+      init.comm_voc(io)  //----- comm voc
+      modify.textarea_html(socket, io, fs, util)  //----  textarea to html and viceversa
+      folders.deals_with_pdfs(socket)  //------  pdfs in folders
 
       //-------------------------------- pdf
 

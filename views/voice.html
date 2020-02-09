@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<html>
+
+<meta charset="UTF-8">
+
+<script src="artyom.window.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+const artyom = new Artyom();
+var socket = io.connect();
+
+artyom.initialize({
+  lang:'fr-FR',
+  continuous:true,
+  debug:false,
+  listen:true
+})
+
+function goto(root, name){
+
+      var dic_name =  {
+          indexes: [name],
+          action: function() {
+              location.href = root + name
+              }
+      }
+      return dic_name
+
+}
+
+// -------------------------------- Toggle TOC
+
+var dic_simple =  {
+        indexes: ['table des matières'],
+        action: function() {
+            //artyom.say("change le toc");
+            $('#toc').toggle()
+            }
+    }
+
+//----------- Dic voc for goto
+
+socket.on('dic_voc', function(dic) {
+
+      var dic_voc = JSON.parse(dic)
+      for (k in dic_voc){                 // keys
+          curr_list = dic_voc[k]         // current list
+          for (i in curr_list){
+              artyom.addCommands(goto(k, curr_list[i])); //
+          }
+      }
+
+ });
+
+
+
+</script>
+
+</html>
