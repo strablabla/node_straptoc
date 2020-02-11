@@ -11,6 +11,7 @@ var re = require('./static/js/read_emit');
 var modify = require('./static/js/modify_html');
 var folders = require('./static/js/folders');
 var init = require('./static/js/init');
+var notes = require('./static/js/notes');
 
 //--------------  Server
 
@@ -70,16 +71,10 @@ io.sockets.on('connection', function (socket) {
       socket.on('make_elems', function(){             //----- pdf
           socket.emit('make_elems','')
       })
-      socket.on('new_note', function(){               //----- note
-          console.log('creating a new note from voice command.. ')
-          socket.emit('create_new_note','')
-      })
-      socket.on('save_note', function(text){               //----- note
-          console.log(text)
-      })
+      notes.handle(socket)
 
 
-}); // sockets.on connection
+}); // io.sockets.on connection
 
 var port = 3001
 var host = '0.0.0.0' // 127.0.0.1

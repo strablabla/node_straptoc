@@ -8,12 +8,13 @@ function date_full(){
       */
 
       var date = new Date()
+      var sec = date.getSeconds();
       var minute = date.getMinutes();
       var hour = date.getHours();
       var day = date.getDate();
       var month = date.getMonth()+1;
       var year = date.getFullYear();
-      var txt_date = [year, month, day, hour, minute].join('_').slice(2)
+      var txt_date = [year, month, day, hour, minute, sec].join('_').slice(2)
 
       return ' ' + txt_date
 
@@ -35,7 +36,8 @@ function fill_note(elem){
       elem.append(butt_save)
 
       butt_save.click(function(){            // send inos note to server..
-          var txt = $('#text_note').val() + ' !pos ' + Math.round($('#note').scrollTop(),1) + date_full()
+          var posdate = ' !pos ' + Math.round($(document).scrollTop(),1) + date_full() // Math.round(,1)
+          var txt = $('#text_note').val() + posdate
           alert(txt)
           socket.emit('save_note', txt)
           $('#note').hide()
@@ -70,8 +72,7 @@ function note_in_strap(elem, pos){
       elem.draggable()
       elem.empty()
       fill_note(elem)
-
-
+      
 }
 
 var reg = '!note'
