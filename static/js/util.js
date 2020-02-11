@@ -79,9 +79,8 @@ exports.save_current_version = function(data,with_date){
       fs.writeFile( namefile, data, function(err) {
             if(err) { return console.log(err); }
             console.log("The file was saved as {} !".format(namefile));
-            //console.log('list_saved.slice(-1)[0] is {} '.format(list_saved.slice(-1)[0]))
       });    // end writeFile
-}         // end save_current_version
+}           // end save_current_version
 
 exports.save_regularly = function(){
 
@@ -89,9 +88,9 @@ exports.save_regularly = function(){
       Saving regularly views/main.html
       */
 
-      list_saved = []     // global
-      lim_nb_saved = 3   // max versions saved
-      var min_interv = 1  // interval in minute
+      list_saved = []             // global
+      lim_nb_saved = 3            // max versions saved
+      var min_interv = 3          // interval in minute
       setInterval(function() {
               fs.readFile('views/main.html', 'utf8', function (err,data) {
                       if (err) { return console.log(err); }

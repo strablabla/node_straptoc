@@ -33,13 +33,26 @@ function goto(root, name){
 
 // -------------------------------- Toggle TOC
 
-var dic_simple =  {
-        indexes: ['table des matières'],
+var dic_toc =  {
+        indexes: ['table des matières', 'matières'],
         action: function() {
             //artyom.say("change le toc");
             $('#toc').toggle()
             }
     }
+artyom.addCommands(dic_toc); //
+
+// -------------------------------- Notes
+
+var dic_note =  {
+        indexes: ['nouvelle note', 'parapluie'],
+        action: function() {
+            //alert('new note')
+            socket.emit('new_note', '')
+            }
+    }
+
+artyom.addCommands(dic_note); //
 
 //----------- Dic voc for goto
 

@@ -33,6 +33,8 @@ nunjucks.configure('views', {
 app.get('/', function(req, res){ res.render('strap_small.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
 
+//--------------  static addresses
+
 init.static_addr(app,express)
 
 //--------------  websocket
@@ -65,12 +67,17 @@ io.sockets.on('connection', function (socket) {
       init.comm_voc(io)  //----- comm voc
       modify.textarea_html(socket, io, fs, util)  //----  textarea to html and viceversa
       folders.deals_with_pdfs(socket)  //------  pdfs in folders
-
-      //-------------------------------- pdf
-
-      socket.on('make_pdfs', function(){
-          socket.emit('make_pdfs','')
+      socket.on('make_elems', function(){             //----- pdf
+          socket.emit('make_elems','')
       })
+      socket.on('new_note', function(){               //----- note
+          console.log('creating a new note from voice command.. ')
+          socket.emit('create_new_note','')
+      })
+      socket.on('save_note', function(text){               //----- note
+          console.log(text)
+      })
+
 
 }); // sockets.on connection
 

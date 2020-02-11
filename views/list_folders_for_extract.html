@@ -49,12 +49,10 @@ $('li').each(function(){
                     $('.funf').click(function(){
                         $(this).parent().next().toggle()
                     })
-                    socket.emit('make_pdfs', '')
+                    socket.emit('make_elems', '')
                 }
             })
-
         } // if text.match
-
   })
 
 function make_code_folder(strap_addr,addr_relat,list_folders,current_count,ul_folders){
@@ -78,7 +76,6 @@ function toggle_pdf(){
     Code for closing, opening the pdfs..
     */
 
-    //alert('toggle !!!')
     $('.togpdf').click(function(){
             var taga = $(this).find('a')
             if (taga.text() == ' [-]'){

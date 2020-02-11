@@ -7,7 +7,7 @@ Handle folders.
 
 var fs = require('fs');
 
-function deals_with_folder(socket,name_folder){
+function deals_with_folder(socket, name_folder){
 
       var count_pdf = name_folder.split('§§')[1]
       var name_folder = name_folder.split('§§')[0]
@@ -26,7 +26,7 @@ function deals_with_folder(socket,name_folder){
 
 }
 
-function deals_with_list_folders(socket,name_folder){
+function deals_with_list_folders(socket, name_folder){
 
       var count_pdf = name_folder.split('§§')[1]
       var name_folder = name_folder.split('§§')[0]
@@ -46,6 +46,7 @@ function deals_with_list_folders(socket,name_folder){
 }
 
 exports.deals_with_pdfs = function(socket){
+
       /*
 
 

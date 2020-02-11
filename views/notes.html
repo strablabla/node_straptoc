@@ -1,0 +1,100 @@
+
+<script>
+
+function date_full(){
+
+      /*
+      Build the text full date
+      */
+
+      var date = new Date()
+      var minute = date.getMinutes();
+      var hour = date.getHours();
+      var day = date.getDate();
+      var month = date.getMonth()+1;
+      var year = date.getFullYear();
+      var txt_date = [year, month, day, hour, minute].join('_').slice(2)
+
+      return ' ' + txt_date
+
+}
+
+function fill_note(elem){
+
+      /*
+      Dynamcally build textarea and button..
+      */
+
+      var butt_save = $('<input/>').attr({
+               type: "button",
+               id: "save_note",
+               value: 'save'
+           });
+      var textarea = $('<textarea id="text_note" rows="5" cols="33" />')
+      elem.append(textarea)
+      elem.append(butt_save)
+
+      butt_save.click(function(){            // send inos note to server..
+          var txt = $('#text_note').val() + ' !pos ' + Math.round($('#note').scrollTop(),1) + date_full()
+          alert(txt)
+          socket.emit('save_note', txt)
+          $('#note').hide()
+      })
+}
+
+function note_in_strap(elem, pos){
+
+      /*
+      Note template
+      */
+
+      elem.css({'background-color':'rgb(255,224,102)',
+                'padding-left': '20px',
+                'padding-right': '20px',
+                'padding-bottom': '20px',
+                'padding-top': '20px',
+                'margin-right': '20px',
+                'margin-left': '20px',
+                'box-shadow': '0.5em 0.5em 0.7em',
+                'position': 'absolute',
+                'left': '50px',
+                'top': pos.toString() + 'px',
+                'width': '330px',
+                'height': '180px',
+                'max-height': '300px',
+                //'font-size': '85%',
+                'z-index': '3',
+                'color': 'black'
+                })
+      //elem.parents().show()
+      elem.draggable()
+      elem.empty()
+      fill_note(elem)
+
+
+}
+
+var reg = '!note'
+
+$('li').each(function(){
+     txt = $(this).text().trim()
+     if (txt.match(reg)){
+            var pos = txt.split(" ").slice(-1)[0]
+            var newtxt = txt.split(" ").slice(1,-1).join(" ")
+                $(this).text(newtxt)
+                note_in_strap($(this), pos) // $(this)
+
+     }
+})
+
+
+socket.on('create_new_note', function(){
+       //alert('hereeeeeee')
+       var pos = $(document).scrollTop()+50
+       //alert(pos)
+       $('#note').show()
+       note_in_strap($('#note'), pos)
+})
+
+
+</script>

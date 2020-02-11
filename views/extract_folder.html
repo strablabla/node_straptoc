@@ -1,146 +1,146 @@
-<!-- <script src="/socket.io/socket.io.js"></script> -->
+
 <script>
 
-socket.on('make_pdfs', function(){
+socket.on('make_elems', function(){
 
-String.prototype.format = function () {
-  var i = 0, args = arguments;
-  return this.replace(/{}/g, function () {
-    return typeof args[i] != 'undefined' ? args[i++] : '';
-  });
-};
+    String.prototype.format = function () {
+          var i = 0, args = arguments;
+          return this.replace(/{}/g, function () {
+            return typeof args[i] != 'undefined' ? args[i++] : '';
+          });
+        };
 
-var count_pdf = 0;
-var count_pdf_insocket = 0;
-var current_li = {}
-var addr_relat = []
-//var addr_short = []
-toggle_pdf_ok = false
+    var count_pdf = 0;
+    var count_pdf_insocket = 0;
+    var current_li = {}
+    var addr_relat = []
+    //var addr_short = []
+    toggle_elem_ok = false
 
-$('li').each(function(){
+    $('li').each(function(){
 
-    /*
-    Make the list of pdfs..
-    Replace !fold by the list in question..
-    */
+        /*
+        Make the list of pdfs..
+        Replace !fold by the list in question..
+        */
 
-    var reg = /\!fold/
-    var txt = $(this).html().split('\n')[0]
-    //var current_li = $(this)
-    //alert(txt)
-    if (txt.match(reg)){
+        var reg = /\!fold/
+        var txt = $(this).html().split('\n')[0]
+        //var current_li = $(this)
+        //alert(txt)
+        if (txt.match(reg)){
 
-        //alert('I am here !! ')
-        //var reg = /\!fold/
-        $('ul').each(function(){
-          var txt = $(this).html()
-          if (txt.match(reg)){
-              //alert(txt)
-              }
-        })
-
-        current_li[count_pdf] = $(this)
-        var addr = txt.split('!fold')[1].trim()
-        // alert("addr " + addr)
-        //alert($(this).html())
-        addr_short = addr.split('/').slice(1).join('/')
-        addr_relat[count_pdf] = relative_addr(addr,addr_short)
-        // alert("addr_short " + addr_short)
-        // alert("addr_relat " + addr_relat)
-        count_pdf += 1;
-        //alert("count_pdf " + count_pdf)
-        var count = count_pdf-1
-        //alert('count ' + count)
-        addr_sent = addr + '§§' + count
-        //alert('emitting from extract folder  ' + addr_sent)
-        socket.emit('folder_extract', addr + '§§' + count)
-        socket.on('folder_extract',function(strap_addr){
-
-                //alert("strap_addr before" + strap_addr)
-                current_count = parseInt(strap_addr.split('§§')[0])
-                strap_addr = strap_addr.split('§§')[1]
-                //alert("current_count after parseInt " + current_count)
-                var list_papers = $('<ul/>')
-                // alert("strap_addr " + strap_addr)
-                // alert('addr_relat[current_count] ' +  addr_relat[current_count])
-                list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
-                list_pdf.forEach(function(elem){ make_li_embed(addr_relat[current_count],elem,list_papers) })
-                list_papers.hide()
-                //alert("changed html with pdfs.. ")
-                current_li[current_count].parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
-                if ( current_count == Object.keys(current_li).length-1 & !toggle_pdf_ok){
-                    //alert('toggle activated !!! ')
-                    toggle_pdf()            // when clicking on - or + open or close..
-                    toggle_pdf_ok = true
-                }
+            //alert('I am here !! ')
+            //var reg = /\!fold/
+            $('ul').each(function(){
+              var txt = $(this).html()
+              if (txt.match(reg)){
+                  //alert(txt)
+                  }
             })
-        } // if text.match
-        //var size = Object.keys(myObj).length;
 
-  })
+            current_li[count_pdf] = $(this)
+            var addr = txt.split('!fold')[1].trim()
+            // alert("addr " + addr)
+            //alert($(this).html())
+            addr_short = addr.split('/').slice(1).join('/')
+            addr_relat[count_pdf] = relative_addr(addr,addr_short)
+            // alert("addr_short " + addr_short)
+            // alert("addr_relat " + addr_relat)
+            count_pdf += 1;
+            //alert("count_pdf " + count_pdf)
+            var count = count_pdf-1
+            //alert('count ' + count)
+            addr_sent = addr + '§§' + count
+            //alert('emitting from extract folder  ' + addr_sent)
+            socket.emit('folder_extract', addr + '§§' + count)
+            socket.on('folder_extract',function(strap_addr){
 
-function relative_addr(addr, addr_short){
+                    //alert("strap_addr before" + strap_addr)
+                    current_count = parseInt(strap_addr.split('§§')[0])
+                    strap_addr = strap_addr.split('§§')[1]
+                    //alert("current_count after parseInt " + current_count)
+                    var list_papers = $('<ul/>')
+                    // alert("strap_addr " + strap_addr)
+                    // alert('addr_relat[current_count] ' +  addr_relat[current_count])
+                    list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
+                    list_pdf.forEach(function(elem){ make_li_embed(addr_relat[current_count],elem,list_papers) })
+                    list_papers.hide()
+                    //alert("changed html with pdfs.. ")
+                    current_li[current_count].parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
+                    if ( current_count == Object.keys(current_li).length-1 & !toggle_elem_ok){
+                        //alert('toggle activated !!! ')
+                        toggle_elem()            // when clicking on - or + open or close..
+                        toggle_elem_ok = true
+                    }
+                })
+            } // if text.match
+            //var size = Object.keys(myObj).length;
 
-      /*
-      Relative address, address used in the html code
-      */
+      })
 
-      try {
-        var reg = /\.{2}\/\w+.+\//     // pattern ../aaa
-        root = addr.match(reg)[0]      // root
-        addr = addr.split(root)[1]     // remove the root
-      }
-      catch{
-        //alert('...nothing found...')
-        addr = addr_short
-      }
-      return addr
-}
+    function relative_addr(addr, addr_short){
 
-function make_li_embed(addr,elem,list_papers){
+          /*
+          Relative address, address used in the html code
+          */
 
-      /*
-      List of pdfs with embedding..
-      */
+          try {
+            var reg = /\.{2}\/\w+.+\//     // pattern ../aaa
+            root = addr.match(reg)[0]      // root
+            addr = addr.split(root)[1]     // remove the root
+          }
+          catch{
+            //alert('...nothing found...')
+            addr = addr_short
+          }
+          return addr
+    }
 
-      var obj = embed_pdf(addr + '/' + elem)
-      var divpdf = $('<div/>').text(elem.split('.pdf')[0])
-      var divpdf_plus = divpdf.append($('<span/>').addClass('togpdf').append($('<a/>').text(' [-]')))
-      list_papers.append($('<li/>').append(divpdf_plus.append($('<div/>').html(obj).hide())))
+    function make_li_embed(addr,elem,list_papers){
 
-}
+          /*
+          List of pdfs with embedding..
+          */
 
-function toggle_pdf(){
+          var obj = embed_elem(addr + '/' + elem)
+          var divpdf = $('<div/>').text(elem.split('.pdf')[0])
+          var divpdf_plus = divpdf.append($('<span/>').addClass('tog_elem').append($('<a/>').text(' [-]')))
+          list_papers.append($('<li/>').append(divpdf_plus.append($('<div/>').html(obj).hide())))
 
-    /*
-    Code for closing, opening the pdfs..
-    */
+    }
 
-    //alert('toggle !!!')
-    $('.togpdf').click(function(){
-            var taga = $(this).find('a')
-            if (taga.text() == ' [-]'){
-                taga.text(' [+]')
-            }
-            else{ taga.text(' [-]') }
-            $(this).next().toggle()
-        })
-}
+    function toggle_elem(){
 
-function embed_pdf(addr){         // embedded pdf..
+        /*
+        Code for closing, opening the pdfs..
+        */
 
-    /*
-    addr : folder + pdf name..
-    */
+        //alert('toggle !!!')
+        $('.tog_elem').click(function(){
+                var taga = $(this).find('a')
+                if (taga.text() == ' [-]'){
+                    taga.text(' [+]')
+                }
+                else{ taga.text(' [-]') }
+                $(this).next().toggle()
+            })
+    }
 
-    var htm = '<br><object width="900" height="500" type="application/pdf"\
-            data="{}?\
-            #zoom=85&scrollbar=0&toolbar=0&navpanes=0">  \
-            </object> <br><br>'.format(addr)
+    function embed_elem(addr){         // embedded pdf..
 
-    return htm // /pdf/Phys/
-}
+        /*
+        addr : folder + pdf name..
+        */
 
-}) // socket.on('make_pdfs')
+        var htm = '<br><object width="900" height="500" type="application/pdf"\
+                data="{}?\
+                #zoom=85&scrollbar=0&toolbar=0&navpanes=0">  \
+                </object> <br><br>'.format(addr)
+
+        return htm // /pdf/Phys/
+    }
+
+}) // socket.on('make_elems')
 
 </script>
