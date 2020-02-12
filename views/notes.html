@@ -36,18 +36,18 @@ function fill_note(elem, id, postop){
       var textarea = $('<textarea id="text_note" rows="5" cols="33" />')
       elem.append(textarea)
       elem.append(butt_save)
-      //elem.id = id
-      // if (new_note){
+
+
             butt_save.click(function(){            // send inos note to server..
                 // Math.round($(document).scrollTop(),1)
-                var posdate = ' !id ' + $('#note').attr('id') +  $('#note').attr('date')  // Math.round(,1)
+                var posdate = ' !id ' + id +  date_full()  // Math.round(,1)
                 var txt = $('#text_note').val() + posdate
                 //alert(txt)
                 socket.emit('save_note', txt)
                 $('#note').hide()
             })
-      //       new_note = false;
-      // } // end if new_note
+
+
 }
 
 function note_in_strap(elem, id, postop){
@@ -140,22 +140,22 @@ function detect_note(key, value){
               var pos = $(this).offset().top
               $('#note').show()
               //$('#note').attr('top',pos)
-              $('#note').attr('id',key)
-              $('#note').attr('date',date_full())
+              // $('#note').attr('id',key)
+              // $('#note').attr('date',date_full())
               $('#note').offset({'top' : pos})
               currval = value.split('!date')[0]
               $('#text_note').val(currval)
               // alert('hover pdf')
               // alert(pos)
               // Math.round($(document).scrollTop(),1)
-
-              // $('#save_note').click(function(){
-              //       var posdate = ' !id ' + key + date_full() // Math.round(,1)
-              //       var txt = currval + posdate
-              //       //alert(txt)
-              //       socket.emit('save_note', txt)
-              //       $('#note').hide()
-              // })
+              $('#save_note').unbind()
+              $('#save_note').click(function(){
+                    var posdate = ' !id ' + key + date_full() // Math.round(,1)
+                    var txt = $('#text_note').val() + posdate
+                    alert(txt)
+                    socket.emit('save_note', txt)
+                    $('#note').hide()
+              })
 
           }
         )}
@@ -172,21 +172,22 @@ function detect_note(key, value){
         $('#note').show()
         //$('#note').attr('top',pos)
         //$('#note').attr('id',key)
-        $('#note').attr('id',key)
-        $('#note').attr('date',date_full())
+        // $('#note').attr('id',key)
+        // $('#note').attr('date',date_full())
         $('#note').offset({'top' : pos})
         currval = value.split('!date')[0]
         $('#text_note').val(currval)
         //alert(value.split('!date')[0])
         // alert('hover href')
         // alert(pos)
-        // $('#save_note').click(function(){
-        //       var posdate = ' !id ' + key + date_full() // Math.round(,1)
-        //       var txt = currval + posdate
-        //       //alert(txt)
-        //       socket.emit('save_note', txt)
-        //       $('#note').hide()
-        // })
+        $('#save_note').unbind()
+        $('#save_note').click(function(){
+              var posdate = ' !id ' + key + date_full() // Math.round(,1)
+              var txt = $('#text_note').val() + posdate
+              alert(txt)
+              socket.emit('save_note', txt)
+              $('#note').hide()
+        })
       } // end hover..
       )}
     }
@@ -194,6 +195,15 @@ function detect_note(key, value){
   }) // href
 
 } // detect_note
+
+key('alt+c',function(){
+
+      var elem = $(':hover').last()
+      id = create_id(elem)
+      var postop = Math.round(elem.offset().top,1)  || 0;
+      show_note(id, postop)
+
+})
 
 key('alt+n',function(){                           // trigger all the notes..
 

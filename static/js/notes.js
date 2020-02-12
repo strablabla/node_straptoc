@@ -32,13 +32,13 @@ exports.handle = function(socket){
             try{
                 var dic_notes = JSON.parse(notes)
                 var infos = text.split('!id')[1]
-                console.log(infos)
-                var date = infos.split(' ').slice(-1)[0]
+                console.log('**** infos to save *****' + infos)
+                var date = infos.split(' ').slice(-1)[0]  // retrieve the date
 
-                var id = infos.split(date)[0].trim()
-                console.log(id)
+                var id = infos.split(date)[0].trim() // retrieve the id..
+                console.log('****** id ****** ' + id)
 
-                console.log(date)
+                console.log('****** date ****** ' + date)
                 dic_notes[id] = text.split('!id')[0] + ' !date ' + date
                 var dicstring = JSON.stringify(dic_notes)
                 console.log(dic_notes)
