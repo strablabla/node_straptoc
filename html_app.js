@@ -42,8 +42,8 @@ init.static_addr(app,express)
 
 // Loading socket.io
 var io = require('socket.io')(server);
-global.patt = '' // pattern for scroll position, used in modify.textarea_html
-global.html_pos = 0 // position in html view,  used in modify.textarea_html
+global.patt = ''                 // pattern for scroll position, used in modify.textarea_html
+global.html_pos = 0              // position in html view,  used in modify.textarea_html
 var comment = false;
 
 //----------- format strings..
@@ -62,16 +62,14 @@ io.sockets.on('connection', function (socket) {
               if (err) { return console.log(err); }
               re.emit_from_read(socket, count, patt, text, html_pos)
           }); // end fs.readFile
-      util.save_regularly()                                           // save the regularly the text..
-      socket.on('join', function(data) { socket.emit('scroll', patt) }); // end socket.on join
+      util.save_regularly()                                                // save the regularly the text..
+      socket.on('join', function(data) { socket.emit('scroll', patt) });   // end socket.on join
 
-      init.comm_voc(io)  //----- comm voc
-      modify.textarea_html(socket, io, fs, util)  //----  textarea to html and viceversa
-      folders.deals_with_pdfs(socket)  //------  pdfs in folders
-      socket.on('make_elems', function(){             //----- pdf
-          socket.emit('make_elems','')
-      })
-      notes.handle(socket)
+      init.comm_voc(io)                               //---- comm voc
+      modify.textarea_html(socket, io, fs, util)      //---- textarea to html and viceversa
+      folders.deals_with_pdfs(socket)                 //---- pdfs in folders
+      //notes.send_notes(socket)
+      notes.handle(socket)                            // notes
 
 
 }); // io.sockets.on connection

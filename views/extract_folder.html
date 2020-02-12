@@ -104,7 +104,7 @@ socket.on('make_elems', function(){
           */
 
           var obj = embed_elem(addr + '/' + elem)
-          var divpdf = $('<div/>').text(elem.split('.pdf')[0])
+          var divpdf = $('<div/>').text(elem.split('.pdf')[0]).addClass('embed_pdf')
           var divpdf_plus = divpdf.append($('<span/>').addClass('tog_elem').append($('<a/>').text(' [-]')))
           list_papers.append($('<li/>').append(divpdf_plus.append($('<div/>').html(obj).hide())))
 

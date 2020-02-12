@@ -24,6 +24,7 @@ function deals_with_folder(socket, name_folder){
         socket.emit('folder_extract', strap_addr)
       });
 
+
 }
 
 function deals_with_list_folders(socket, name_folder){
@@ -60,6 +61,10 @@ exports.deals_with_pdfs = function(socket){
       socket.on('list_folders', function(name_folder) {
              console.log('################ addr list_folders.. ' + name_folder)
              deals_with_list_folders(socket,name_folder)
+        })
+
+      socket.on('make_elems', function(){             //---- pdf
+            socket.emit('make_elems','')
         })
 
 
