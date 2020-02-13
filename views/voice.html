@@ -19,6 +19,8 @@ artyom.initialize({
   listen:true
 })
 
+// -------------------------------- go to location function..
+
 function goto(root, name){
 
       var dic_name =  {
@@ -31,7 +33,7 @@ function goto(root, name){
 
 }
 
-// -------------------------------- Toggle TOC
+// -------------------------------- toggle TOC
 
 var dic_toc =  {
         indexes: ['table des matières', 'matières'],
@@ -42,12 +44,11 @@ var dic_toc =  {
     }
 artyom.addCommands(dic_toc); //
 
-// -------------------------------- Notes
+// -------------------------------- trigger Notes
 
 var dic_note =  {
-        indexes: ['nouvelle note', 'parapluie'],
+        indexes: ['nouvelle note'],
         action: function() {
-            //alert('new note')
             socket.emit('new_note', '')
             }
     }

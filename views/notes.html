@@ -171,11 +171,13 @@ function detect_note(key, value){
         var txt = $(this).text()
         try{
             var keysplit = key.trim().split('/')[1].split(' ')[0].trim()
-            if (txt.search(keysplit) != -1){
-              $(this).hover(function(){
-                  handle_note(key,value,$(this))
-              }
-            )}
+            if (keysplit != ''){
+                if (txt.search(keysplit) != -1){
+                      $(this).hover(function(){
+                            handle_note(key,value,$(this))
+                      }
+                  )}
+             }
           }catch(err){}
 
       }) // embed.each
@@ -190,6 +192,17 @@ function detect_note(key, value){
           )}
         } // if txt
       }) // href
+
+      $('.youtube').each(function(){
+        var txt = $(this).attr('id')
+        if (txt){
+          if (txt.search(key) != -1){
+            $(this).hover(function(){
+                handle_note(key,value,$(this))
+             } // end hover..
+          )}
+        } // if txt
+      }) // 
 
 } // detect_note
 
