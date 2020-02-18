@@ -40,6 +40,9 @@ function fill_note(elem, id, postop){
                class: "btn btn-warning"
            });
       var textarea = $('<textarea id="text_note" rows="5" cols="33" />')
+      var title = $('<h1/>').addClass('note_title')
+      title.css({'font-size':'12px', 'box-shadow': '0 0px 0px'})
+      elem.append(title) // .css({'font-size':'20px'})
       elem.append(textarea)
       elem.append(butt_save)
       butt_save.click(function(){            // send note to server..
@@ -66,7 +69,7 @@ function note_in_strap(elem, id, postop){
                 'padding-left': '20px',
                 'padding-right': '20px',
                 'padding-bottom': '20px',
-                'padding-top': '40px',
+                'padding-top': '10px',
                 'margin-right': '20px',
                 'margin-left': '20px',
                 'box-shadow': '0.5em 0.5em 0.7em',
@@ -74,7 +77,7 @@ function note_in_strap(elem, id, postop){
                 'left': '50px',
                 'top': posnote,
                 'width': '330px',
-                'height': '200px',
+                'height': '220px',
                 'max-height': '300px',
                 //'font-size': '85%',
                 'z-index': '3',
@@ -140,6 +143,7 @@ function handle_note(key,value,elem){
 
       $('#note').show()
       $('#note').offset({'top' : elem.offset().top})
+      $('.note_title').text('Note : ' + value.split('!date')[1])
       $('#text_note').val(value.split('!date')[0])
       bind_save_butt(key)
 
@@ -193,7 +197,7 @@ function detect_note(key, value){
         } // if txt
       }) // href
 
-      $('.youtube').each(function(){
+      $('.youtube').each(function(){     // note for straptoc youtube..
         var txt = $(this).attr('id')
         if (txt){
           if (txt.search(key) != -1){
@@ -202,7 +206,7 @@ function detect_note(key, value){
              } // end hover..
           )}
         } // if txt
-      }) // 
+      }) //
 
 } // detect_note
 

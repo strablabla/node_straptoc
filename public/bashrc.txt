@@ -1,0 +1,229 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL=ignoreboth
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# If set, the pattern "**" used in a pathname expansion context will
+# match all files and zero or more directories and subdirectories.
+#shopt -s globstar
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm|xterm-color|*-256color) color_prompt=yes;;
+esac
+
+# uncomment for a colored prompt, if the terminal has the capability; turned
+# off by default to not distract the user: the focus in a terminal window
+# should be on the output of commands, not on the prompt
+#force_color_prompt=yes
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+	# We have color support; assume it's compliant with Ecma-48
+	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+	# a case would tend to support setf rather than setaf.)
+	color_prompt=yes
+    else
+	color_prompt=
+    fi
+fi
+
+if [ "$color_prompt" = yes ]; then
+    if [[ ${EUID} == 0 ]] ; then
+        PS1='${debian_chroot:+($debian_chroot)}\[\033[01;31m\]\h\[\033[01;34m\] \W \$\[\033[00m\] '
+    else
+        PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\] \[\033[01;34m\]\w \$\[\033[00m\] '
+    fi
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h \w \$ '
+fi
+unset color_prompt force_color_prompt
+
+# If this is an xterm set the title to user@host:dir
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# colored GCC warnings and errors
+#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# some more ls aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+if [ -x /usr/bin/mint-fortune ]; then
+     /usr/bin/mint-fortune
+fi
+
+alias flood='cd /home/lio/Desktop/bitbuck/floo4d_draft'
+alias cfvisu='atom Visu/visu2D.mscf'
+alias cfproc='atom process.mscf'
+alias bsh='atom ~/.bashrc'
+alias src='source ~/.bashrc'
+alias pynatif='python'
+alias py='~/anaconda3/bin/python'
+alias pip='~/anaconda3/bin/pip'
+alias anac='export PATH=$HOME/anaconda/bin:$PATH'
+alias ipynb='$HOME/anaconda3/bin/ipython notebook '
+alias ipy='$HOME/anaconda/bin/ipython'
+#
+alias lins='$HOME/anaconda3/bin/python /home/lio/Desktop/git/Tinkering/js/straptoc/useful/list_insert.py'
+alias lins1='$HOME/anaconda3/bin/python /home/lio/Desktop/git/Tinkering/js/straptoc/useful/list_insert1.py'
+alias lem='$HOME/anaconda3/bin/python /home/lio/Desktop/git/Tinkering/js/straptoc/useful/unzip_lemonde.py'
+#
+## screen detached with name
+function scr()
+{
+screen -d -m -S $1
+}
+#
+## quit screen with name
+function qs()
+{
+screen -S $1 -X quit
+}
+#
+## go to customcss profile nbextensions directory
+function ipypr()
+{
+cd "$HOME/.ipython/profile_$1/static/custom/nbextensions"
+}
+#
+## launch ipynb with screen with a given name
+function ipynbs()
+{
+screen -d -m -S $1 $HOME/anaconda/bin/ipython notebook --profile customcss $2
+}
+#
+## launch ipynb with given profile name
+function ipynbpr()
+{
+$HOME/anaconda/bin/ipython notebook --profile $1
+}
+#
+## launch ipynb with given profile name
+function ipynbspr()
+{
+screen -d -m -S  $1 $HOME/anaconda/bin/ipython notebook --profile $2 $3
+}
+#
+alias sl='screen -ls'
+alias ipytoc='cd $HOME/.ipython/profile_customcss/static/custom/nbextensions'
+alias mystuff='cd $HOME/CloudStation/encours'
+alias mystuff='cd $HOME/CloudStation/mystuff'
+alias ipynbcode='cd $HOME/Desktop/Encours/IPython_notebook_code'
+alias op='nautilus .'
+alias upy='cd /home/lio/Desktop/mystuff/MicroPython/Progs/uart_pin_servo' # micropython
+alias pym='~/anaconda3/bin/python -m'
+alias py='~/anaconda3/bin/python'
+alias supy='sudo ~/anaconda3/bin/python'
+alias conda='sudo ~/anaconda3/bin/conda'
+alias spike='cd /home/lio/Desktop/bitbuck/spike'
+alias bit='cd /home/lio/Desktop/bitbuck'
+alias gith='cd /home/lio/Desktop/git'
+alias gits='git status'
+alias gita='git add *'
+alias gitcm='git commit -m'
+alias hgs='hg status'
+alias hgcm='hg commit -m'
+alias pyserv='python -m SimpleHTTPServer 8888 &'
+alias pyfolder_utow='python $HOME/CloudStation/Infosutiles/own/list_folder.py'
+alias pyfolder_utjb='python $HOME/CloudStation/Infosutiles/Job/list_folder.py'
+alias papers='cd /home/lio/CloudStation/encours/papers_to_keep'
+alias bind='cd ~/Desktop/bitbuck/bindings_extract'
+alias interf='~/anaconda3/bin/python -m Interf.run'
+alias sshsyno='ssh admin@192.168.0.14'
+alias py2='/home/lio/anaconda2/bin/python'
+alias atom='/usr/bin/atom'
+#
+#### owns
+utow=$HOME/CloudStation/Infosutiles/own/utiles_own.html
+tdow=$HOME/CloudStation/Todo/own/todo_own.html
+alias ow='atom $utow $tdow; screen -S chrome_ow chromium-browser $utow $tdow; exit'
+# pyfolder_utow $utow
+#
+#### jobs
+utjb=$HOME/CloudStation/Infosutiles/Job/utiles_job.html
+tdjb=$HOME/CloudStation/Todo/Job/todo_job.html
+alias jbs='gedit $utjb $tdjb; chromium-browser $utjb $tdjb'
+alias syno='bash /usr/bin/synology-cloud-station-drive'
+alias mpsyno='echo "mogwai1207" | sudo -S /usr/bin/synology-cloud-station-drive'
+alias zic='firefox /home/lio/Téléchargements/youtube/read_zics.html '
+alias seagate="rsync -a --delete /home/lio/Téléchargements/youtube '/media/lio/Seagate Expansion Drive/AMD-E1';rsync -a --delete /home/lio/Téléchargements/podcasts '/media/lio/Seagate Expansion Drive/AMD-E1'"
+alias voice="cd ~/Desktop/git/Tinkering/js/voice/annyang ; pym interf__strap.run"
+alias tink="cd /home/lio/Desktop/git/Tinkering"
+alias edvoice='atom /home/lio/Desktop/git/Tinkering/js/voice/annyang/interf__strap/templates/straptoc_eg_small.html'
+alias kap='killall python'
+alias pong='py ~/Desktop/git/Tinkering/js/threejs_exp/pong/pong_keys/run.py'
+
+# added by Anaconda3 4.2.0 installer
+#export PATH="/home/lio/anaconda3/bin:$PATH"
