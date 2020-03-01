@@ -25,6 +25,8 @@ function date_full(){
 
 }
 
+var currelem
+
 function fill_note(elem, id, postop){
 
       /*
@@ -39,12 +41,13 @@ function fill_note(elem, id, postop){
                value: "save",
                class: "btn btn-warning"
            });
-      var textarea = $('<textarea id="text_note" rows="5" cols="33" />')
+      var textarea = $('<textarea id="text_note" rows="5" cols="43" />')
       var title = $('<h1/>').addClass('note_title')
       title.css({'font-size':'12px', 'box-shadow': '0 0px 0px'})
       elem.append(title) // .css({'font-size':'20px'})
       elem.append(textarea)
       elem.append(butt_save)
+      $('#text_note').show()
       butt_save.click(function(){            // send note to server..
           var posdate = ' !id ' + id +  date_full()
           var txt = $('#text_note').val() + posdate
@@ -77,7 +80,7 @@ function note_in_strap(elem, id, postop){
                 'left': '50px',
                 'top': posnote,
                 'width': '330px',
-                'height': '220px',
+                'height': '250px',
                 'max-height': '300px',
                 //'font-size': '85%',
                 'z-index': '3',
@@ -135,17 +138,43 @@ function create_id(elem){
     return id
 }
 
+function deal_with_note(key,value,elem,action){
+
+  /*
+
+  */
+
+  elem.css({"text-decoration":action})
+  $('#note').show()
+  $('#note').offset({'top' : elem.offset().top})
+  $('.note_title').text('Note : ' + value.split('!date')[1])
+  $('#text_note').val(value.split('!date')[0])
+  //alert(value.split('!date')[0])
+  bind_save_butt(key)
+  currelem = elem
+
+}
+
 function handle_note(key,value,elem){
 
       /*
 
       */
+      //.button:link{ text-decoration:none }
+      elem.hover(function(){
+          if (currelem != elem){
+              //alert("new note")
+              try{
+                 currelem.css({"text-decoration":'none'})
+              }catch(err){} // alert('first elem')
 
-      $('#note').show()
-      $('#note').offset({'top' : elem.offset().top})
-      $('.note_title').text('Note : ' + value.split('!date')[1])
-      $('#text_note').val(value.split('!date')[0])
-      bind_save_butt(key)
+          }
+          deal_with_note(key,value,elem,"underline")
+      })
+      // elem.mouseleave(function(){
+      //   deal_with_note(key,value,elem,"none")
+      // })
+
 
 }
 
@@ -177,10 +206,8 @@ function detect_note(key, value){
             var keysplit = key.trim().split('/')[1].split(' ')[0].trim()
             if (keysplit != ''){
                 if (txt.search(keysplit) != -1){
-                      $(this).hover(function(){
-                            handle_note(key,value,$(this))
-                      }
-                  )}
+                  handle_note(key,value,$(this))
+                  }
              }
           }catch(err){}
 
@@ -190,22 +217,18 @@ function detect_note(key, value){
         var txt = $(this).attr('href')
         if (txt){
           if (txt.search(key) != -1){
-            $(this).hover(function(){
                 handle_note(key,value,$(this))
              } // end hover..
-          )}
-        } // if txt
-      }) // href
+          } // if txt
+      }) // each href
 
       $('.youtube').each(function(){     // note for straptoc youtube..
         var txt = $(this).attr('id')
         if (txt){
           if (txt.search(key) != -1){
-            $(this).hover(function(){
                 handle_note(key,value,$(this))
              } // end hover..
-          )}
-        } // if txt
+          } // if txt
       }) //
 
 } // detect_note
@@ -252,10 +275,12 @@ key('alt+n',function(){                           // trigger all the notes..
       socket.emit('ask_notes','')
       socket.on('all_notes', function(txt){
          var notes = JSON.parse(txt)
+
          $.each(notes, function(key, value) {
                detect_note(key, value)
          });
          active_template(notes)
+
       })
 
 })
