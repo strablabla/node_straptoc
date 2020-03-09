@@ -22,10 +22,50 @@ artyom.initialize({
 
 })
 
+// --------------------------------
+
 voice_onoff()
 artyom.isObeying(function(){
   $('#voice_onoff').css({'background-color':'yellow'})
 })
+
+// --------------------------------
+
+function voice_onoff(){
+
+      /*
+
+      */
+
+      var elem = $('<div/>').attr('id','voice_onoff')
+      $('#content').append(elem)
+      elem.css({'background-color':'rgb(255,224,102)',
+                'box-shadow': '0.5em 0.5em 0.7em',
+                'position': 'fixed',
+                'left': '50px',
+                'top': '50px',
+                'width': '20px',
+                'height': '20px',
+                //'font-size': '85%',
+                'z-index': '3'
+                })
+        manual_flip(elem)
+
+      }
+
+// -------------------------------- stop recognition..
+
+var dic_trig =  {
+        indexes: ['arrête ton char'],
+        action: function() {
+            //artyom.say("change le toc");
+            artyom.dontObey()
+            }
+    }
+
+artyom.addCommands(dic_trig); //
+
+// -------------------------------- trigger recognition..
 
 var dic_listen =  {
         indexes: ['écoute mammouth'],
@@ -35,31 +75,25 @@ var dic_listen =  {
     }
 artyom.addCommands(dic_listen); //
 
+function manual_flip(elem){
 
-function voice_onoff(){
+  /*
+  Flip manually between recognition and non recognition..
+  */
 
-      /*
+  elem.click(function(){
 
-      */
-      var elem = $('<div/>').attr('id','voice_onoff')
-      $('#content').append(elem)
-      elem.css({'background-color':'rgb(255,224,102)',
-                'padding-left': '20px',
-                'padding-right': '20px',
-                'padding-bottom': '20px',
-                'padding-top': '20px',
-                'margin-right': '20px',
-                'margin-left': '20px',
-                'box-shadow': '0.5em 0.5em 0.7em',
-                'position': 'fixed',
-                'left': '50px',
-                'top': '50px',
-                'width': '10px',
-                'height': '10px',
-                //'font-size': '85%',
-                'z-index': '3'
-                })
-      }
+          if(artyom.isObeying()){
+              artyom.dontObey()
+              $('#voice_onoff').css({'background-color':'blue'})
+          }else{
+              artyom.obey()
+              $('#voice_onoff').css({'background-color':'yellow'})
+          }
+
+      })
+
+  }
 
 // -------------------------------- go to location function..
 
@@ -86,18 +120,6 @@ var dic_toc =  {
     }
 artyom.addCommands(dic_toc); //
 
-// -------------------------------- stop recognition..
-
-var dic_trig =  {
-        indexes: ['arrête ton char'],
-        action: function() {
-            //artyom.say("change le toc");
-            artyom.dontObey()
-            }
-    }
-
-artyom.addCommands(dic_trig); //
-
 // -------------------------------- trigger Notes
 
 var dic_note =  {
@@ -108,19 +130,6 @@ var dic_note =  {
     }
 
 artyom.addCommands(dic_note); //
-
-// -------------------------------- stop recognition..
-
-var dic_trig =  {
-        indexes: ['arrête ton char'],
-        action: function() {
-            //artyom.say("change le toc");
-            artyom.dontObey()
-            $('#voice_onoff').css({'background-color':'blue'})
-            }
-    }
-
-artyom.addCommands(dic_trig); //
 
 //----------- Dic voc for goto
 

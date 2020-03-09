@@ -35,6 +35,7 @@ function deals_with_list_folders(socket, name_folder){
       var strap_addr = ''
       fs.readdir(name_folder, (err, files) => {
           strap_addr +=  count_pdf + '§§'
+          if(err) return console.error(err);
           files.forEach(file => {
              console.log(file);
              strap_addr += file + '\n'

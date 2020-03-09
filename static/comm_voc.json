@@ -1,12 +1,5 @@
 { "#Science_":
       [
-      "Physique", "Chimie", "Gros instruments",
-      "Grands organismes", "Publications libres",
-      "Mathématiques", "Algos", "Traitement du signal",
-      "Neuroscience", "Biologie", "Géologie",
-      "Planétologie", "Evolution", "Astrophysique",
-      "Zoologie", "Linguistique", "Archéologie",
-      "Histoire", "Psychologie", "Médecine santé",
-      "Podcast science"
+      "Géologie"
       ]
 }
