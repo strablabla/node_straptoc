@@ -68,7 +68,9 @@ function make_code_folder(strap_addr, addr_relat, list_folders, current_count, u
             var last_ul = $('<ul/>').toggle()
             titli.append(last_ul.append(curr_li))
           } // end for
-      current_li[current_count].parent().parent().append(ul_folders).css({'color':'#ff9966'}) // #ff9966 #476b6b
+      var currparpar = current_li[current_count].parent().parent()
+      currparpar.append($('<span/>').text('[-]').addClass('togpdf'))
+      currparpar.append(ul_folders.hide()).css({'color':'#ff9966'}) // #ff9966 #476b6b
       current_li[current_count].parent().remove()
 
 }
