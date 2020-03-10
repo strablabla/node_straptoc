@@ -28,6 +28,7 @@ $('li').each(function(){
     var fullreg = /\!fold.+\!inside/
     var txt = $(this).html().split('\n')[0]
     if ( txt.match(fullreg) ){
+          //$(this).css({'color':'#ffb3d9'})
           current_li[count_pdf] = $(this)
           var addr = txt.split('!fold')[1].split('!inside')[0].trim()
           addroot = addr
@@ -46,6 +47,8 @@ $('li').each(function(){
                 if ( current_count == Object.keys(addr_relat).length-1 & !toggle_pdf_ok){
                     toggle_pdf()            // when clicking on - or + open or close..
                     toggle_pdf_ok = true
+                    //css({'color':'#ffe6f2'})
+                    //$('.funf').parent().parent().parent().css({'color':'#ffe6f2'})
                     $('.funf').click(function(){
                         $(this).parent().next().toggle()
                     })
@@ -65,7 +68,7 @@ function make_code_folder(strap_addr, addr_relat, list_folders, current_count, u
             var last_ul = $('<ul/>').toggle()
             titli.append(last_ul.append(curr_li))
           } // end for
-      current_li[current_count].parent().parent().append(ul_folders)
+      current_li[current_count].parent().parent().append(ul_folders).css({'color':'#ff9966'}) // #ff9966 #476b6b
       current_li[current_count].parent().remove()
 
 }

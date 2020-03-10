@@ -28,16 +28,18 @@ socket.on('make_elems', function(){
         var txt = $(this).html().split('\n')[0]
         //var current_li = $(this)
         //alert(txt)
+        //$(this).css({'color':'#ffb3d9'})
         if (txt.match(reg)){
-
+            //$(this).css({'color':'#ffb3d9'})
             //alert('I am here !! ')
             //var reg = /\!fold/
-            $('ul').each(function(){
-              var txt = $(this).html()
-              if (txt.match(reg)){
-                  //alert(txt)
-                  }
-            })
+            //$(this).addClass('fold')
+            // $('ul').each(function(){
+            //   var txt = $(this).html()
+            //   if (txt.match(reg)){
+            //       //alert(txt)
+            //       }
+            // })
 
             current_li[count_pdf] = $(this)
             var addr = txt.split('!fold')[1].trim()
@@ -64,12 +66,17 @@ socket.on('make_elems', function(){
                     // alert("strap_addr " + strap_addr)
                     // alert('addr_relat[current_count] ' +  addr_relat[current_count])
                     list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
-                    list_pdf.forEach(function(elem){ make_li_embed(addr_relat[current_count],elem,list_papers) })
+                    list_pdf.forEach(function(elem){ make_li_embed(addr_relat[current_count], elem, list_papers) })
                     list_papers.hide()
+                    //list_papers.parent().css({'color':'#ffe6f2'})
                     //alert("changed html with pdfs.. ")
                     current_li[current_count].parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
+                    //list_papers.parent().parent().css({'color':'#2eb82e'})
+                    //css({'color':'#ffe6f2'})
+                    //current_li[current_count].parent().css({'color':'#ffe6f2'})
                     if ( current_count == Object.keys(current_li).length-1 & !toggle_elem_ok){
                         //alert('toggle activated !!! ')
+                        //.css({'color':'#ffb3d9'})
                         toggle_elem()            // when clicking on - or + open or close..
                         toggle_elem_ok = true
                     }
