@@ -6,6 +6,25 @@ Utilities
 
 var fs = require('fs');
 
+function make_date_full(){
+
+      /*
+      Build the text date
+      */
+
+      var date = new Date()
+      var sec = date.getSeconds();
+      var minute = date.getMinutes();
+      var hour = date.getHours();
+      var day = date.getDate();
+      var month = date.getMonth();
+      var year = date.getFullYear();
+      var txt_date = [year, month, day, hour, minute, sec].join('_')
+
+      return txt_date
+
+}
+
 function make_date(){
 
       /*
@@ -19,22 +38,6 @@ function make_date(){
       var month = date.getMonth();
       var year = date.getFullYear();
       var txt_date = [year, month, day, hour, minute].join('_')
-
-      return txt_date
-
-}
-
-function date_day(){
-
-      /*
-      Build the text date
-      */
-
-      var date = new Date()
-      var day = date.getDate();
-      var month = date.getMonth();
-      var year = date.getFullYear();
-      var txt_date = [year, month, day].join('_')
 
       return txt_date
 
@@ -72,7 +75,7 @@ exports.save_current_version = function(data,with_date){
                 list_saved.splice(index, 1);
                 //console.log('list_saved in while ' + list_saved)
               }
-              console.log('list_saved  ' + list_saved)
+              //console.log('list_saved  ' + list_saved)
           }
       }
       else{ var namefile = basename + ".html" }
@@ -88,12 +91,13 @@ exports.save_regularly = function(){
       Saving regularly views/main.html
       */
 
-      list_saved = []             // global
-      lim_nb_saved = 3            // max versions saved
-      var min_interv = 3          // interval in minute
+      list_saved = []     // global
+      lim_nb_saved = 4   // max versions saved
+      var min_interv = 5  // interval in minute
       setInterval(function() {
               fs.readFile('views/main.html', 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
+                      console.log(make_date_full())
                       exports.save_current_version(data,true) // with date
                   });   // end fs.readFile
         }, parseInt(min_interv*60*1000)); // 300000 5 min  //10000 10 sec //600000 10 min

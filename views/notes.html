@@ -145,7 +145,9 @@ function deal_with_note(key,value,elem,action){
   */
 
   elem.css({"text-decoration":action})
-  $('#note').show()
+  if (! note_hidden){
+     $('#note').show()
+  }
   $('#note').offset({'top' : elem.offset().top})
   $('.note_title').text('Note : ' + value.split('!date')[1])
   $('#text_note').val(value.split('!date')[0])
@@ -264,6 +266,8 @@ function active_template(notes){
 
 }
 
+note_activated = false
+note_hidden = false
 key('alt+n',function(){                           // trigger all the notes..
 
       /*
@@ -272,16 +276,22 @@ key('alt+n',function(){                           // trigger all the notes..
 
       */
 
-      socket.emit('ask_notes','')
-      socket.on('all_notes', function(txt){
-         var notes = JSON.parse(txt)
+      if (note_activated){
+        $('#note').toggle()
+        note_hidden = !note_hidden
+      }else{
+            socket.emit('ask_notes','')
+            socket.on('all_notes', function(txt){
+               var notes = JSON.parse(txt)
 
-         $.each(notes, function(key, value) {
-               detect_note(key, value)
-         });
-         active_template(notes)
+               $.each(notes, function(key, value) {
+                     detect_note(key, value)
+               });
+               active_template(notes)
+               note_activated = true
 
-      })
+            })
+      }
 
 })
 

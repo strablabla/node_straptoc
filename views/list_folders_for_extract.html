@@ -55,7 +55,9 @@ $('li').each(function(){
                     socket.emit('make_elems', '')
                 }
             })
+
         } // if text.match
+
   })
 
 function make_code_folder(strap_addr, addr_relat, list_folders, current_count, ul_folders){
@@ -72,6 +74,7 @@ function make_code_folder(strap_addr, addr_relat, list_folders, current_count, u
       currparpar.append($('<span/>').text('[-]').addClass('togpdf'))
       currparpar.append(ul_folders.hide()).css({'color':'#ff9966'}) // #ff9966 #476b6b
       current_li[current_count].parent().remove()
+      //toggle_pdf()
 
 }
 
@@ -81,6 +84,7 @@ function toggle_pdf(){
     Code for closing, opening the pdfs..
     */
 
+    //alert('toggle !!!')
     $('.togpdf').click(function(){
             var taga = $(this).find('a')
             if (taga.text() == ' [-]'){
