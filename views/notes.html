@@ -205,7 +205,8 @@ function detect_note(key, value){
       $('.embed_pdf').each(function(){
         var txt = $(this).text()
         try{
-            var keysplit = key.trim().split('/')[1].split(' ')[0].trim()
+            //var keysplit = key.trim().split('/')[1].split(' ')[0].trim()
+            var keysplit = key.trim().split('/')[1].split('#zoom=')[0].trim().split('.pdf?')[0]
             if (keysplit != ''){
                 if (txt.search(keysplit) != -1){
                   handle_note(key,value,$(this))
