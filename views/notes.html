@@ -164,19 +164,16 @@ function handle_note(key,value,elem){
       */
       //.button:link{ text-decoration:none }
       elem.hover(function(){
+          //alert('hover is ok')
           if (currelem != elem){
               //alert("new note")
               try{
-                 currelem.css({"text-decoration":'none'})
+                 currelem.css({"text-decoration":'none'}) // remove underlline
               }catch(err){} // alert('first elem')
 
           }
           deal_with_note(key,value,elem,"underline")
       })
-      // elem.mouseleave(function(){
-      //   deal_with_note(key,value,elem,"none")
-      // })
-
 
 }
 
@@ -224,6 +221,22 @@ function detect_note(key, value){
              } // end hover..
           } // if txt
       }) // each href
+
+      $('object').each(function(){
+          var type = $(this).attr('type')
+          //alert(type)
+          if (type == 'application/pdf'){
+             //alert('founddddd')
+             var txt = $(this).attr('data')
+             //alert(txt)
+             if (txt.search(key) != -1){
+                   //alert(txt)
+                   // alert(key)
+                   // alert(value)
+                   handle_note(key,value,$(this).parent())
+                } // end hover..
+          } // if type is application/pdf
+      }) // each object
 
       $('.youtube').each(function(){     // note for straptoc youtube..
         var txt = $(this).attr('id')
