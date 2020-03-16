@@ -35,6 +35,14 @@ function fill_note(elem, id, postop){
 
       */
 
+      var butt_reduce = $('<input/>').attr({
+               type: "button",
+               id: "reduce_note",
+               value: "-",
+               class: "btn btn-warning"
+           });
+      butt_reduce.css({"position":"absolute", "top":"8px","left":"8px"})
+
       var butt_save = $('<input/>').attr({
                type: "button",
                id: "save_note",
@@ -47,12 +55,27 @@ function fill_note(elem, id, postop){
       elem.append(title) // .css({'font-size':'20px'})
       elem.append(textarea)
       elem.append(butt_save)
+      elem.append(butt_reduce)
       $('#text_note').show()
       butt_save.click(function(){            // send note to server..
           var posdate = ' !id ' + id +  date_full()
           var txt = $('#text_note').val() + posdate
           socket.emit('save_note', txt)
           $('#note').hide()
+      })
+      butt_reduce.click(function(){            // send note to server..
+          $('#text_note').toggle()
+          if($("#text_note").is(":visible")){
+                $('#note').css({'height':'250px'})
+                $('#note').css({'width':'350px'})
+                butt_save.show()
+                title.show()
+            } else{
+                $('#note').css({'height':'50px'})
+                $('#note').css({'width':'50px'})
+                butt_save.hide()
+                title.hide()
+            }
       })
 
 
@@ -79,7 +102,7 @@ function note_in_strap(elem, id, postop){
                 'position': 'absolute',
                 'left': '50px',
                 'top': posnote,
-                'width': '330px',
+                'width': '350px',
                 'height': '250px',
                 'max-height': '300px',
                 //'font-size': '85%',
