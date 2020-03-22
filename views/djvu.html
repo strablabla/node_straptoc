@@ -1,0 +1,20 @@
+<script>
+
+$('.§§').click(function(){
+
+    var ul = $(this).parent().parent().next()
+    var obj = ul.find('object')
+    var addr = obj.attr('data')
+    if (addr.search('.djvu') != -1){
+
+        ul.find('li').replaceWith($('<div/>').attr('id',addr))
+        var viewer_instance = new DjVu.Viewer();
+        viewer_instance.render(document.getElementById(addr));
+        viewer_instance.loadDocumentByUrl(addr);
+
+    }
+
+})
+
+
+</script>
