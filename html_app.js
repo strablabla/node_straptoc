@@ -12,6 +12,7 @@ var modify = require('./static/js/modify_html');
 var folders = require('./static/js/folders');
 var init = require('./static/js/init');
 var notes = require('./static/js/notes');
+var subtit = require('./static/js/make_subtit');
 
 //--------------  Server
 
@@ -54,6 +55,8 @@ String.prototype.format = function () {
     return typeof args[i] != 'undefined' ? args[i++] : '';
   });
 };
+
+subtit.make_sub()
 
 io.sockets.on('connection', function (socket) {
 
