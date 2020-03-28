@@ -39,9 +39,10 @@ function fill_note(elem, id, postop){
                type: "button",
                id: "reduce_note",
                value: "-",
-               class: "btn btn-warning"
+               class: "btn btn-warning",
+               style: "padding: 1px 6px;"
            });
-      butt_reduce.css({"position":"absolute", "top":"8px","left":"8px"})
+      butt_reduce.css({"position":"absolute", "top":"8px","left":"10px"})
 
       var butt_save = $('<input/>').attr({
                type: "button",
@@ -49,7 +50,7 @@ function fill_note(elem, id, postop){
                value: "save",
                class: "btn btn-warning"
            });
-      var textarea = $('<textarea id="text_note" rows="5" cols="43" />')
+      var textarea = $('<textarea id="text_note" rows="5" cols="43" style=" width: 306px; height: 108px;" /> ')
       var title = $('<h1/>').addClass('note_title')
       title.css({'font-size':'12px', 'box-shadow': '0 0px 0px'})
       elem.append(title) // .css({'font-size':'20px'})
@@ -71,8 +72,8 @@ function fill_note(elem, id, postop){
                 butt_save.show()
                 title.show()
             } else{
-                $('#note').css({'height':'50px'})
-                $('#note').css({'width':'50px'})
+                $('#note').css({'height':'40px'}) // reduced size height
+                $('#note').css({'width':'5px'})  // reduced size width
                 butt_save.hide()
                 title.hide()
             }
