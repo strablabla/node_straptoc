@@ -1,28 +1,29 @@
 
-function modify_html_with_newtext(io, fs, util, new_text){
+function modify_html_with_newtext(io, fs, util, new_text, name){
 
     /*
 
     */
 
     console.log('save before changing the text')
-    util.save_current_version(new_text,false)    // save before change
-    io.sockets.emit('page_return_to_html','')   // send message back for sending the scroll pos.
-    fs.writeFile("views/main.html", new_text, function(err) {
+    util.save_current_version(new_text, false, addr)      // save before change
+    io.sockets.emit('page_return_to_html','')       // send message back for sending the scroll pos.
+    var addr = "views/" + name + ".html"
+    fs.writeFile(addr, new_text, function(err) {
           if(err) { return console.log(err); }
-          console.log('new text modified and saved in views/main.html')
+          console.log('new text modified and saved in ' + addr)
     }); // end write file
 
 }
 
-exports.textarea_html = function(socket, io, fs, util){
+exports.textarea_html = function(socket, io, fs, util, name){
 
     /*
 
     */
 
     socket.on('return', function(new_text) {        // change html with textarea
-          modify_html_with_newtext(io, fs, util, new_text)
+          modify_html_with_newtext(io, fs, util, new_text, name)
       }); // end socket.on return
 
     socket.on('scroll', function(pattern) { global.patt = pattern })

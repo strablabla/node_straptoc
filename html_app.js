@@ -5,7 +5,6 @@ var path = require("path");
 var open = require('open');
 var fs = require('fs');
 var nunjucks  = require('nunjucks');
-var count = require('./static/js/count_lines');
 var util = require('./static/js/util');
 var re = require('./static/js/read_emit');
 var modify = require('./static/js/modify_html');
@@ -34,6 +33,8 @@ nunjucks.configure('views', {
 
 app.get('/', function(req, res){ res.render('strap_small.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
+app.get('/text_done', function(req, res){ res.render('text_done.html'); });
+app.get('/fait', function(req, res){ res.render('fait.html'); });
 
 //--------------  static addresses
 
@@ -56,23 +57,20 @@ String.prototype.format = function () {
   });
 };
 
-subtit.make_sub()
+subtit.make_sub() // make the subtitles..
 
 io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
-      fs.readFile('views/main.html', 'utf8', function (err,text) {
-              if (err) { return console.log(err); }
-              re.emit_from_read(socket, count, patt, text, html_pos)
-          }); // end fs.readFile
-      util.save_regularly()                                                // save the regularly the text..
-      socket.on('join', function(data) { socket.emit('scroll', patt) });   // end socket.on join
+      re.emit_from_read(socket, patt, html_pos)
+      util.save_regularly('main')                                                // save the regularly the text..
+      socket.on('join', function(data) { socket.emit('scroll', patt) });         // end socket.on join
 
-      init.comm_voc(io)                               //---- comm voc
-      modify.textarea_html(socket, io, fs, util)      //---- textarea to html and viceversa
-      folders.deals_with_pdfs(socket)                 //---- pdfs in folders
+      init.comm_voc(io)                                         //---- comm voc
+      modify.textarea_html(socket, io, fs, util, 'main')        //---- textarea to html and viceversa
+      folders.deals_with_pdfs(socket)                           //---- pdfs in folders
       //notes.send_notes(socket)
-      notes.handle(socket)                            // notes
+      notes.handle(socket)                                      // notes
 
 
 }); // io.sockets.on connection

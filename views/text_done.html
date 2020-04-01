@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html>
+
+<meta charset="UTF-8">
+
+{% include 'header.html' %}
+<script  src="/edit_textarea.js"></script>
+<script  src="/code_mirror_addons.js"></script>
+<link rel="stylesheet" href="codemirror.css">
+<script src="codemirror.js"></script>
+<link rel="stylesheet" href="highlight.css">
+{% include 'textarea.html' %}
+ <script src="/socket.io/socket.io.js"></script>
+
+ <script>
+
+    var socket = io.connect();  //'http://localhost:3000'
+    var comment = false;
+    var scroll_html_pos = 0
+    var pattern = ''
+
+    //------------- Scroll position
+
+    socket.on('scroll', function(code) {
+            var json_line_patt = JSON.parse(code);
+            line_number = json_line_patt['line']
+            var patt = json_line_patt['pattern']
+            if (comment){ alert('line_number is : '+ line_number) }
+
+            //-------------------------- CodeMirror
+
+            var editor = CodeMirror.fromTextArea(document.getElementById("comment"), {
+                  lineNumbers: true,
+                  mode: 'markdown'
+            });
+
+            code_mirror_add_func(editor)
+
+             //------------- from textarea to html
+
+             $('#submit').click(function(){               // submit new text.. from text to html
+                   var new_text = editor.getValue()
+                   socket.emit('return', new_text);
+                 }) // end click
+      })
+
+    socket.on('scroll_html', function(pos) {  // save html position of scroll
+            scroll_html_pos = pos
+            if (comment){ alert(' scroll_html pos = ' + pos) }
+      })
+
+      //------------- just a message
+
+    socket.on('connection', function() {
+        socket.emit('join', 'This is a message from client textarea !!' );
+      });
+
+    //------------- from html to textarea
+
+    socket.on('message', function(message) {     // write html in textarea
+        $('#comment').val(message);
+        if (comment){ alert('received message  !! ') }
+      })
+
+    //-------------  pattern
+
+    socket.on('pattern', function(patt) {
+          pattern = patt
+      })
+
+    $('#go_back').click(function(){               // submit new text.. from text to html
+          socket.emit('scroll_html', scroll_html_pos);
+        }) // end click
+
+    $('.form-group').bind('contextmenu', function(e){  // when clicking right go back to html
+          e.preventDefault();
+          document.getElementById('submit').click();
+          return false;
+          });
+
+    socket.on('page_return_to_html_done', function(){
+          document.getElementById('go_back').click();
+    })
+
+
+</script>
+
+</html>

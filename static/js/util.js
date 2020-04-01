@@ -43,13 +43,13 @@ function make_date(){
 
 }
 
-exports.save_current_version = function(data,with_date){
+exports.save_current_version = function(data, with_date, name){
 
       /*
       Save the current main.html in views/saved/main_old.html
       */
 
-      var basename = 'views/saved/main_old'
+      var basename = 'views/saved/'+ name +'_old'
       txt_date = make_date()
       if ( with_date ){             // case where it is saved with a date..
           //console.log('txt_date ' + txt_date)
@@ -60,7 +60,7 @@ exports.save_current_version = function(data,with_date){
           // console.log(list_saved)
           while (list_saved.length > lim_nb_saved){
               //console.log('removing the oldest element ' + list_saved[0] + '!!!')
-              var addr_removed = 'views/saved/main_old_' + list_saved[0] + '.html'
+              var addr_removed = basename + '_' + list_saved[0] + '.html'
               try{
                   fs.unlinkSync(addr_removed)
                   console.log('addr_removed is ' + addr_removed)
@@ -85,7 +85,7 @@ exports.save_current_version = function(data,with_date){
       });    // end writeFile
 }           // end save_current_version
 
-exports.save_regularly = function(){
+exports.save_regularly = function(name){
 
       /*
       Saving regularly views/main.html
@@ -95,7 +95,7 @@ exports.save_regularly = function(){
       lim_nb_saved = 4   // max versions saved
       var min_interv = 5  // interval in minute
       setInterval(function() {
-              fs.readFile('views/main.html', 'utf8', function (err,data) {
+              fs.readFile('views/' + name + '.html', 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
                       console.log(make_date_full())
                       exports.save_current_version(data,true) // with date

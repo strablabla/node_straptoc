@@ -6,7 +6,7 @@ and send some informations : pattern, scrollpos etc..
 */
 
 
-function dblclick_to_text(socket, elem, index){
+function dblclick_to_text(socket, elem, index, addr){
 
       /*
       Go to text
@@ -14,26 +14,26 @@ function dblclick_to_text(socket, elem, index){
 
       elem.dblclick(function(e){  // when clicking right go back to html
             e.preventDefault();
-            pattern_and_flip(socket, $(this),index)
+            pattern_and_flip(socket, $(this), index, addr)
             return false;
             });
 }
 
 
-function pattern_and_flip(socket, elem, take_elem){
+function pattern_and_flip(socket, elem, take_elem, addr){
 
     /*
     Find the pattern and flip to text
     */
 
     // ------------ find the pattern
-    
+
     if (elem.is('li')){ var patt = elem.text().split('\n')[0] }
     else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }
 
     // ------------ flip to text
 
-    window.location.href = 'text';                    // flip from html to textarea
+    window.location.href = addr;                    // flip from html to textarea
 
     // ------------ send informations
 

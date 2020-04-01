@@ -1,16 +1,36 @@
+/*
+
+*/
+
+var fs = require('fs');
+var count = require('./count_lines'); // ./static/js/
 
 
-exports.emit_from_read = function(socket, count, patt, text, scroll_html_pos){
+function emit_from_read_txt (socket, patt, scroll_html_pos, name, channel){
 
       /*
-      Emit after the data read
+      Emit after the data read for a given name and channel.. 
       */
 
-      socket.emit('message', text); // send the text read in html file to textarea
-      var line_number = count.find_line_of_pattern(text, patt)
-      var json_line_patt = JSON.stringify( {'line':line_number, 'pattern':patt} );
-      socket.emit('scroll', json_line_patt);  // send line number and pattern.. 
-      socket.emit('scroll_html', scroll_html_pos)  // scroll position in the html..
-      socket.emit('pattern', patt);       // send the pattern
+      fs.readFile('views/' + name + '.html', 'utf8', function (err,text) {
+              if (err) { return console.log(err); }
+
+              socket.emit(channel, text); // send the text read in html file to textarea
+              var line_number = count.find_line_of_pattern(text, patt)
+              var json_line_patt = JSON.stringify( {'line' : line_number, 'pattern' : patt} );
+              socket.emit('scroll', json_line_patt);            // send line number and pattern..
+              socket.emit('scroll_html', scroll_html_pos)       // scroll position in the html..
+              socket.emit('pattern', patt);                     // send the pattern
+
+        }); // end fs.readFile
+
+}
+exports.emit_from_read = function(socket, patt, scroll_html_pos){
+
+      /*
+      Emit after the data read toward different channels..
+      */
+
+      emit_from_read_txt (socket, patt, scroll_html_pos, 'main', 'message')
 
 }

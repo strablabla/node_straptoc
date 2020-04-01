@@ -25,7 +25,7 @@ var dic_modes_switch = { '.date': 1, 'li li': 0,
                          'li:not(:has(span))': 0} //,'h1':0,'h2':0}
 
 Object.entries(dic_modes_switch).forEach(([elem,i]) =>
-        dblclick_to_text(socket, $(elem), i, 'text')
+        dblclick_to_text(socket, $(elem), i, 'text_done')
 )
 
 </script>
