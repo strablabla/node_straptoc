@@ -37,8 +37,10 @@ function pattern_and_flip(socket, elem, take_elem, addr){
 
     // ------------ send informations
 
+    dcurrtxt = {'text':'main','text_done':'text_done'}
     socket.emit('scroll', patt );                     //  emit pattern toward html_app.js
     var scroll_html_pos = $(document).scrollTop()     // scroll pos in html
     socket.emit('scroll_html', scroll_html_pos);
+    socket.emit('curr_txt', dcurrtxt[addr]);
 
 }

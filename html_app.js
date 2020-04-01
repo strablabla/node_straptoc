@@ -46,6 +46,7 @@ init.static_addr(app,express)
 var io = require('socket.io')(server);
 global.patt = ''                 // pattern for scroll position, used in modify.textarea_html
 global.html_pos = 0              // position in html view,  used in modify.textarea_html
+global.curr_text = 'main'
 var comment = false;
 
 //----------- format strings..
@@ -67,7 +68,7 @@ io.sockets.on('connection', function (socket) {
       socket.on('join', function(data) { socket.emit('scroll', patt) });         // end socket.on join
 
       init.comm_voc(io)                                         //---- comm voc
-      modify.textarea_html(socket, io, fs, util, 'main')        //---- textarea to html and viceversa
+      modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                           //---- pdfs in folders
       //notes.send_notes(socket)
       notes.handle(socket)                                      // notes

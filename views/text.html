@@ -26,7 +26,7 @@
             var json_line_patt = JSON.parse(code);
             line_number = json_line_patt['line']
             var patt = json_line_patt['pattern']
-            if (comment){ alert('line_number is : '+ line_number) }
+            if (comment){ alert('line_number is : ' + line_number) }
 
             //-------------------------- CodeMirror
 
@@ -58,7 +58,7 @@
 
     //------------- from html to textarea
 
-    socket.on('message', function(message) {     // write html in textarea
+    socket.on('main_text', function(message) {     // write html in textarea
         $('#comment').val(message);
         if (comment){ alert('received message  !! ') }
       })
@@ -80,7 +80,8 @@
           });
 
     socket.on('page_return_to_html', function(){
-          document.getElementById('go_back').click();
+          //document.getElementById('go_back').click();
+          window.location.href = '/';
     })
 
 
