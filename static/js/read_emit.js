@@ -20,6 +20,7 @@ function emit_from_read_txt (socket, patt, scroll_html_pos, name, channel){
               socket.emit('scroll', json_line_patt);            // send line number and pattern..
               socket.emit('scroll_html', scroll_html_pos)       // scroll position in the html..
               socket.emit('pattern', patt);                     // send the pattern
+              //socket.emit('curr_txt', curr_text);               // send curr_text
 
         }); // end fs.readFile
 

@@ -19,6 +19,13 @@
     var comment = false;
     var scroll_html_pos = 0
     var pattern = ''
+    var new_loc = ''
+    //console.log('#### in text, curr_text is ' + global.curr_text)
+
+    // socket.on('curr_txt', function(mess) {  // save html position of scroll
+    //         curr_text = mess
+    //         console.log('in text, curr_text = ' + curr_text)
+    //   })
 
     //------------- Scroll position
 
@@ -58,9 +65,18 @@
 
     //------------- from html to textarea
 
-    socket.on('main_text', function(message) {     // write html in textarea
+    socket.on('main_text', function(message) {     // write html in textarea // dload[global.curr_text]
+        //console.log('curr_text in text.html is ' + curr_text)
         $('#comment').val(message);
         if (comment){ alert('received message  !! ') }
+        new_loc = '/'
+      })
+
+    socket.on('text_done', function(message) {     // write html in textarea // dload[global.curr_text]
+        //console.log('curr_text in text.html is ' + curr_text)
+        $('#comment').val(message);
+        if (comment){ alert('received message  !! ') }
+        new_loc = 'fait'
       })
 
     //-------------  pattern
@@ -80,8 +96,8 @@
           });
 
     socket.on('page_return_to_html', function(){
-          //document.getElementById('go_back').click();
-          window.location.href = '/';
+
+          window.location.href = new_loc;
     })
 
 

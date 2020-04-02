@@ -22,7 +22,6 @@ const options = {
 
 var app = express()
 var server =  https.createServer(options, app)
-//var server = http.createServer(app);
 
 nunjucks.configure('views', {
     autoescape: true,
@@ -33,8 +32,8 @@ nunjucks.configure('views', {
 
 app.get('/', function(req, res){ res.render('strap_small.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
-app.get('/text_done', function(req, res){ res.render('text_done.html'); });
 app.get('/fait', function(req, res){ res.render('fait.html'); });
+app.get('/text_done', function(req, res){ res.render('text_done.html'); });
 
 //--------------  static addresses
 
@@ -70,9 +69,7 @@ io.sockets.on('connection', function (socket) {
       init.comm_voc(io)                                         //---- comm voc
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                           //---- pdfs in folders
-      //notes.send_notes(socket)
       notes.handle(socket)                                      // notes
-
 
 }); // io.sockets.on connection
 
