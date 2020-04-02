@@ -5,12 +5,15 @@
 <meta charset="UTF-8">
 
 {% include 'header.html' %}
+
 <script  src="/edit_textarea.js"></script>
 <script  src="/code_mirror_addons.js"></script>
 <link rel="stylesheet" href="codemirror.css">
 <script src="codemirror.js"></script>
 <link rel="stylesheet" href="highlight.css">
+
 {% include 'textarea.html' %}
+
  <script src="/socket.io/socket.io.js"></script>
 
  <script>
@@ -20,12 +23,6 @@
     var scroll_html_pos = 0
     var pattern = ''
     var new_loc = ''
-    //console.log('#### in text, curr_text is ' + global.curr_text)
-
-    // socket.on('curr_txt', function(mess) {  // save html position of scroll
-    //         curr_text = mess
-    //         console.log('in text, curr_text = ' + curr_text)
-    //   })
 
     //------------- Scroll position
 
@@ -65,19 +62,14 @@
 
     //------------- from html to textarea
 
-    socket.on('main_text', function(message) {     // write html in textarea // dload[global.curr_text]
-        //console.log('curr_text in text.html is ' + curr_text)
-        $('#comment').val(message);
-        if (comment){ alert('received message  !! ') }
-        new_loc = '/'
-      })
-
-    socket.on('text_done', function(message) {     // write html in textarea // dload[global.curr_text]
-        //console.log('curr_text in text.html is ' + curr_text)
-        $('#comment').val(message);
-        if (comment){ alert('received message  !! ') }
-        new_loc = 'fait'
-      })
+    dchandir = { 'main_text':'/', 'text_done':'fait' }
+    Object.entries(dchandir).forEach(([elem,k]) =>
+          socket.on(elem, function(message) {     //
+              $('#comment').val(message);
+              if (comment){ alert('received message  !! ') }
+              new_loc = k
+            })
+    )
 
     //-------------  pattern
 
@@ -96,8 +88,7 @@
           });
 
     socket.on('page_return_to_html', function(){
-
-          window.location.href = new_loc;
+        window.location.href = new_loc;
     })
 
 
