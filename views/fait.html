@@ -1,19 +1,9 @@
-{% include 'begin.html' %}
-{% include 'header.html' %}
-{% include 'beg_straptoc.html' %}
-{% include 'straptoc_params.html' %}
+{% extends "base.html" %}
 
+{% block text %}
+   {% include 'done.html' %}
+{% endblock %}
 
-{% include 'done.html' %}
-
-{% include 'end_straptoc.html' %}
-{% include 'voice.html' %}
-{% include 'show_li.html' %}
-
-{% include 'scroll_socket.html' %}
-{% include 'notes.html' %}
-
-<!-- <script> global.curr_text = 'text_done' </script> -->
-
-{% include 'modif_css.html' %}
-{% include 'end.html' %}
+{% block plugins %}
+   {% include 'notes.html' %}
+{% endblock %}

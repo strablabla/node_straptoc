@@ -1,20 +1,13 @@
-{% include 'begin.html' %}
-{% include 'header.html' %}
-{% include 'beg_straptoc.html' %}
-{% include 'straptoc_params.html' %}
+{% extends "base.html" %}
 
-{% include 'main.html' %}
+{% block text %}
+    {% include 'main.html' %}
+{% endblock %}
 
-{% include 'end_straptoc.html' %}
-{% include 'voice.html' %}
-{% include 'show_li.html' %}
-
-{% include 'scroll_socket.html' %}
-{% include 'list_folders_for_extract.html' %}
-{% include 'extract_folder.html' %}
-{% include 'notes.html' %}
-{% include 'alerts.html' %}
-
-{% include 'djvu.html' %}
-{% include 'modif_css.html' %}
-{% include 'end.html' %}
+{% block plugins %}
+    {% include 'list_folders_for_extract.html' %}
+    {% include 'extract_folder.html' %}
+    {% include 'notes.html' %}
+    {% include 'alerts.html' %}
+    {% include 'djvu.html' %}
+{% endblock %}

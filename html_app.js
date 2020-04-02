@@ -33,7 +33,6 @@ nunjucks.configure('views', {
 app.get('/', function(req, res){ res.render('strap_small.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
 app.get('/fait', function(req, res){ res.render('fait.html'); });
-app.get('/text_done', function(req, res){ res.render('text_done.html'); });
 
 //--------------  static addresses
 
