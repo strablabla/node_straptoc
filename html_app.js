@@ -62,7 +62,7 @@ io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
       re.emit_from_read(socket, patt, html_pos)
-      util.save_regularly('main')                                                // save the regularly the text..
+      util.save_regularly_all()                                                // save the regularly the text..
       socket.on('join', function(data) { socket.emit('scroll', patt) });         // end socket.on join
 
       init.comm_voc(io)                                         //---- comm voc

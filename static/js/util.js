@@ -85,21 +85,32 @@ exports.save_current_version = function(data, with_date, name){
       });    // end writeFile
 }           // end save_current_version
 
-exports.save_regularly = function(name){
+function save_regularly(name){
 
       /*
       Saving regularly views/main.html
       */
 
       list_saved = []     // global
-      lim_nb_saved = 4   // max versions saved
-      var min_interv = 5  // interval in minute
-      setInterval(function() {
+      lim_nb_saved = 3   // max versions saved
+      var min_interv = 1  // interval in minute
+      setInterval(function(name) {
               fs.readFile('views/' + name + '.html', 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
                       console.log(make_date_full())
                       exports.save_current_version(data,true) // with date
                   });   // end fs.readFile
         }, parseInt(min_interv*60*1000)); // 300000 5 min  //10000 10 sec //600000 10 min
+
+}
+
+exports.save_regularly_all = function(){
+
+    /*
+    Saving regularly
+    */
+
+    save_regularly ('main')
+    save_regularly ('done')
 
 }
