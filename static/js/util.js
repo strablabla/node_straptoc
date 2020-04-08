@@ -6,7 +6,7 @@ Utilities
 
 var fs = require('fs');
 
-function make_date_full(){
+function make_date(depth){
 
       /*
       Build the text date
@@ -19,25 +19,8 @@ function make_date_full(){
       var day = date.getDate();
       var month = date.getMonth();
       var year = date.getFullYear();
-      var txt_date = [year, month, day, hour, minute, sec].join('_')
-
-      return txt_date
-
-}
-
-function make_date(){
-
-      /*
-      Build the text date
-      */
-
-      var date = new Date()
-      var minute = date.getMinutes();
-      var hour = date.getHours();
-      var day = date.getDate();
-      var month = date.getMonth();
-      var year = date.getFullYear();
-      var txt_date = [year, month, day, hour, minute].join('_')
+      var txt_date = [year, month, day, hour, minute, sec]
+      txt_date = txt_date.slice(0,depth).join('_')
 
       return txt_date
 
@@ -50,7 +33,7 @@ exports.save_current_version = function(data, with_date, name){
       */
 
       var basename = 'views/saved/'+ name +'_old'
-      txt_date = make_date()
+      txt_date = make_date(5)  // 6 --> sec
       if ( with_date ){             // case where it is saved with a date..
           //console.log('txt_date ' + txt_date)
           var namefile = basename + '_' + txt_date + ".html"
@@ -88,17 +71,25 @@ exports.save_current_version = function(data, with_date, name){
 function save_regularly(name){
 
       /*
-      Saving regularly views/main.html
+      Saving regularly views/ + name + .html
       */
 
-      list_saved = []     // global
-      lim_nb_saved = 3   // max versions saved
-      var min_interv = 1  // interval in minute
-      setInterval(function(name) {
-              fs.readFile('views/' + name + '.html', 'utf8', function (err,data) {
+      list_saved = []        // global
+      lim_nb_saved = 3       // max versions saved
+      var min_interv = 3     // interval in minute
+
+      console.log('reading before saving in utils.js.. ')
+      console.log('name is ' + name)
+
+      var addr = 'views/md/' + name + '.html'
+      console.log('addr is ' + addr)
+
+      setInterval(function() {
+              fs.readFile(addr, 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
-                      console.log(make_date_full())
-                      exports.save_current_version(data,true) // with date
+                      console.log(make_date(6)) // 6 --> sec
+                      console.log('inside setInterval, name.. is ' + name)
+                      exports.save_current_version(data, true, name) // with date
                   });   // end fs.readFile
         }, parseInt(min_interv*60*1000)); // 300000 5 min  //10000 10 sec //600000 10 min
 
@@ -107,10 +98,15 @@ function save_regularly(name){
 exports.save_regularly_all = function(){
 
     /*
-    Saving regularly
+    Saving regularly markdown files..
     */
 
-    save_regularly ('main')
-    save_regularly ('done')
+    try{
+        for (i in list_md){
+            save_regularly (list_md[i])
+        }
+    }catch(err){
+        console.log('saving did not work ')
+    }
 
 }

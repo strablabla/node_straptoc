@@ -1,9 +1,16 @@
+
 {% extends "base.html" %}
 
 {% block text %}
-   {% include 'done.html' %}
+    {% include "md/fait_md.html" %}
 {% endblock %}
 
 {% block plugins %}
-   {% include 'notes.html' %}
+    {% include 'list_folders_for_extract.html' %}
+    {% include 'extract_folder.html' %}
+    {% include 'notes.html' %}
+    {% include 'alerts.html' %}
+    {% include 'djvu.html' %}
+    {% include 'vid_playing.html' %}
 {% endblock %}
+

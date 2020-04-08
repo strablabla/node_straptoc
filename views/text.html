@@ -6,6 +6,7 @@
 
 {% include 'header.html' %}
 
+<script  src="global.js"></script>
 <script  src="/edit_textarea.js"></script>
 <script  src="/code_mirror_addons.js"></script>
 <link rel="stylesheet" href="codemirror.css">
@@ -62,7 +63,6 @@
 
     //------------- from html to textarea
 
-    dchandir = { 'main_text':'/', 'text_done':'fait' }
     Object.entries(dchandir).forEach(([elem,k]) =>
           socket.on(elem, function(message) {     //
               $('#comment').val(message);

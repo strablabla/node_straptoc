@@ -4,7 +4,7 @@ var express = require('express')
 var path = require("path");
 var open = require('open');
 var fs = require('fs');
-var nunjucks  = require('nunjucks');
+var nunjucks  = require('nunjucks');      // templating tool..
 var util = require('./static/js/util');
 var re = require('./static/js/read_emit');
 var modify = require('./static/js/modify_html');
@@ -27,10 +27,12 @@ nunjucks.configure('views', {
     autoescape: true,
     express: app,
     watch:true
-    // echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+    
 });
 
-app.get('/', function(req, res){ res.render('strap_small.html'); });
+//-------------
+
+app.get('/', function(req, res){ res.render('main.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
 app.get('/fait', function(req, res){ res.render('fait.html'); });
 
@@ -44,8 +46,12 @@ init.static_addr(app,express)
 var io = require('socket.io')(server);
 global.patt = ''                 // pattern for scroll position, used in modify.textarea_html
 global.html_pos = 0              // position in html view,  used in modify.textarea_html
-global.curr_text = 'main'
+global.curr_text = '#main'
 var comment = false;
+
+//-------------
+
+init.pages()
 
 //----------- format strings..
 
@@ -63,12 +69,12 @@ io.sockets.on('connection', function (socket) {
       console.log('A client is connected!');
       re.emit_from_read(socket, patt, html_pos)
       util.save_regularly_all()                                                // save the regularly the text..
-      socket.on('join', function(data) { socket.emit('scroll', patt) });         // end socket.on join
+      socket.on('join', function(data) { socket.emit('scroll', patt) });       // end socket.on join
 
-      init.comm_voc(io)                                         //---- comm voc
+      init.comm_voc(io)                                            //---- comm voc
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
-      folders.deals_with_pdfs(socket)                           //---- pdfs in folders
-      notes.handle(socket)                                      // notes
+      folders.deals_with_pdfs(socket)                              //---- pdfs in folders
+      notes.handle(socket)                                         //---- notes
 
 }); // io.sockets.on connection
 
