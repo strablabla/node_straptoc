@@ -11,8 +11,61 @@ Make the TOC for the pages..
 
 */
 
+var hover_pages = $('<div/>').attr('id','hover_pages')
+hover_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pages
+          'box-shadow': '0.5em 0.5em 0.7em',
+          'position': 'fixed',
+          'left': '1px',
+          'top': '80px',
+          'width': '20px',
+          'height': '20px',
+          //'font-size': '85%',
+          'z-index': '3'
+          })
+//$('#pages').draggable()
+$('#content').append(hover_pages)
 
-//alert('Helllooo list_pages is  !!!' + list_pages)
+var pages = $('<div/>').attr('id','pages')
+pages.css({'background-color':'rgb(100,104,102)', // List of pages
+          'box-shadow': '0.5em 0.5em 0.7em',
+          'padding-bottom':'50px',
+          'position': 'fixed',
+          'left': '20px',
+          'top': '80px',
+          'width': '100px',
+          'height': 'auto',
+          'color' : 'white',
+          //'font-size': '85%',
+          'z-index': '3'
+          })
+
+$('#content').append(pages)
+$('#pages').append($('<h1/>').text('Pages'))  // title
+$('#pages').append($('<ul/>').attr('id','all_pages'))
+
+function add_elem_pages_toc(curr_page, name){
+
+      var name = name || curr_page;
+      var link = $('<a/>').attr('href', '/' + curr_page).text(name)
+      link.addClass('main_pages')
+      var elem_list = $('<li/>').append(link)
+      $('#all_pages').append(elem_list)
+
+}
+$('#pages').hide()
+
+add_elem_pages_toc('main','Main')
+for (i in list_pages){
+      var curr_page = list_pages[i]
+      if (curr_page != 'main'){
+          add_elem_pages_toc(curr_page)
+      }
+}
+$('.main_pages').css({'color':'white'})
+$('#hover_pages').on('mouseover', function(){
+    //alert("yaaaahh")
+     $('#pages').toggle()
+})
 
 
 </script>
