@@ -5,7 +5,6 @@ Initialization
 */
 
 var fs = require('fs');
-//var express = require('express')
 
 
 exports.comm_voc = function(io){
@@ -20,7 +19,7 @@ exports.comm_voc = function(io){
           }); // end fs.readFile
   }
 
-exports.static_addr = function(app,express){
+exports.static_addr = function(app, express){
 
       /*
       Static addresses
@@ -55,6 +54,7 @@ function make_html_around_md(file){
     {% include 'alerts.html' %}
     {% include 'djvu.html' %}
     {% include 'vid_playing.html' %}
+    {% include 'pages.html' %}
 {% endblock %}
 
 */}.toString().slice(14,-3).replace('inserted_file',file)
@@ -71,16 +71,78 @@ function fill_globals(elem){
 
       global.dic_md['#' + elem] = elem + '_md'
       global.dic_md_name['#' + elem] = [elem + '_md', '_' + elem]
+      global.dic_text_id[elem] = 'text-#' + elem
       global.list_md.push(elem + '_md')
+      global.list_pages.push(elem)
+      global.dic_text_id[''] = 'text-#main'
 
 }
 
-exports.pages = function(){
+exports.handle_pages = function(app){
+
+  /*
+
+
+
+  */
+
+
+  fs.readdir('views/md', (err, files) => {
+
+        /*
+
+        Create the template html for each md file in views..
+
+        */
+
+        var lmd = []
+        var dic_app = {}
+        files.forEach(file => {
+            if (file.search('_md.html') != -1){
+                console.log('#### found md !!! it is ' + file)
+                model = make_html_around_md(file)                // template
+                console.log('#### model is ' + model)
+                var addr = 'views/' + file.replace('_md.html','.html')
+                var name = file.replace('_md.html','')
+                lmd.push(name)
+                dic_app[name] = {'path': '/' + name, 'html': name + '.html'}
+                //route_page(app, name)
+                fs.writeFile(addr, model, function(err) {   // create the template
+                      if(err) { return console.log(err); }
+                      console.log("The file was saved at {} !".format(addr));
+                });    // end writeFile
+            }
+        }) // end for
+        var data0 = JSON.stringify(lmd)
+        //console.log("########## lmd is " + data)
+        //io.sockets.emit('pages', data)
+        var namefile0 = 'static/pages.json'
+        fs.writeFile(namefile0 , data0, function(err) {
+                if(err) { return console.log(err); }
+                console.log("The file was saved as {} !".format(namefile0));
+
+                pages()
+
+                Object.keys(dic_app).forEach(function(key) {
+                    var page = dic_app[key];
+                    app.get(page.path,function(req, res){
+                         res.render(page.html);
+                    });
+                });
+
+          });    // end writeFile
+
+    }) // end readdir
+
+}
+
+function pages(){
 
       /*
 
       */
 
+      //handle_pages()
       fs.readFile('static/pages.json', 'utf8', function (err,text) {
 
           /*
@@ -94,41 +156,23 @@ exports.pages = function(){
          dic_glob = {}
          global.dic_md = {}
          global.dic_md_name = {}
+         global.dic_text_id = {}
          global.list_md = []  // list markdowns
+         global.list_pages = []  // list pages
          for (i in list_pages){
              var elem = list_pages[i]
              dic_glob['_' + elem] = elem
              fill_globals(elem)
          }
          dic_glob['_main'] = '/'
-         data = 'var dchandir = ' + JSON.stringify(dic_glob)
+         data = 'var dchandir = ' + JSON.stringify(dic_glob) + '\n'
+         data += 'var list_pages = ' + JSON.stringify(global.list_pages) + '\n'
+         data += 'var dic_text_id = ' + JSON.stringify(global.dic_text_id) + '\n'
          var namefile = 'scripts/global.js'
             fs.writeFile(namefile , data, function(err) {
                if(err) { return console.log(err); }
                console.log("The file was saved as {} !".format(namefile));
               });    // end writeFile
         }); // end fs.readFile
-
-        fs.readdir('views/md', (err, files) => {
-
-              /*
-
-              Create the template html for each md file in views..
-
-              */
-
-              files.forEach(file => {
-                  if (file.search('_md.html') != -1){
-                      console.log('#### found md !!! it is ' + file)
-                      model = make_html_around_md(file)
-                      console.log('#### model is ' + model)
-                      var addr = 'views/' + file.replace('_md.html','.html')
-                      fs.writeFile(addr, model, function(err) {
-                            if(err) { return console.log(err); }
-                            console.log("The file was saved at {} !".format(addr));
-                      });    // end writeFile
-                  }
-              })
-          }) // end readdir
 
   }

@@ -1,4 +1,5 @@
 
+<script  src="global.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="dbl_click_move_to_text.js"></script>
 
@@ -25,10 +26,10 @@ var dic_modes_switch = { '.date': 1, 'li li': 0,
                          'li:not(:has(span))': 0} //,'h1':0,'h2':0}
 console.log('############  in scroll_socket curr_text is ' + window.location.href.split('//')[1].split('/'))
 var loc = window.location.href.split('//')[1].split('/')[1]
-ddirtxt = {'':'text-#main','fait':'text-#fait'} // addr, text-curr_text
+//ddirtxt = {'':'text-#main','fait':'text-#fait'} // addr, text-curr_text
 
-Object.entries(dic_modes_switch).forEach(([elem,i]) =>
-        dblclick_to_text(socket, $(elem), i, ddirtxt[loc])
+Object.entries(dic_modes_switch).forEach(([elem, i]) =>
+        dblclick_to_text(socket, $(elem), i, dic_text_id[loc])
 )
 
 

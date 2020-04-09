@@ -2,7 +2,9 @@
 function modify_html_with_newtext(io, fs, util, new_text, name){
 
     /*
+
     Save the new version of the text..
+
     */
 
     console.log('save before changing the text')
@@ -19,7 +21,9 @@ function modify_html_with_newtext(io, fs, util, new_text, name){
 exports.textarea_html = function(socket, io, fs, util, currtxt){
 
     /*
+
     Handle text in textarea..
+    
     */
 
     socket.on('return', function(new_text) {        // change html with textarea

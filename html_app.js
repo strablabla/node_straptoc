@@ -27,18 +27,17 @@ nunjucks.configure('views', {
     autoescape: true,
     express: app,
     watch:true
-    
+
 });
 
-//-------------
+init.handle_pages(app)
 
 app.get('/', function(req, res){ res.render('main.html'); });
 app.get('/text', function(req, res){ res.render('text.html'); });
-app.get('/fait', function(req, res){ res.render('fait.html'); });
 
 //--------------  static addresses
 
-init.static_addr(app,express)
+init.static_addr(app, express)
 
 //--------------  websocket
 
@@ -48,10 +47,6 @@ global.patt = ''                 // pattern for scroll position, used in modify.
 global.html_pos = 0              // position in html view,  used in modify.textarea_html
 global.curr_text = '#main'
 var comment = false;
-
-//-------------
-
-init.pages()
 
 //----------- format strings..
 

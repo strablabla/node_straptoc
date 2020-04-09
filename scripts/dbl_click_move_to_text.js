@@ -31,6 +31,7 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
     else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }
 
     // ------------ flip to text
+
     var addr = addr_chann.split('-')[0]
     var curr_text = addr_chann.split('-')[1]
     window.location.href = addr;                    // flip from html to textarea
