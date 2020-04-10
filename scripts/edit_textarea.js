@@ -1,11 +1,15 @@
 /*
+
 Textarea edition
+
 */
 
 function wrap_hyperlink(aster, sel){
 
       /*
+
       markdown syntax for hyperlink
+
       */
 
       var subsel = sel.split('\/')

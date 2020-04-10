@@ -8,7 +8,9 @@ var count = require('./count_lines'); // ./static/js/
 function emit_from_read_txt (socket, patt, scroll_html_pos, id){
 
       /*
+
       Emit after the data read for a given name and channel..
+      
       */
 
       name = id[0]
@@ -32,7 +34,9 @@ function emit_from_read_txt (socket, patt, scroll_html_pos, id){
 exports.emit_from_read = function(socket, patt, scroll_html_pos){
 
       /*
+
       Emit after the data read toward different channels..
+
       */
 
       console.log('in read_emit.js, curr_text is ' + curr_text)

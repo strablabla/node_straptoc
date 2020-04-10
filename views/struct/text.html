@@ -4,7 +4,7 @@
 
 <meta charset="UTF-8">
 
-{% include 'header.html' %}
+{% include 'page_struct/header.html' %}
 
 <script  src="global.js"></script>
 <script  src="/edit_textarea.js"></script>
@@ -13,7 +13,7 @@
 <script src="codemirror.js"></script>
 <link rel="stylesheet" href="highlight.css">
 
-{% include 'textarea.html' %}
+{% include 'struct/textarea.html' %}
 
  <script src="/socket.io/socket.io.js"></script>
 
@@ -73,7 +73,7 @@
 
     //-------------  pattern
 
-    socket.on('pattern', function(patt) {
+    socket.on('pattern', function(patt) {   // pattern to be found in the md text..
           pattern = patt
       })
 
@@ -88,7 +88,7 @@
           });
 
     socket.on('page_return_to_html', function(){
-        window.location.href = new_loc;
+        window.location.href = new_loc;   // return to html..
     })
 
 

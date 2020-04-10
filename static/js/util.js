@@ -9,7 +9,11 @@ var fs = require('fs');
 function make_date(depth){
 
       /*
-      Build the text date
+
+      Build the text date,
+      year, month, day, hour, minute, sec
+      depth = 6 --> goes to the seconds..
+
       */
 
       var date = new Date()
@@ -29,7 +33,10 @@ function make_date(depth){
 exports.save_current_version = function(data, with_date, name){
 
       /*
-      Save the current main.html in views/saved/main_old.html
+
+      Save the current file name.html
+      in views/saved
+
       */
 
       var basename = 'views/saved/'+ name +'_old'
@@ -71,12 +78,14 @@ exports.save_current_version = function(data, with_date, name){
 function save_regularly(name){
 
       /*
-      Saving regularly views/ + name + .html
+
+      Saving regularly views/saved/ + name + .html
+
       */
 
-      list_saved = []        // global
-      lim_nb_saved = 3       // max versions saved
-      var min_interv = 3     // interval in minute
+      list_saved = []         // global
+      lim_nb_saved = 3        // max versions saved
+      var min_interv = 10     // interval in minute
 
       console.log('reading before saving in utils.js.. ')
       console.log('name is ' + name)
@@ -98,12 +107,14 @@ function save_regularly(name){
 exports.save_regularly_all = function(){
 
     /*
+    
     Saving regularly markdown files..
+
     */
 
     try{
-        for (i in list_md){
-            save_regularly (list_md[i])
+        for (md_file of list_md){
+            save_regularly (md_file)
         }
     }catch(err){
         console.log('saving did not work ')

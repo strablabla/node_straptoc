@@ -1,0 +1,21 @@
+<script>
+
+/*
+
+Change height and width for audio format..
+
+*/
+
+$('video').each(function(){
+
+    var src = $(this).attr('src')
+    if (src.search('.mp3') != -1){
+
+      $(this).css({'height':'50px','width':'400px'})
+
+    }
+
+})
+
+
+</script>

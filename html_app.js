@@ -33,7 +33,7 @@ nunjucks.configure('views', {
 init.handle_pages(app)
 
 app.get('/', function(req, res){ res.render('main.html'); });
-app.get('/text', function(req, res){ res.render('text.html'); });
+app.get('/text', function(req, res){ res.render('struct/text.html'); });
 
 //--------------  static addresses
 

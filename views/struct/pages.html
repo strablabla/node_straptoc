@@ -55,8 +55,7 @@ function add_elem_pages_toc(curr_page, name){
 $('#pages').hide()
 
 add_elem_pages_toc('main','Main')
-for (i in list_pages){
-      var curr_page = list_pages[i]
+for (var curr_page of list_pages){
       if (curr_page != 'main'){
           add_elem_pages_toc(curr_page)
       }

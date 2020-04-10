@@ -1,17 +1,17 @@
 
-{% extends "base.html" %}
+{% extends "page_struct/base.html" %}
 
 {% block text %}
     {% include "md/main_md.html" %}
 {% endblock %}
 
 {% block plugins %}
-    {% include 'list_folders_for_extract.html' %}
-    {% include 'extract_folder.html' %}
-    {% include 'notes.html' %}
-    {% include 'alerts.html' %}
-    {% include 'djvu.html' %}
-    {% include 'vid_playing.html' %}
-    {% include 'pages.html' %}
+    {% include 'plugins/list_folders_for_extract.html' %}
+    {% include 'plugins/extract_folder.html' %}
+    {% include 'plugins/notes.html' %}
+    {% include 'plugins/alerts.html' %}
+    {% include 'plugins/djvu.html' %}
+    {% include 'plugins/vid_playing.html' %}
+    {% include 'plugins/audio.html' %}
 {% endblock %}
 

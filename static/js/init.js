@@ -6,11 +6,12 @@ Initialization
 
 var fs = require('fs');
 
-
 exports.comm_voc = function(io){
 
       /*
+
       Dictionary for vocal commands..
+
       */
 
       fs.readFile('static/comm_voc.json', 'utf8', function (err,text) {
@@ -22,39 +23,40 @@ exports.comm_voc = function(io){
 exports.static_addr = function(app, express){
 
       /*
+
       Static addresses
+
       */
 
       fs.readFile('static/addr.json', 'utf8', function (err,text) {
               if (err) { return console.log(err); }
                let dic_addr = JSON.parse(text);
-               for (i in dic_addr){
-                   console.log(dic_addr[i])
-                   app.use(express.static(dic_addr[i]));
+               for (stat_addr of dic_addr){
+                   console.log(stat_addr)
+                   app.use(express.static(stat_addr));
                }
           }); // end fs.readFile
 
     }
 
-
 function make_html_around_md(file){
 
   var model = function(){/*
 
-{% extends "base.html" %}
+{% extends "page_struct/base.html" %}
 
 {% block text %}
     {% include "md/inserted_file" %}
 {% endblock %}
 
 {% block plugins %}
-    {% include 'list_folders_for_extract.html' %}
-    {% include 'extract_folder.html' %}
-    {% include 'notes.html' %}
-    {% include 'alerts.html' %}
-    {% include 'djvu.html' %}
-    {% include 'vid_playing.html' %}
-    {% include 'pages.html' %}
+    {% include 'plugins/list_folders_for_extract.html' %}
+    {% include 'plugins/extract_folder.html' %}
+    {% include 'plugins/notes.html' %}
+    {% include 'plugins/alerts.html' %}
+    {% include 'plugins/djvu.html' %}
+    {% include 'plugins/vid_playing.html' %}
+    {% include 'plugins/audio.html' %}
 {% endblock %}
 
 */}.toString().slice(14,-3).replace('inserted_file',file)
@@ -66,6 +68,8 @@ return model
 function fill_globals(elem){
 
       /*
+
+      Create the global variables used for pages communication..
 
       */
 
@@ -85,7 +89,6 @@ exports.handle_pages = function(app){
 
 
   */
-
 
   fs.readdir('views/md', (err, files) => {
 
@@ -140,9 +143,9 @@ function pages(){
 
       /*
 
+
       */
 
-      //handle_pages()
       fs.readFile('static/pages.json', 'utf8', function (err,text) {
 
           /*
@@ -159,10 +162,9 @@ function pages(){
          global.dic_text_id = {}
          global.list_md = []  // list markdowns
          global.list_pages = []  // list pages
-         for (i in list_pages){
-             var elem = list_pages[i]
-             dic_glob['_' + elem] = elem
-             fill_globals(elem)
+         for (var page of list_pages){
+             dic_glob['_' + page] = page
+             fill_globals(page)
          }
          dic_glob['_main'] = '/'
          data = 'var dchandir = ' + JSON.stringify(dic_glob) + '\n'
