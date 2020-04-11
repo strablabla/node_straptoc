@@ -22,7 +22,7 @@ $('#content').append(hover_play_list)
 
 var elem0 = $('<div/>').attr('id','vid_play_list')
 $('#content').append(elem0)
-elem0.css({'background-color':'rgb(225,204,252, 0.5)', // Current play list..
+elem0.css({'background-color':'rgb(225,204,252, 0.9)', // Current play list..
           'box-shadow': '0.5em 0.5em 0.7em',
           'padding-bottom': '40px',
           'padding-top': '10px',
@@ -35,39 +35,88 @@ elem0.css({'background-color':'rgb(225,204,252, 0.5)', // Current play list..
           'height': 'auto',
           'z-index': '3'
           })
-$('#vid_play_list').append($('<h3/>').text('selected medias'))
-var list_vid = []
+$('#vid_play_list').append($('<h3/>').css({'text-align':'center'}).text('selected medias'))
+
+
+function reinit_action(selection, elem, action){
+
+  elem.each(function(){
+        if( $(this).attr('index') != selection.attr('index') ){
+              eval(action)
+        }
+   })
+}
+
+function reinitialize(selection){
+
+  reinit_action(selection, $('.vid_selected'),'$(this)[0].pause()')
+  reinit_action(selection, $('.elem_list_play_selected'),"$(this).css({'color':'black'})")
+  reinit_action(selection, $('.ul_selected'),'$(this).hide()')
+
+}
+
+function selection_click(elem_li, selection){
+
+      /*
+
+      Actions produced when clicking the element of the play_list..
+
+      */
+
+      selection.click(function(){
+           reinitialize($(this))
+           var currid = $(this).attr('id').split('sel_')[1] // vid current id ..
+           var currvidid = '#' + currid
+           var sel_vid = $(currvidid)[0]
+           if (sel_vid.paused){                      // if video stopped.
+               selection.css({'color':'blue'})
+               sel_vid.play()
+             }else{                                  // if video active..
+              selection.css({'color':'black'})
+              sel_vid.pause()
+            }
+            elem_li.children('ul').toggle()             // toggle the media..
+      })
+
+
+}
+
+function fill_play_list(elem_li, vid_id, numsel){
+
+      /*
+
+      Create the play_list..
+
+      */
+
+      var currid = 'vid_num' + numsel
+      var selection = $('<div/>')
+      selection.addClass('elem_list_play_selected').attr('index', numsel)
+      selection.attr('src', vid_id)
+      selection.attr('id', 'sel_' + currid)
+      selection.text('...' + vid_id.slice(-30,-4))
+      $('#vid_play_list').append(selection)     // add media title to the play list..
+      selection_click(elem_li, selection)
+
+}
+
+var list_vid = [] // list of videos fingerprint..
 var numsel = 0
 $("li").click( function(){
     var elem_li = $(this)
     var vid = elem_li.find('ul li div video')
-    if (vid ){
-        if(elem_li.children('ul').hasClass('strapvid')){
+    if ( vid ){
+        if(elem_li.children('ul').hasClass('strapvid')){  // filter the li element..
             var vid_id = vid.attr('src')
             if (list_vid.indexOf(vid_id) == -1){
-                var currid = 'vid_num' + numsel
-                vid.attr('id',currid)
+                //alert('numsel is ' + numsel)
+                elem_li.children('ul').addClass('ul_selected').attr('index', numsel)
+                vid.attr('id', 'vid_num' + numsel).attr('index', numsel)             // number associated to the video..
+                vid.addClass('vid_selected')       // assigning class vid_selected to all the video selected..
                 elem_li.css({'color':'green'})
-                list_vid.push(vid_id)             // save in list
+                list_vid.push(vid_id)             // save the videos id to avoid doublons.
                 //-----------
-                var selection = $('<div/>')
-                selection.addClass('vid_selected')
-                selection.attr('src',vid_id)
-                selection.text('...' + vid_id.slice(-30,-4))
-                $('#vid_play_list').append(selection)     // add elem to the panel..
-                selection.click(function(){
-                     var currvidid = '#' + currid
-                     var sel_vid = $(currvidid)[0]
-                     //alert(sel_vid.paused)
-                     if (sel_vid.paused){
-                         selection.css({'color':'blue'})
-                         sel_vid.play()
-                       }else{
-                        selection.css({'color':'black'})
-                        sel_vid.pause()
-                      }
-                      elem_li.children().toggle()
-                })
+                fill_play_list(elem_li, vid_id, numsel)
             }
             numsel += 1
        }
@@ -76,7 +125,7 @@ $("li").click( function(){
 
 $('#vid_play_list').hide()
 
-$('#hover_play_list').on('mouseover', function(){
+$('#hover_play_list').on('mouseover', function(){  // show / hide play_list
      $('#vid_play_list').toggle()
 })
 
