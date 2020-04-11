@@ -8,7 +8,7 @@ Indicates where the video is being played and gives a link to it..
 
 var elem0 = $('<div/>').attr('id','vid_playing')
 $('#content').append(elem0)
-elem0.css({'background-color':'rgb(255,104,102)', // indicates where is the vid beig played..
+elem0.css({'background-color':'rgb(255,104,102)', // indicates where is the vid being played..
           'box-shadow': '0.5em 0.5em 0.7em',
           'position': 'absolute',
           'left': '200px',
@@ -22,7 +22,7 @@ $('#vid_playing').hide()
 
 var elem1 = $('<a/>').attr('id','vid_name')
 $('#content').append(elem1)
-elem1.css({'background-color':'rgb(255,104,102)', // bar for video with link..
+elem1.css({'background-color':'rgb(255,104,102)', // bottom window bar for video with link..
           'box-shadow': '0.5em 0.5em 0.7em',
           'position': 'fixed',
           'padding-top':'5px',
@@ -39,17 +39,19 @@ elem1.css({'background-color':'rgb(255,104,102)', // bar for video with link..
 $('#vid_name').hide()
 $('#vid_name').attr('href','#vid_playing')
 
-$("video").on('play', function() {
+$("video").on('play', function() {     // on play
 
      var offset = $(this).offset()
-     var x = offset.left-100 // position of indicator
-     var y = offset.top-0
+     var x = offset.left-100                               // x position of indicator
+     var y = offset.top                                    // y position of indicator
      $('#vid_playing').show()
-     $('#vid_name').text($(this).attr('src')).show()
-     $('#vid_playing').css({ 'left': x, 'top': y })
+     $('#vid_name').text($(this).attr('src')).show()       // video with link
+     $('#vid_playing').css({ 'left': x, 'top': y })        // indicator
+     $(this)[0].volume = 0.5                               // halving the video volume
+
  });
 
- $("video").on('pause', function() {
+ $("video").on('pause', function() {   // on pause
 
       $('#vid_playing').hide()
       $('#vid_name').hide()

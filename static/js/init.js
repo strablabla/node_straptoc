@@ -57,6 +57,7 @@ function make_html_around_md(file){
     {% include 'plugins/djvu.html' %}
     {% include 'plugins/vid_playing.html' %}
     {% include 'plugins/audio.html' %}
+    {% include 'plugins/play_list_vid.html' %}
 {% endblock %}
 
 */}.toString().slice(14,-3).replace('inserted_file',file)
