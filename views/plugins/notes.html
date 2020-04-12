@@ -35,7 +35,7 @@ function fill_note(elem, id, postop){
 
       */
 
-      var butt_close = $('<input/>').attr({
+      var butt_close = $('<input/>').attr({   // close button
                type: "button",
                id: "reduce_note",
                value: "x",
@@ -44,7 +44,7 @@ function fill_note(elem, id, postop){
            });
       butt_close.css({"position":"absolute", "top":"8px","right":"10px"})
 
-      var butt_reduce = $('<input/>').attr({
+      var butt_reduce = $('<input/>').attr({  // reduce size button
                type: "button",
                id: "reduce_note",
                value: "-",
@@ -53,7 +53,7 @@ function fill_note(elem, id, postop){
            });
       butt_reduce.css({"position":"absolute", "top":"8px","left":"10px"})
 
-      var butt_save = $('<input/>').attr({
+      var butt_save = $('<input/>').attr({   // save button
                type: "button",
                id: "save_note",
                value: "save",

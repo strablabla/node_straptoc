@@ -9,7 +9,6 @@ Notes
 var fs = require('fs');
 
 
-
 exports.handle = function(socket){
 
     socket.on('ask_notes', function(){

@@ -3,14 +3,14 @@
 */
 
 var fs = require('fs');
-var count = require('./count_lines'); // ./static/js/
+var count = require('./count_lines'); 
 
 function emit_from_read_txt (socket, patt, scroll_html_pos, id){
 
       /*
 
       Emit after the data read for a given name and channel..
-      
+
       */
 
       name = id[0]

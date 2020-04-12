@@ -11,6 +11,7 @@ exports.comm_voc = function(io){
       /*
 
       Dictionary for vocal commands..
+      Load and send it..
 
       */
 
@@ -25,6 +26,7 @@ exports.static_addr = function(app, express){
       /*
 
       Static addresses
+      Load them and create the routing with express.. 
 
       */
 

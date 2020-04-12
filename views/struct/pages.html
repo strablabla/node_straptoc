@@ -1,8 +1,8 @@
 
 <script  src="global.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 
 <script>
-
 
 /*
 
@@ -11,7 +11,66 @@ Make the TOC for the pages..
 
 */
 
-var hover_pages = $('<div/>').attr('id','hover_pages') // small square for hovering.. 
+var socket = io.connect();
+
+function reload_js(src) {
+    $('script[src="' + src + '"]').remove();
+    $('<script>').attr('src', src).appendTo('head');
+}
+
+var enter_new_page = $('<div/>').attr('id','enter_new_page')
+enter_new_page.css({'background-color':'rgb(100,104,102)',
+          'padding-left': '50px',
+          'padding-right': '20px',
+          'padding-bottom': '2px',
+          'padding-top': '10px',
+          'margin-right': '20px',
+          'margin-left': '20px',
+          'box-shadow': '0.5em 0.5em 0.7em',
+          'position': 'fixed',
+          'left': '100px',
+          'top': '100px',  //function(){return $('#page').attr('height')}
+          'width': '300px',
+          'height': '70px',
+          'max-height': '300px',
+          //'font-size': '85%',
+          'z-index': '4',
+          'color': 'black'
+          })
+
+var butt_save_new_page = $('<input/>').attr({   // save button
+         type: "button",
+         id: "save_new_page",
+         value: "save",
+         class: "btn btn-warning"
+     });
+
+var input_name = $('<input type="text" id="name_new_page" name="name" required minlength="3" maxlength="11" size="12"> ')
+input_name.css({'height':'30px', 'width':'150px', 'margin-top':'7px'})
+butt_save_new_page.css({'height':'30px', 'padding-top':'1.2px'})
+enter_new_page.append(input_name)
+enter_new_page.append(butt_save_new_page)
+enter_new_page.hide()
+
+$('#content').append(enter_new_page)
+
+$('#name_new_page').show()
+
+butt_save_new_page.click(function(){            // send note to server..
+
+    enter_new_page.hide()
+    socket.emit('new_page', input_name.val());
+
+})
+
+socket.on('load_new_page',function(){
+
+  reload_js('global.js');
+  fill_list_page()
+
+})
+
+var hover_pages = $('<div/>').attr('id','hover_pages') // small square for hovering..
 hover_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pages
           'box-shadow': '0.5em 0.5em 0.7em',
           'position': 'fixed',
@@ -22,17 +81,16 @@ hover_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pag
           //'font-size': '85%',
           'z-index': '3'
           })
-//$('#pages').draggable()
 $('#content').append(hover_pages)
 
 var pages = $('<div/>').attr('id','pages')
 pages.css({'background-color':'rgb(100,104,102)', // List of pages
           'box-shadow': '0.5em 0.5em 0.7em',
-          'padding-bottom':'50px',
+          'padding-bottom':'40px',
           'position': 'fixed',
           'left': '20px',
           'top': '80px',
-          'width': '100px',
+          'width': '120px', // '100px'
           'height': 'auto',
           'color' : 'white',
           //'font-size': '85%',
@@ -49,22 +107,38 @@ function add_elem_pages_toc(curr_page, name){
       var link = $('<a/>').attr('href', '/' + curr_page).text(name)
       link.addClass('main_pages')
       var elem_list = $('<li/>').append(link)
-      $('#all_pages').append(elem_list)
+      $('#all_pages').append(elem_list)    // add name of pages in #all_pages
 
 }
 $('#pages').hide()
 
-add_elem_pages_toc('main','Main')
-for (var curr_page of list_pages){
-      if (curr_page != 'main'){
-          add_elem_pages_toc(curr_page)
+function fill_list_page(){
+
+      $('#all_pages').empty()
+      add_elem_pages_toc('main','Main') //  add Main in first position in #all_pages
+      for (var curr_page of list_pages){
+            if (curr_page != 'main'){
+                add_elem_pages_toc(curr_page)
+            }
       }
+      $('#all_pages').append($('<div/>').text('+').css({'margin-left':'30px'}).attr('id','add_page')) // .css({'left':'5px'})
+      $('.main_pages').css({'color':'white'})
+      $('#add_page').click(function(){
+         butt_offset = $(this).offset()
+         $('#enter_new_page').css({ 'top' : butt_offset.top })
+         $('#enter_new_page').toggle()
+
+
+      })
+
 }
-$('.main_pages').css({'color':'white'})
+
+fill_list_page()
+
 $('#hover_pages').on('mouseover', function(){
-    //alert("yaaaahh")
      $('#pages').toggle()
 })
+
 
 
 </script>
