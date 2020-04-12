@@ -4,6 +4,8 @@
 
 <meta charset="UTF-8">
 
+<script src="keymaster.js"></script>
+
 {% include 'page_struct/header.html' %}
 
 <script  src="global.js"></script>
@@ -24,6 +26,7 @@
     var scroll_html_pos = 0
     var pattern = ''
     var new_loc = ''
+    var editor;
 
     //------------- Scroll position
 
@@ -35,7 +38,7 @@
 
             //-------------------------- CodeMirror
 
-            var editor = CodeMirror.fromTextArea(document.getElementById("comment"), {
+            editor = CodeMirror.fromTextArea(document.getElementById("comment"), {
                   lineNumbers: true,
                   mode: 'markdown'
             });
@@ -73,15 +76,15 @@
 
     //-------------  pattern
 
-    socket.on('pattern', function(patt) {   // pattern to be found in the md text..
+    socket.on('pattern', function(patt) {              // pattern to be found in the md text..
           pattern = patt
       })
 
-    $('#go_back').click(function(){               // submit new text.. from text to html
+    $('#go_back').click(function(){                     // submit new text.. from text to html
           socket.emit('scroll_html', scroll_html_pos);
         }) // end click
 
-    $('.form-group').bind('contextmenu', function(e){  // when clicking right go back to html
+    $('.form-group').bind('contextmenu', function(e){   // when clicking right go back to html
           e.preventDefault();
           document.getElementById('submit').click();
           return false;
@@ -90,6 +93,14 @@
     socket.on('page_return_to_html', function(){
         window.location.href = new_loc;   // return to html..
     })
+
+    document.addEventListener('keydown', function(event) {
+      //if (event.ctrlKey && event.key === 'z') {
+      if (event.altKey && event.key === 's') {
+            document.getElementById('submit').click();
+            return false;
+  }
+});
 
 
 </script>
