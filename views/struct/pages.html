@@ -6,14 +6,13 @@
 
 /*
 
-
-Make the TOC for the pages..
+Make the list of the pages for navigating from one page to another..
 
 */
 
 var socket = io.connect();
 
-function reload_js(src) {
+function reload_js(src) {                     // reload a script..
     $('script[src="' + src + '"]').remove();
     $('<script>').attr('src', src).appendTo('head');
 }
@@ -49,8 +48,8 @@ var input_name = $('<input type="text" id="name_new_page" name="name" required m
 input_name.css({'height':'30px', 'width':'150px', 'margin-top':'7px'})
 butt_save_new_page.css({'height':'30px', 'padding-top':'1.2px'})
 enter_new_page.append(input_name)
-enter_new_page.append(butt_save_new_page)
-enter_new_page.hide()
+              .append(butt_save_new_page)
+              .hide()
 
 $('#content').append(enter_new_page)
 
@@ -99,36 +98,48 @@ pages.css({'background-color':'rgb(100,104,102)', // List of pages
 
 $('#content').append(pages)
 $('#pages').append($('<h1/>').text('Pages'))  // title
-$('#pages').append($('<ul/>').attr('id','all_pages'))
+           .append($('<ul/>').attr('id','all_pages'))
 
 function add_elem_pages_toc(curr_page, name){
 
+      /*
+
+      Add link toward page to #all_pages'
+
+      */
+
       var name = name || curr_page;
-      var link = $('<a/>').attr('href', '/' + curr_page).text(name)
+      var link = $('<a/>').attr('href', '/' + curr_page)
+                          .attr('id','link_' + curr_page)
+                          .text(name)
       link.addClass('main_pages')
       var elem_list = $('<li/>').append(link)
       $('#all_pages').append(elem_list)    // add name of pages in #all_pages
 
 }
-$('#pages').hide()
+
+var curr_page = window.location.href.split('//')[1].split('/')[1] || ''
+if(curr_page == '' ){  $('#pages').hide() }
 
 function fill_list_page(){
 
       $('#all_pages').empty()
       add_elem_pages_toc('main','Main') //  add Main in first position in #all_pages
+      $('#link_main').attr('href','/')
       for (var curr_page of list_pages){
             if (curr_page != 'main'){
                 add_elem_pages_toc(curr_page)
             }
       }
-      $('#all_pages').append($('<div/>').text('+').css({'margin-left':'30px'}).attr('id','add_page')) // .css({'left':'5px'})
+      var plus_butt = $('<div/>').text('+')
+                                 .css({'margin-left':'25px','margin-top':'10px'})
+                                 .attr('id','add_page')
+      $('#all_pages').append(plus_butt) // .css({'left':'5px'})
       $('.main_pages').css({'color':'white'})
       $('#add_page').click(function(){
-         butt_offset = $(this).offset()
-         $('#enter_new_page').css({ 'top' : butt_offset.top })
-         $('#enter_new_page').toggle()
-
-
+           butt_offset = $(this).offset()
+           $('#enter_new_page').css({ 'top' : butt_offset.top })
+                               .toggle()
       })
 
 }
@@ -138,7 +149,5 @@ fill_list_page()
 $('#hover_pages').on('mouseover', function(){
      $('#pages').toggle()
 })
-
-
 
 </script>
