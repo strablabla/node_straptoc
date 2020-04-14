@@ -99,6 +99,29 @@ $('h3').css({'color':'#d27979', 'font-family': "libre_carlson_display", 'font-st
 $('#toc').css({'width':'auto !important', 'font-size':'14px', 'top':'70px'})
 $('.date').css({"font-family": "'Enriqueta', serif", 'color':'#000000'})
 $('.navbar').css({'position':'fixed'})
+$('.todotheme').css({'width':'auto', 'height':'700px','margin-right':'300px'})
+
+// ------------------- actions on elements after date..
+
+var dic_li = { 'job' : {'color':'blue'} }
+$('li').each(function(){
+  var elem = $(this).parent().prev()
+  if ( elem.hasClass('date') ){
+      var rubr = $(this).text()
+                        .split('[-]')[0].trim()
+                        .split('\n')[0].trim()
+      for (const [elem,k] of Object.entries(dic_li)) {
+              if( rubr == 'job' ){ $(this).css({'color':'blue'}) }
+      }
+    }
+})
+
+// ----------------
+
+$('#text').hide()
+
+//$('a').attr('icon','false')
+
 //$('h1').css({'font-family': "'Enriqueta', serif", 'text-shadow':'none'})
 
 

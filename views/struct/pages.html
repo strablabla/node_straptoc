@@ -57,15 +57,15 @@ $('#name_new_page').show()
 
 butt_save_new_page.click(function(){            // send note to server..
 
-    enter_new_page.hide()
-    socket.emit('new_page', input_name.val());
+      enter_new_page.hide()
+      socket.emit('new_page', input_name.val());
 
 })
 
 socket.on('load_new_page',function(){
 
-  reload_js('global.js');
-  fill_list_page()
+      reload_js('global.js');
+      fill_list_page()
 
 })
 
@@ -77,7 +77,6 @@ hover_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pag
           'top': '80px',
           'width': '20px',
           'height': '20px',
-          //'font-size': '85%',
           'z-index': '3'
           })
 $('#content').append(hover_pages)
@@ -92,7 +91,6 @@ pages.css({'background-color':'rgb(100,104,102)', // List of pages
           'width': '120px', // '100px'
           'height': 'auto',
           'color' : 'white',
-          //'font-size': '85%',
           'z-index': '3'
           })
 
@@ -102,24 +100,24 @@ $('#pages').append($('<h1/>').text('Pages'))  // title
 
 function add_elem_pages_toc(curr_page, name){
 
-      /*
+        /*
 
-      Add link toward page to #all_pages'
+        Add link toward page to #all_pages'
 
-      */
+        */
 
-      var name = name || curr_page;
-      var link = $('<a/>').attr('href', '/' + curr_page)
-                          .attr('id','link_' + curr_page)
-                          .text(name)
-      link.addClass('main_pages')
-      var elem_list = $('<li/>').append(link)
-      $('#all_pages').append(elem_list)    // add name of pages in #all_pages
+        var name = name || curr_page;
+        var link = $('<a/>').attr('href', '/' + curr_page)
+                            .attr('id','link_' + curr_page)
+                            .text(name)
+        link.addClass('main_pages')
+        var elem_list = $('<li/>').append(link)
+        $('#all_pages').append(elem_list)    // add name of pages in #all_pages
 
 }
 
 var curr_page = window.location.href.split('//')[1].split('/')[1] || ''
-if(curr_page == '' ){  $('#pages').hide() }
+if(curr_page == '' ){ $('#pages').hide() }
 
 function fill_list_page(){
 
@@ -146,8 +144,15 @@ function fill_list_page(){
 
 fill_list_page()
 
-$('#hover_pages').on('mouseover', function(){
-     $('#pages').toggle()
+// Change size of the current name page in the list..
+
+$('#link_' + curr_page).css({'text-decoration':'underline', 'font-size':'25px'})
+if (curr_page == ''){
+   $('#link_main').css({'text-decoration':'underline', 'font-size':'25px'})
+}
+
+$('#hover_pages').on('click', function(){
+     $('#pages').toggle() // mouseover
 })
 
 </script>

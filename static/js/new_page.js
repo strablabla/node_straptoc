@@ -17,7 +17,6 @@ exports.create_new_page = function(app, name_page, io){
 
  }
 
-
 function make_md_text(title){
 
     var md_text = function(){/*

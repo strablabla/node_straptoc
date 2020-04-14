@@ -79,7 +79,9 @@ artyom.addCommands(dic_listen); //
 function manual_flip(elem){
 
   /*
+
   Flip manually between recognition and non recognition..
+
   */
 
   elem.click(function(){
@@ -121,16 +123,30 @@ var dic_toc =  {
     }
 artyom.addCommands(dic_toc); //
 
-// -------------------------------- trigger Notes
+// -------------------------------- Create a new note
+
 
 var dic_note =  {
-        indexes: ['nouvelle note'],
+        indexes: ['nouvelle note', 'ajouter une note'],
         action: function() {
-            socket.emit('new_note', '')
-            }
+          socket.emit('create_new_note')
+          //alert('nouvelle note !!!')
+
+          }
     }
 
 artyom.addCommands(dic_note); //
+
+// -------------------------------- Search in the document
+
+var dic_search =  {
+        indexes: ['Rechercher'],
+        action: function() {
+            $('.todotheme').toggle()
+            }
+    }
+
+artyom.addCommands(dic_search); //
 
 //----------- Dic voc for goto
 
@@ -145,6 +161,9 @@ socket.on('dic_voc', function(dic) {
       } // end for
 
  });
+
+
+ {% include 'basics/voice_specific.html' %}
 
 
 </script>

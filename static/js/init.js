@@ -26,7 +26,7 @@ exports.static_addr = function(app, express){
       /*
 
       Static addresses
-      Load them and create the routing with express.. 
+      Load them and create the routing with express..
 
       */
 
@@ -43,28 +43,31 @@ exports.static_addr = function(app, express){
 
 function make_html_around_md(file){
 
-  var model = function(){/*
+  var list_plugins =  '\n'
+  var files = fs.readdirSync('views/plugins')
+  for (var f of files) {
+      list_plugins += "    {% include 'plugins/" + f + "' %}' \n"
+  }
+  console.log("### list_plugins_text " + list_plugins)
+  page = '\n  {% include "md/inserted_file" %}  \n'.replace('inserted_file', file)
 
-{% extends "page_struct/base.html" %}
+  var base = function(){/*
 
-{% block text %}
-    {% include "md/inserted_file" %}
-{% endblock %}
+  {% extends "page_struct/base.html" %}
 
-{% block plugins %}
-    {% include 'plugins/list_folders_for_extract.html' %}
-    {% include 'plugins/extract_folder.html' %}
-    {% include 'plugins/notes.html' %}
-    {% include 'plugins/alerts.html' %}
-    {% include 'plugins/djvu.html' %}
-    {% include 'plugins/vid_playing.html' %}
-    {% include 'plugins/audio.html' %}
-    {% include 'plugins/play_list_vid.html' %}
-{% endblock %}
+  {% block text %}
+      insert_page
+  {% endblock %}
 
-*/}.toString().slice(14,-3).replace('inserted_file',file)
+  {% block plugins %}
+       insert_plugins
+  {% endblock %}
 
-return model
+  */}.toString().slice(14,-3).replace('insert_page', page)
+                             .replace('insert_plugins', list_plugins)
+
+console.log(base)
+return base
 
 }
 

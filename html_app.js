@@ -66,11 +66,8 @@ io.sockets.on('connection', function (socket) {
       re.emit_from_read(socket, patt, html_pos)
       util.save_regularly_all()                                                // save the regularly the text..
       socket.on('join', function(data) { socket.emit('scroll', patt) });       // end socket.on join
-      socket.on('new_page', function(name_page) {
-         new_page.create_new_page(app, name_page, io)
-         //init.handle_pages(app)
-         //console.log('yeahhhh I am HEEERRREEE !!!')
-        });
+      socket.on('new_page', function(name_page) { new_page.create_new_page( app, name_page, io ) }); // new page
+      socket.on('create_new_note', function() { socket.emit('create_new_note','') });
       init.comm_voc(io)                                            //---- comm voc
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                              //---- pdfs in folders

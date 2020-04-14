@@ -3,6 +3,86 @@
 
 <script>
 
+/*
+
+Notes
+
+*/
+
+//var socket = io.connect();
+
+var note = $('<p/>').attr('id','note')
+$('#content').append(note)
+
+var notes_state = $('<img/>').attr('src',"capicon/svg/353.svg")  // icon for play_list on/off
+notes_state.attr('id','notes_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top':'100px',
+                'right':'20px',
+                'width':'15px'
+              })
+$('#content').append(notes_state) // 266, 353, 354
+
+$('#notes_state').click(function(){
+
+      $('#id_view_image').hide()       // prevent the browser to open the svg..
+      $('#id_view_image_body').hide()   //
+
+      //-------
+
+      toggle_note()
+
+})
+
+note_activated = false
+note_hidden = false
+
+function toggle_note(){
+
+        /*
+
+        toggle_note()
+
+        */
+
+        //alert('toggle_note')
+
+
+        if (note_activated){      // was activated..
+              //alert('deactivate note')
+              $('#note').hide()
+              note_hidden = true
+              //note_hidden = !note_hidden
+              note_activated = false
+
+              $('#notes_state').attr('src',"capicon/svg/353.svg") // white
+
+
+        }else{
+              //$('#notes_state').attr('src',"capicon/svg/353.svg") // white
+              //alert('activate note !!!')
+              socket.emit('ask_notes','')
+              socket.on('all_notes', function(txt){
+                 var notes = JSON.parse(txt)
+
+                 $.each(notes, function(key, value) {
+                       detect_note(key, value)
+                 });
+                 active_template(notes)
+                 note_activated = true
+                 note_hidden = false  // ready for hover..
+                 //$('#note').show()
+                 $('#notes_state').attr('src',"capicon/svg/354.svg") // black
+                 //$('#notes_state').attr('src',"capicon/svg/353.svg")
+
+              })
+        }
+
+
+}
+
 function date_full(){
 
       /*
@@ -37,21 +117,21 @@ function fill_note(elem, id, postop){
 
       var butt_close = $('<input/>').attr({   // close button
                type: "button",
-               id: "reduce_note",
+               id: "close_note",
                value: "x",
                class: "btn btn-success",
                style: "padding: 1px 6px;"
            });
       butt_close.css({"position":"absolute", "top":"8px","right":"10px"})
 
-      var butt_reduce = $('<input/>').attr({  // reduce size button
-               type: "button",
-               id: "reduce_note",
-               value: "-",
-               class: "btn btn-warning",
-               style: "padding: 1px 6px;"
-           });
-      butt_reduce.css({"position":"absolute", "top":"8px","left":"10px"})
+      var butt_reduce = $('<img/>').attr({
+                src: "capicon/svg/353.svg",
+                id: "reduce_note",
+                class: "btn btn-warning",
+                style: "padding: 1px 1px;",
+                width: "25px"
+              })  // icon for play_list on/off
+      butt_reduce.css({"position":"absolute", "top":"-2px","left":"6px"})
 
       var butt_save = $('<input/>').attr({   // save button
                type: "button",
@@ -91,10 +171,9 @@ function fill_note(elem, id, postop){
             }
       })
       butt_close.click(function(){
-          $('#note').toggle()
-          note_hidden = !note_hidden
+          toggle_note()
      })
-
+    butt_reduce.click() // present the note in reduced form
 
 }
 
@@ -117,7 +196,8 @@ function note_in_strap(elem, id, postop){
                 'margin-left': '20px',
                 'box-shadow': '0.5em 0.5em 0.7em',
                 'position': 'absolute',
-                'left': '50px',
+                'left': '100px',
+                //'left': '50px',
                 'top': posnote,
                 'width': '350px',
                 'height': '250px',
@@ -142,12 +222,17 @@ function show_note(id, postop){
 
 }
 
-//var new_note = false;
-socket.on('create_new_note', function(){ // create new note by voice command..
+var new_note = false;
+socket.on('create_new_note', function(){      // create new note by voice command..
 
       /*
 
+      Voice commands :
+        * ajouter une note, nouvelle note ..
+
       */
+
+      //alert('in note.html !!!')
 
       var elem = $(':hover').last()
       id = create_id(elem)
@@ -160,7 +245,18 @@ function create_id(elem){
 
       /*
 
+
       */
+
+
+
+      // var id;
+      // var lformats = ['href', 'data', 'src']
+      // lformats.forEach(function(frmt){
+      //      if (elem[0].hasAttribute(frmt)){id = elem.attr('href')}
+      // })
+
+
 
       if (elem.attr('href')){
           var id = elem.attr('href')
@@ -171,48 +267,73 @@ function create_id(elem){
       else if (elem.attr('src')){
           var id = elem.attr('src')
       }
-      else if (elem.parent().hasClass('youtube')){
+      if (elem.parent().hasClass('youtube')){
           var id = elem.parent().attr('id')
       }
+
+      alert('id')
 
     return id
 }
 
-function deal_with_note(key,value,elem,action){
-
-  /*
-
-  */
-
-  elem.css({"text-decoration":action})
-  if (! note_hidden){
-     $('#note').show()
-  }
-  $('#note').offset({'top' : elem.offset().top})
-  $('.note_title').text('Note : ' + value.split('!date')[1])
-  $('#text_note').val(value.split('!date')[0])
-  //alert(value.split('!date')[0])
-  bind_save_butt(key)
-  currelem = elem
-
-}
-
-function handle_note(key,value,elem){
+function deal_with_note(key, value, elem, action){
 
       /*
 
+      Underline and icon..
+
       */
-      //.button:link{ text-decoration:none }
+
+      elem.css({"text-decoration" : action})               // underlining
+      var icon_note = $('<img/>').attr('src',"capicon/svg/353.svg")  // icon
+                                 .addClass('icon_note')
+                                 .css({'width':'15px'})
+                                 .hide()
+      icon_note.click(false);  // deactivate click on icon..
+      if (! elem[0].hasAttribute('note')){
+
+          elem.attr('note','true')
+          // elem.next().append($('<span/>').text(' ').append(icon_note))
+
+      }
+
+      if (!note_hidden){
+         $('#note').show()
+         //elem.next().find('.icon_note').show() // show icon for note
+         //elem.find('.icon_note').show() // case tog
+      }
+      else{
+         $('#note').hide()
+      }
+      $('#note').offset({'top' : elem.offset().top})
+      $('.note_title').text('Note : ' + value.split('!date')[1])
+      $('#text_note').val(value.split('!date')[0])
+      //alert(value.split('!date')[0])
+      bind_save_butt(key)
+      currelem = elem
+
+}
+
+function handle_note(key, value, elem){
+
+      /*
+
+
+      */
+
       elem.hover(function(){
           //alert('hover is ok')
+          //alert('note_hidden is ' + note_hidden)
           if (currelem != elem){
               //alert("new note")
               try{
                  currelem.css({"text-decoration":'none'}) // remove underlline
+                 $('.icon_note').hide() // icon when not on the element..
               }catch(err){} // alert('first elem')
 
           }
-          deal_with_note(key,value,elem,"underline")
+          //note_hidden = false
+          deal_with_note(key, value, elem, "underline")
       })
 
 }
@@ -246,7 +367,7 @@ function detect_note(key, value){
             var keysplit = key.trim().split('/')[1].split('#zoom=')[0].trim().split('.pdf?')[0]
             if (keysplit != ''){
                 if (txt.search(keysplit) != -1){
-                  handle_note(key,value,$(this))
+                  handle_note( key, value, $(this) )
                   }
              }
           }catch(err){}
@@ -257,7 +378,7 @@ function detect_note(key, value){
         var txt = $(this).attr('href')
         if (txt){
           if (txt.search(key) != -1){
-                handle_note(key,value,$(this))
+                handle_note( key, value, $(this) )
              } // end hover..
           } // if txt
       }) // each href
@@ -273,7 +394,7 @@ function detect_note(key, value){
                    //alert(txt)
                    // alert(key)
                    // alert(value)
-                   handle_note(key,value,$(this).parent())
+                   handle_note( key, value, $(this).parent() )
                 } // end hover..
           } // if type is application/pdf
       }) // each object
@@ -282,14 +403,14 @@ function detect_note(key, value){
         var txt = $(this).attr('id')
         if (txt){
           if (txt.search(key) != -1){
-                handle_note(key,value,$(this))
+                handle_note( key, value, $(this) )
              } // end hover..
           } // if txt
       }) //
 
 } // detect_note
 
-key('alt+c',function(){
+key('alt+n',function(){
 
       /*
 
@@ -320,34 +441,7 @@ function active_template(notes){
 
 }
 
-note_activated = false
-note_hidden = false
-key('alt+n',function(){                           // trigger all the notes..
 
-      /*
-
-      Load and show the notes
-
-      */
-
-      if (note_activated){
-        $('#note').toggle()
-        note_hidden = !note_hidden
-      }else{
-            socket.emit('ask_notes','')
-            socket.on('all_notes', function(txt){
-               var notes = JSON.parse(txt)
-
-               $.each(notes, function(key, value) {
-                     detect_note(key, value)
-               });
-               active_template(notes)
-               note_activated = true
-
-            })
-      }
-
-})
 
 
 </script>
