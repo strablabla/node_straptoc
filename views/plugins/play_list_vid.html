@@ -6,23 +6,27 @@ Play list
 
 */
 
-var list_play_state = $('<img/>').attr('src',"capicon/svg/044.svg")  // icon for play_list on/off
+// rgb(255, 255, 204) pale yellow
+var color_play_list = 'rgb(255, 255, 204)'
+
+var list_play_state = $('<img/>').attr('src',"capicon/svg/227.svg")  // icon for play_list, helmet
 list_play_state.css({
                 'position':'fixed',
                 'top':'70px',
                 'right':'20px',
-                'width':'15px'
+                'width':'17px'
               })
 $('#content').append(list_play_state)
 
-list_play_state.click(function(event) {
+list_play_state.click(function(event) {     // click on the helmet..
 
-
-      $('#id_view_image').hide()       // prenvent the browser to open the svg..
+      $('#id_view_image').hide()            // prevent the browser to open the svg..
       $('#id_view_image_body').hide()   //
+
       //-------
-      $('#hover_play_list').toggle()
-      if ($('#hover_play_list').is(':visible')){
+
+      $('#toggle_play_list').toggle()                   // toggle play list
+      if ($('#toggle_play_list').is(':visible')){
           $('#vid_play_list').show()
       }
       else{
@@ -31,29 +35,42 @@ list_play_state.click(function(event) {
 
   });
 
-var img_helmet = $('<img/>').attr('src',"capicon/svg/227.svg")
+var img_helmet = $('<img/>').attr('src',"capicon/svg/227.svg") // helmet
 img_helmet.css({'position':'relative',
                 'margin-top':'25px',
                 'margin-left':'50%',
                 'left':'-12.5px',
                 'width':'15px'
               })
-
-var butt_play = $('<input/>').attr({   // save button
-         type: "button",
-         id: "butt_play",
-         value: "play",
-         class: "btn btn-warning"
-     });
-butt_play.css({'position':'absolute',
+var butt_play = $('<input/>').attr({   // play button
+                   type: "button",
+                   id: "butt_play",
+                   value: "play",
+                   class: "btn btn-warning"
+               });
+butt_play.css({'position':'absolute',  // play button css
                 'bottom':'30px',
                 'margin-left':'50%',
                 'left':'-30px',
                 'padding-bottom':'5px'
               })
 
-var hover_play_list = $('<div/>').attr('id','hover_play_list')   // small square for hovering..
-hover_play_list.css({'background-color':'rgb(225,204,252)',       // hover for viewing list of vids
+// -- Arrows
+
+dic_css_tpl_arr = {'position':'relative', // css for play list arrows
+                  'width':'10px',
+                  'bottom':'7px',
+                  'left':'7px'
+                  }
+
+var tpl_arr = new Arrow('tpl_arr', 'play_list', dic_css_tpl_arr)
+tpl_arr_l = tpl_arr.make(277).hide()                                 //---- left arrow
+tpl_arr_r = tpl_arr.make(276)   // 276                               //---- arrow right
+
+// -- Toggle play list
+
+var toggle_play_list = $('<div/>').attr('id','toggle_play_list')   // small square for hovering..
+toggle_play_list.css({'background-color': color_play_list,       // hover for viewing list of vids
           'box-shadow': '0.5em 0.5em 0.7em',
           'position': 'fixed',
           'right': '5px',
@@ -62,18 +79,45 @@ hover_play_list.css({'background-color':'rgb(225,204,252)',       // hover for v
           'height': '20px',
           'z-index': '3'
           })
-$('#content').append(hover_play_list)
+$('#content').append(toggle_play_list)
+
+// ------  Add arrows to toggle play list..
+
+toggle_play_list.append(tpl_arr_r).append(tpl_arr_l)
+
+// -- Actions  for Play list
+
+dic_css_pl_act = {'position':'absolute', // dic css play_list actions
+                  'width':'15px',
+                  'bottom':'20px',
+                  'right':'12px'
+                  }
+
+function make_icon_action(name, num){
+      var pl_act = $('<img/>').attr('src',"capicon/svg/" + num + ".svg") // toggle play_list_arrow left
+                              .attr('id','pl_act_' + name)
+      pl_act.css(dic_css_pl_act)
+
+  return pl_act
+}
+
+// ---- bin action
+
+var pl_act_bin = make_icon_action('bin', '030')
+
+//-- Play list
 
 var elem0 = $('<div/>').attr('id','vid_play_list')
 $('#content').append(elem0)
-elem0.css({'background-color':'rgb(225,204,252, 0.9)', // Current play list..
+col_panel_list_play = color_play_list.replace(')', ', 0.9)')
+elem0.css({'background-color': col_panel_list_play, // Current play list..
           'box-shadow': '0.5em 0.5em 0.7em',
           'padding-bottom': '90px',
           'padding-top': '10px',
           'padding-left': '50px',
           'padding-right': '50px',
           'position': 'fixed',
-          'right': '30px',
+          'right': '30px',   // open
           'bottom': '70px',
           'width': 'auto',
           'height': 'auto',
@@ -82,9 +126,12 @@ elem0.css({'background-color':'rgb(225,204,252, 0.9)', // Current play list..
 var tit = $('<h3/>').css({'text-align':'center'})
                     .text('selected medias')
 
-$('#vid_play_list').append(img_helmet) // pict helmet
-$('#vid_play_list').append(tit) // title
-$('#vid_play_list').append(butt_play)  // button for playing..
+// ---- Add elements to play list..
+
+$('#vid_play_list').append(img_helmet)    // pict helmet
+                   .append(tit)           // title
+                   .append(butt_play)     // button for playing..
+                   .append(pl_act_bin)    // bin
 
 function reinit_act(selection, elem, action){
 
@@ -103,15 +150,16 @@ function reinit_act(selection, elem, action){
 
 function reinitialize(sel){
 
-  /*
+      /*
 
-  Reinitialize
+      Reinitialize
 
-  */
+      */
 
-  reinit_act(sel, $('.vid_selected'),'$(this)[0].pause()')
-  reinit_act(sel, $('.elem_list_play_selected'),"$(this).css({'color':'black'})")
-  reinit_act(sel, $('.ul_selected'),'$(this).hide()')
+      reinit_act(sel, $('.vid_selected'),'$(this)[0].pause()')
+      reinit_act(sel, $('.elem_list_play_selected'),"$(this).css({'color':'black'})")
+      reinit_act(sel, $('.ul_selected'),'$(this).hide()')
+      reinit_act(sel, $('.icon_sound'),'$(this).hide()')
 
 }
 
@@ -123,6 +171,8 @@ function selection_click(elem_li, selection, numsel){
 
       */
 
+
+
       selection.click(function(){
            reinitialize($(this))
            var currid = $(this).attr('id').split('sel_')[1] // vid current id ..
@@ -130,15 +180,14 @@ function selection_click(elem_li, selection, numsel){
            var sel_vid = $(currvidid)[0]
            if (sel_vid.paused){                      // if video stopped.
                selection.css({'color':'blue'})
-               //sel_vid.play()                        // play selected video..
+                        .children('.icon_sound').show()
+               //selection.append(icon_sound)          // icon sound
                play_vid_list(numsel)
              }else{                                  // if video active..
               selection.css({'color':'black'})
               sel_vid.pause()
             }
-            //elem_li.children('ul').toggle()             // toggle the media..
       })
-
 
 }
 
@@ -150,18 +199,48 @@ function fill_play_list(elem_li, vid_id, numsel){
 
       */
 
+      var icon_sound = $('<img/>').attr('src',"capicon/svg/073.svg")    // icon to indicate vid is in the play list
+                                  .css({'width':'13px', 'margin-left':'10px'})
+                                  .attr('index', numsel)
+                                  .addClass('icon_sound')
+
       var currid = 'vid_num' + numsel
       var selection = $('<div/>')
       selection.addClass('elem_list_play_selected').attr('index', numsel)
-              .attr('src', vid_id)
-              .attr('id', 'sel_' + currid)
-              .text('...' + vid_id.slice(-30,-4))
+               .attr('src', vid_id)
+               .attr('id', 'sel_' + currid)
+               .text('...' + vid_id.slice(-30,-4))
+               .append(icon_sound.hide())
       $('#vid_play_list').append(selection)     // add media title to the play list..
       selection_click(elem_li, selection, numsel)
 
 }
 
-var list_vid = [] // list of videos fingerprint..
+function add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons){
+
+      /*
+
+      Add video in the play list
+
+      */
+
+      elem_li.children('ul').addClass('ul_selected')
+                            .attr('index', numsel)
+      vid.attr('id', 'vid_num' + numsel)
+         .attr('index', numsel)             // number associated to the video..
+         .addClass('vid_selected')          // assigning class vid_selected to all the video selected..
+      elem_li.css({'color':'black'})        // color the link in the main document
+      list_icons[numsel] = $('<img/>').attr('src',"capicon/svg/227.svg")    // icon to indicate vid is in the play list
+                                      .css({'width':'12px', 'margin':'0px'})
+      elem_li.append($('<span/>').text(' ').append(list_icons[numsel]))  // add icon in the doc
+      list_vid.push(vid_id)                 // save the videos id to avoid doublons.
+
+      //-----------
+
+      fill_play_list(elem_li, vid_id, numsel)
+}
+
+var list_vid = []      // list of videos fingerprint..
 var list_icons = []
 var numsel = 0
 $("li").click( function(){
@@ -171,18 +250,9 @@ $("li").click( function(){
         if(elem_li.children('ul').hasClass('strapvid')){  // filter the li element..
             var vid_id = vid.attr('src')
             if (list_vid.indexOf(vid_id) == -1){
-                elem_li.children('ul').addClass('ul_selected')
-                                      .attr('index', numsel)
-                vid.attr('id', 'vid_num' + numsel)
-                   .attr('index', numsel)             // number associated to the video..
-                   .addClass('vid_selected')          // assigning class vid_selected to all the video selected..
-                elem_li.css({'color':'black'})        // color the link in the main document
-                list_icons[numsel] = $('<img/>').attr('src',"capicon/svg/227.svg")
-                                                .css({'width':'12px', 'margin':'0px'})
-                elem_li.append($('<span/>').text(' ').append(list_icons[numsel]))
-                list_vid.push(vid_id)                 // save the videos id to avoid doublons.
-                //-----------
-                fill_play_list(elem_li, vid_id, numsel)
+                if ($('#vid_play_list').is(':visible')){
+                    add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
+                }
             }
             numsel += 1
        }
@@ -190,13 +260,35 @@ $("li").click( function(){
 })
 
 $('#vid_play_list').hide()
-$('#hover_play_list').hide()
+$('#toggle_play_list').hide()
+var play_list_open = true
 
-$('#hover_play_list').on('click', function(){  // show / hide play_list
-     $('#vid_play_list').toggle() // mouseover
+$('#toggle_play_list').on('click', function(){   //
+
+      /*
+
+      show / hide play_list
+
+      */
+
+     play_list_open = !play_list_open
+     var translr = '-' + $('#vid_play_list').css('width')
+     if (!play_list_open){
+          $('#vid_play_list').animate({'right': translr }) // hide
+     }
+     else{
+          $('#vid_play_list').animate({ 'right': '30px' }) // show
+     }
+     $('.tpl_arr').toggle()                      // exchange right and left arrow
 })
 
 function play_vid_list(i){
+
+      /*
+
+      Play the list elements
+
+      */
 
       vid_id = '#vid_num' + i
       var currvid = $(vid_id)[0]
@@ -212,8 +304,8 @@ function play_vid_list(i){
       $(vid_id).on('ended',function(){
 
             try{
-                reinitialize($('#sel_vid_num' + i))
-                reinitialize($('#sel_vid_num' + i-1))
+                reinitialize($('#sel_vid_num' + i))    // reinit last vid
+                reinitialize($('#sel_vid_num' + i-1))  // reinit vid before last vid
                 play_vid_list(i+1)     // recurrence
               }catch(err){
                 //alert('enddd!!!')

@@ -38,6 +38,15 @@ function voice_onoff(){
 
       */
 
+      var icon_sound = $('<img/>').attr('src',"capicon/svg/085.svg")  // icon for play_list on/off
+
+      dic_css_icon_sound = {'position':'relative', // css for play list arrows
+                        'width':'10px',
+                        'bottom':'7px',
+                        'left':'7px'
+                        }
+      icon_sound.css(dic_css_icon_sound)
+
       var elem = $('<div/>').attr('id','voice_onoff')
       $('#content').append(elem)
       elem.css({'background-color':'rgb(255,224,102)',
@@ -50,6 +59,12 @@ function voice_onoff(){
                 //'font-size': '85%',
                 'z-index': '3'
                 })
+        $('#voice_onoff').append(icon_sound)
+            icon_sound.click(function(){
+                      $('#voice_onoff').click()
+                      $('#id_view_image').hide()
+                      $('#id_view_image_body').hide()
+                  })
         manual_flip(elem)
 
       }

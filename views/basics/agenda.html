@@ -1,0 +1,76 @@
+
+<script>
+
+/*
+
+Agenda
+
+*/
+
+//-- Agenda panel
+
+var icon_agenda = $('<img/>').attr('src',"capicon/svg/033.svg")  // icon for agenda panel
+icon_agenda.attr('id','icon_agenda')
+           .css({
+                'position':'absolute',
+                'top':'10px',
+                'margin-right':'50%',
+                'right':'-8px',
+                'width':'17px'
+              })
+
+var agenda_panel = $('<div/>').attr('id','agenda_panel')
+$('#content').append(agenda_panel)
+
+var ap_width = 600;
+agenda_panel.css({'background-color': '#ffffff', //
+          'box-shadow': '0.5em 0.5em 2.7em',
+          'padding-bottom': '90px',
+          'padding-top': '30px',
+          'padding-left': '50px',
+          'padding-right': '50px',
+          'position': 'fixed',
+          'right': '-' + ap_width + 'px',   // hidden
+          'top': '130px',
+          'width': '600px',
+          'height': '400px',
+          'z-index': '3'
+          })
+var tit = $('<h3/>').css({'text-align':'center'})
+                    .text('Agenda')
+
+// ---- Add elements to agenda panel..
+
+$('#agenda_panel').append(icon_agenda)    // pict Agenda
+                  .append(tit)           // title
+
+var agenda_state = $('<img/>').attr('src',"capicon/svg/033.svg")  // icon for agenda toggle
+agenda_state.attr('id','agenda_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top':'200px',
+                'right':'20px',
+                'width':'17px'
+              })
+$('#content').append(agenda_state) //
+
+var agenda_open = false
+
+$('#agenda_state').on('click', function(){   // show / hide agenda
+
+     $('#id_view_image').hide()              // prevent the browser to open the svg..
+     $('#id_view_image_body').hide()   //
+
+     var translr = '-' + $('#agenda_panel').css('width')
+     if (!agenda_open){
+          //alert('((window).width-ap_width) / 2 ' + ($(window).width()) / 2)
+          $('#agenda_panel').animate({ 'right': ($(window).width()-ap_width) / 2  }) // show
+     } // ((window).width-ap_width) / 2
+     else{
+          $('#agenda_panel').animate({ 'right': translr}) // hide
+     }
+     agenda_open = !agenda_open
+})
+
+</script>

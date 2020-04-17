@@ -83,9 +83,6 @@
 }
 
 
-
-
-
 </style>
 
 <script>
@@ -96,34 +93,76 @@
 $('h1').css({'font-family': "libre_carlson_display", 'text-shadow':'none'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d
 $('h2').css({'color':'#c65353', 'font-family': "libre_carlson_display", '-webkit-text-stroke-width': '0.5px'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d 1a75ff b3d1ff ff3333 ff9999 8cb3d9
 $('h3').css({'color':'#d27979', 'font-family': "libre_carlson_display", 'font-style': 'bold', '-webkit-text-stroke-width': '0.2px'}) // 'Enriqueta', serif
-$('#toc').css({'width':'auto !important', 'font-size':'14px', 'top':'70px'})
+$('#toc').css({'width':'auto !important', 'font-size':'14px', 'top':'70px', 'background-color':'#ffeecc'})
 $('.date').css({"font-family": "'Enriqueta', serif", 'color':'#000000'})
 $('.navbar').css({'position':'fixed'})
 $('.todotheme').css({'width':'auto', 'height':'700px','margin-right':'300px'})
+$('pre').css({ 'display': 'table' }) // 'margin-right':'30%',
 
 // ------------------- actions on elements after date..
 
-var dic_li = { 'job' : {'color':'blue'} }
+var dic_li = { 'job' : {'inside': {'color': '#99dfff'}, 'title': {'color':'#00aeff'} },
+               'prog' : {'inside': {'color': '#ffe6e6'}, 'title': {'color':'#ff9999'} }
+               // ffd9b3 ffbf80
+               // ffe6e6 ff9999
+
+ }
 $('li').each(function(){
-  var elem = $(this).parent().prev()
-  if ( elem.hasClass('date') ){
-      var rubr = $(this).text()
-                        .split('[-]')[0].trim()
-                        .split('\n')[0].trim()
-      for (const [elem,k] of Object.entries(dic_li)) {
-              if( rubr == 'job' ){ $(this).css({'color':'blue'}) }
+      var elem = $(this).parent().prev()
+      if ( elem.hasClass('date') ){
+          var rubr = $(this).text()
+                            .split('[-]')[0].trim()
+                            .split('\n')[0].trim()
+      for (const [key,dic_style] of Object.entries(dic_li)) {
+           //alert('dic_css is ' + dic_css)
+           if( rubr == key ){
+                  $(this).find('ul li').css({'color' : 'blue'})         // color 1st level  
+                  $(this).find('ul li li').css({'color' : 'black'})     // color 2 level
+                  $(this).css({'color' : dic_style['title']['color']})  // color heading
+                  $(this).children('ul').css({                          // vertical line on the left..
+                                      'border-color': dic_style['inside']['color'], // 99dfff, e6f7ff
+                                      'border-left': '2px solid', // solid, dashed
+                                      'border-spacing': '-10px',
+                                      'padding-left' : '20px'
+                                    })
+               }
       }
     }
 })
 
+// ---------------   Symbols
+
+var dic_symb = {'tél':'041', 'mail':'019'}
+
+for (const [key, value] of Object.entries(dic_symb)) {
+
+      $('li').each(function(){
+         var htm = $(this).html()
+         var regex = new RegExp('\\!' + key);
+         if (htm.search(regex) != -1){
+              var span_icon = '<span><img class="icon_symbol" src="capicon/svg/{}.svg"  width="15px"></span/>'.replace('{}',value)
+              regex_replace = new RegExp('\\!' + key, 'g');
+              htm = htm.replace(regex_replace, span_icon)  // inset the icon
+              $(this).html(htm)  // change in html
+              }
+        })
+}
+$('.icon_symbol').css({                          //------- Correction on vertical position of the symbols..
+                        'margin-bottom':'0px',
+                        'margin-top':'2px'
+                      })
+
+// --------------- Color videos
+
+var color_medias = '#66cc66'
+var dic_col_medias = {'color': color_medias}
+$('.strapvid').find('a').css(dic_col_medias)
+$('.strapvid').parent().css(dic_col_medias) // 66cc66, 79d279
+$('.strapvid').prev().css(dic_col_medias)
+
 // ----------------
 
 $('#text').hide()
-
-//$('a').attr('icon','false')
-
-//$('h1').css({'font-family': "'Enriqueta', serif", 'text-shadow':'none'})
-
 
 MathLive.renderMathInDocument();
 

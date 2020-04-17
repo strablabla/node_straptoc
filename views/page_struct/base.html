@@ -7,10 +7,19 @@
 
 {% block text %}{% endblock %}
 
-{# Basics #}
+{# Page struct #}
 
 {% include 'page_struct/end_straptoc.html' %}
+
+{# Struct #}
+
 {% include 'struct/pages.html' %}
+
+{# Basics #}
+
+{% include 'basics/agenda.html' %}
+{% include 'basics/config.html' %}
+{% include 'basics/search.html' %}
 {% include 'basics/voice.html' %}
 {% include 'basics/show_li.html' %}
 {% include 'page_struct/scroll_socket.html' %}
@@ -18,7 +27,6 @@
 {# Plugins #}
 
 {% block plugins %}{% endblock %}
-
 
 {% include 'style/modif_css.html' %}
 {% include 'page_struct/end.html' %}

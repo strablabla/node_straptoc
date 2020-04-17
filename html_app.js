@@ -5,6 +5,9 @@ var path = require("path");
 var open = require('open');
 var fs = require('fs');
 var nunjucks  = require('nunjucks');      // templating tool..
+
+//-----------------
+
 var util = require('./static/js/util');
 var re = require('./static/js/read_emit');
 var modify = require('./static/js/modify_html');
@@ -12,7 +15,7 @@ var folders = require('./static/js/folders');
 var init = require('./static/js/init');
 var notes = require('./static/js/notes');
 var subtit = require('./static/js/make_subtit');
-var new_page = require('./static/js/new_page');
+var new_obj = require('./static/js/new_obj');
 
 //--------------  Server
 
@@ -64,10 +67,11 @@ io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
       re.emit_from_read(socket, patt, html_pos)
-      util.save_regularly_all()                                                // save the regularly the text..
+      //util.save_regularly_all()                                                // save the regularly the text..
       socket.on('join', function(data) { socket.emit('scroll', patt) });       // end socket.on join
-      socket.on('new_page', function(name_page) { new_page.create_new_page( app, name_page, io ) }); // new page
-      socket.on('create_new_note', function() { socket.emit('create_new_note','') });
+
+      new_obj.create(socket, app, io)
+
       init.comm_voc(io)                                            //---- comm voc
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                              //---- pdfs in folders

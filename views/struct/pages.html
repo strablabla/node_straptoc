@@ -1,4 +1,5 @@
 
+<script  src="graph_obj.js"></script>
 <script  src="global.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 
@@ -8,6 +9,9 @@
 
 Make the list of the pages for navigating from one page to another..
 
+rem :
+graph_obj.js for Arrow ..
+
 */
 
 var socket = io.connect();
@@ -16,6 +20,8 @@ function reload_js(src) {                     // reload a script..
     $('script[src="' + src + '"]').remove();
     $('<script>').attr('src', src).appendTo('head');
 }
+
+// New page
 
 var enter_new_page = $('<div/>').attr('id','enter_new_page')
 enter_new_page.css({'background-color':'rgb(100,104,102)',
@@ -37,7 +43,7 @@ enter_new_page.css({'background-color':'rgb(100,104,102)',
           'color': 'black'
           })
 
-var butt_save_new_page = $('<input/>').attr({   // save button
+var butt_save_new_page = $('<input/>').attr({   // save new page
          type: "button",
          id: "save_new_page",
          value: "save",
@@ -48,14 +54,14 @@ var input_name = $('<input type="text" id="name_new_page" name="name" required m
 input_name.css({'height':'30px', 'width':'150px', 'margin-top':'7px'})
 butt_save_new_page.css({'height':'30px', 'padding-top':'1.2px'})
 enter_new_page.append(input_name)
-              .append(butt_save_new_page)
+              .append(butt_save_new_page) // save page butt
               .hide()
 
 $('#content').append(enter_new_page)
 
 $('#name_new_page').show()
 
-butt_save_new_page.click(function(){            // send note to server..
+butt_save_new_page.click(function(){            // send note to server the name of the new page..
 
       enter_new_page.hide()
       socket.emit('new_page', input_name.val());
@@ -69,8 +75,21 @@ socket.on('load_new_page',function(){
 
 })
 
-var hover_pages = $('<div/>').attr('id','hover_pages') // small square for hovering..
-hover_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pages
+// -- Arrows for list pages
+
+dic_css_tp_arr = {'position':'relative',
+                  'width':'10px',
+                  'bottom':'7px',
+                  'left':'5px'
+                  }
+
+var tp_arr = new Arrow('tp_arr', 'pages', dic_css_tp_arr)
+tp_arr_l = tp_arr.make(277).hide()                                 //---- arrow left
+tp_arr_r = tp_arr.make(276)                                        //---- arrow right
+
+
+var toggle_pages = $('<div/>').attr('id','toggle_pages') // small square for hovering..
+toggle_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pages
           'box-shadow': '0.5em 0.5em 0.7em',
           'position': 'fixed',
           'left': '1px',
@@ -79,15 +98,16 @@ hover_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pag
           'height': '20px',
           'z-index': '3'
           })
-$('#content').append(hover_pages)
+toggle_pages.append(tp_arr_r).append(tp_arr_l)
+$('#content').append(toggle_pages)
 
 var pages = $('<div/>').attr('id','pages')
 pages.css({'background-color':'rgb(100,104,102)', // List of pages
           'box-shadow': '0.5em 0.5em 0.7em',
           'padding-bottom':'40px',
           'position': 'fixed',
-          'left': '20px',
-          'top': '80px',
+          'left': '-120px',
+          'top': '100px',
           'width': '120px', // '100px'
           'height': 'auto',
           'color' : 'white',
@@ -117,12 +137,11 @@ function add_elem_pages_toc(curr_page, name){
 }
 
 var curr_page = window.location.href.split('//')[1].split('/')[1] || ''
-if(curr_page == '' ){ $('#pages').hide() }
 
 function fill_list_page(){
 
       $('#all_pages').empty()
-      add_elem_pages_toc('main','Main') //  add Main in first position in #all_pages
+      add_elem_pages_toc('main','Main')    //  add Main in first position in #all_pages
       $('#link_main').attr('href','/')
       for (var curr_page of list_pages){
             if (curr_page != 'main'){
@@ -132,7 +151,7 @@ function fill_list_page(){
       var plus_butt = $('<div/>').text('+')
                                  .css({'margin-left':'25px','margin-top':'10px'})
                                  .attr('id','add_page')
-      $('#all_pages').append(plus_butt) // .css({'left':'5px'})
+      $('#all_pages').append(plus_butt) //
       $('.main_pages').css({'color':'white'})
       $('#add_page').click(function(){
            butt_offset = $(this).offset()
@@ -146,13 +165,39 @@ fill_list_page()
 
 // Change size of the current name page in the list..
 
-$('#link_' + curr_page).css({'text-decoration':'underline', 'font-size':'25px'})
-if (curr_page == ''){
-   $('#link_main').css({'text-decoration':'underline', 'font-size':'25px'})
+function change_font_size_curr_page(font_size){
+
+    /*
+
+    Change the font size
+
+    */
+
+    //alert('change size')
+    $('#link_' + curr_page).css({'text-decoration':'underline', 'font-size': font_size + 'px'})
+    if (curr_page == ''){
+       $('#link_main').css({'text-decoration':'underline', 'font-size': font_size + 'px'})
+    }
+
 }
 
-$('#hover_pages').on('click', function(){
-     $('#pages').toggle() // mouseover
+var pages_open = false // if true, list of pages visible
+
+$('#toggle_pages').on('click', function(){   // toggle list of pages
+
+     pages_open = !pages_open
+     var translr = '130px' //
+     if (!pages_open){           // close..
+          $('#pages').animate({'left': '-' + translr }) // translate list_pages on the left  to hide it..
+          change_font_size_curr_page(12)
+     }
+     else{                      // open
+          $('#pages').animate({ 'left': '0px' }) // translate list_pages on the right to show it..
+          change_font_size_curr_page(25)
+     }
+     $('.tp_arr').toggle()                      // exchange right and left arrow
 })
+
+
 
 </script>

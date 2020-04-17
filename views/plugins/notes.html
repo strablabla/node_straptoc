@@ -19,9 +19,9 @@ notes_state.attr('id','notes_state')
            .attr('val','false')
            .css({
                 'position':'fixed',
-                'top':'100px',
+                'top':'110px',
                 'right':'20px',
-                'width':'15px'
+                'width':'17px'
               })
 $('#content').append(notes_state) // 266, 353, 354
 
@@ -50,32 +50,36 @@ function toggle_note(){
         //alert('toggle_note')
 
 
-        if (note_activated){      // was activated..
+        if (note_activated){      // note_activated = true
               //alert('deactivate note')
               $('#note').hide()
+              $('.with_note').each(function(){
+                  $(this).css({'color': $(this).attr('color')})
+              })
+
               note_hidden = true
               //note_hidden = !note_hidden
               note_activated = false
-
               $('#notes_state').attr('src',"capicon/svg/353.svg") // white
+              $('.icon_note').hide()
 
+        }else{          //  note_activated = false
 
-        }else{
-              //$('#notes_state').attr('src',"capicon/svg/353.svg") // white
               //alert('activate note !!!')
               socket.emit('ask_notes','')
               socket.on('all_notes', function(txt){
                  var notes = JSON.parse(txt)
 
                  $.each(notes, function(key, value) {
-                       detect_note(key, value)
+
+                       detect_note(key, value)  // prepare notes with handlers
                  });
                  active_template(notes)
                  note_activated = true
                  note_hidden = false  // ready for hover..
                  //$('#note').show()
                  $('#notes_state').attr('src',"capicon/svg/354.svg") // black
-                 //$('#notes_state').attr('src',"capicon/svg/353.svg")
+                 $('.icon_note').show()
 
               })
         }
@@ -236,7 +240,7 @@ socket.on('create_new_note', function(){      // create new note by voice comman
 
       var elem = $(':hover').last()
       id = create_id(elem)
-      var postop = Math.round(elem.offset().top,1)  || 0;
+      var postop = Math.round( elem.offset().top, 1 )  || 0;
       show_note(id, postop)
 
 })
@@ -248,59 +252,40 @@ function create_id(elem){
 
       */
 
-
-
-      // var id;
-      // var lformats = ['href', 'data', 'src']
-      // lformats.forEach(function(frmt){
-      //      if (elem[0].hasAttribute(frmt)){id = elem.attr('href')}
-      // })
-
-
-
-      if (elem.attr('href')){
-          var id = elem.attr('href')
-      }
-      else if (elem.attr('data')){
-          var id = elem.attr('data')
-      }
-      else if (elem.attr('src')){
-          var id = elem.attr('src')
-      }
+      var id;
+      var lformats = ['href', 'data', 'src']
+      lformats.forEach(function(frmt){
+           if (elem[0].hasAttribute(frmt)){id = elem.attr(frmt)}
+      })
       if (elem.parent().hasClass('youtube')){
           var id = elem.parent().attr('id')
       }
+      $('#note').show()
 
-      alert('id')
+      //alert('id = ' + id)
 
     return id
 }
 
-function deal_with_note(key, value, elem, action){
+function deal_with_note_hover(key, value, elem, action){
 
       /*
 
       Underline and icon..
 
       */
+      if (! elem[0].hasAttribute('color')){
+          elem.attr('color', elem.css("color"))
+       }
 
-      elem.css({"text-decoration" : action})               // underlining
-      var icon_note = $('<img/>').attr('src',"capicon/svg/353.svg")  // icon
-                                 .addClass('icon_note')
-                                 .css({'width':'15px'})
-                                 .hide()
-      icon_note.click(false);  // deactivate click on icon..
+      elem.css({"text-decoration" : action,             // underlining
+                'color': '#ffd480'                      // orange color
+      })
       if (! elem[0].hasAttribute('note')){
-
           elem.attr('note','true')
-          // elem.next().append($('<span/>').text(' ').append(icon_note))
-
       }
-
       if (!note_hidden){
          $('#note').show()
-         //elem.next().find('.icon_note').show() // show icon for note
-         //elem.find('.icon_note').show() // case tog
       }
       else{
          $('#note').hide()
@@ -314,6 +299,33 @@ function deal_with_note(key, value, elem, action){
 
 }
 
+function deal_with_note(key, value, elem){
+
+      /*
+
+      Underline and icon..
+
+      */
+
+      var icon_note = $('<img/>').attr('src',"capicon/svg/353.svg")  // icon
+                                 .addClass('icon_note')
+                                 .css({'width':'17px'})
+      icon_note.click(false);  // deactivate click on icon..
+      if (! elem[0].hasAttribute('note')){
+          elem.attr('note','true')
+          elem.addClass('with_note')
+          var span_note_icon = $('<span/>').text(' ').append(icon_note)
+          elem.next().append(span_note_icon)
+      }
+
+      $('#note').offset({'top' : elem.offset().top})
+      $('.note_title').text('Note : ' + value.split('!date')[1])
+      $('#text_note').val(value.split('!date')[0])
+      //alert(value.split('!date')[0])
+      bind_save_butt(key)
+      currelem = elem
+}
+
 function handle_note(key, value, elem){
 
       /*
@@ -321,19 +333,26 @@ function handle_note(key, value, elem){
 
       */
 
+      deal_with_note(key, value, elem)
       elem.hover(function(){
           //alert('hover is ok')
           //alert('note_hidden is ' + note_hidden)
+          //var currcol;
           if (currelem != elem){
               //alert("new note")
               try{
                  currelem.css({"text-decoration":'none'}) // remove underlline
-                 $('.icon_note').hide() // icon when not on the element..
+                 if ( currelem[0].hasAttribute('color')){
+                        currelem.css({"color" : currelem.attr('color')}) // retrieving the initial color
+                 }
+                 //$('.icon_note').hide() // icon when not on the element..
               }catch(err){} // alert('first elem')
 
           }
-          //note_hidden = false
-          deal_with_note(key, value, elem, "underline")
+          if (note_activated){
+              deal_with_note_hover(key, value, elem, "underline")
+          }
+
       })
 
 }
@@ -358,54 +377,58 @@ function detect_note(key, value){
 
       /*
 
+      Detect where there are notes
+
       */
 
       $('.embed_pdf').each(function(){
-        var txt = $(this).text()
-        try{
-            //var keysplit = key.trim().split('/')[1].split(' ')[0].trim()
-            var keysplit = key.trim().split('/')[1].split('#zoom=')[0].trim().split('.pdf?')[0]
-            if (keysplit != ''){
-                if (txt.search(keysplit) != -1){
-                  handle_note( key, value, $(this) )
-                  }
-             }
-          }catch(err){}
+            var txt = $(this).text()
+            //alert(txt)
+            try{
+                //var keysplit = key.trim().split('/')[1].split(' ')[0].trim()
+                var keysplit = key.trim().split('/').slice(-1)[0].split('#zoom=')[0].trim().split(/\.pdf\?/)[0]
+                if (keysplit != ''){
+                      //alert(keysplit)
+                      if (txt.search(keysplit) != -1){
+                          //alert('text is ' + txt)
+                          handle_note( key, value, $(this) )
+                      }
+                 }
+              }catch(err){}
 
       }) // embed.each
 
       $('a').each(function(){
-        var txt = $(this).attr('href')
-        if (txt){
-          if (txt.search(key) != -1){
-                handle_note( key, value, $(this) )
-             } // end hover..
-          } // if txt
+            var txt = $(this).attr('href')
+            if (txt){
+                if (txt.search(key) != -1){
+                    handle_note( key, value, $(this) )
+                 } // end hover..
+              } // if txt
       }) // each href
 
       $('object').each(function(){
-          var type = $(this).attr('type')
-          //alert(type)
-          if (type == 'application/pdf'){
-             //alert('founddddd')
-             var txt = $(this).attr('data')
-             //alert(txt)
-             if (txt.search(key) != -1){
-                   //alert(txt)
-                   // alert(key)
-                   // alert(value)
-                   handle_note( key, value, $(this).parent() )
-                } // end hover..
-          } // if type is application/pdf
+            var type = $(this).attr('type')
+            //alert(type)
+            if (type == 'application/pdf'){
+               //alert('founddddd')
+                var txt = $(this).attr('data')
+                if (txt.search(key) != -1){
+                     // alert('txt ' + txt)
+                     // alert('key ' + key)
+                     // alert('value ' + value)
+                     handle_note( key, value, $(this).parent() )
+                  } // end hover..
+            } // if type is application/pdf
       }) // each object
 
       $('.youtube').each(function(){     // note for straptoc youtube..
-        var txt = $(this).attr('id')
-        if (txt){
-          if (txt.search(key) != -1){
-                handle_note( key, value, $(this) )
-             } // end hover..
-          } // if txt
+            var txt = $(this).attr('id')
+            if (txt){
+                if (txt.search(key) != -1){
+                    handle_note( key, value, $(this) )
+                   } // end hover..
+              } // if txt
       }) //
 
 } // detect_note
@@ -419,8 +442,10 @@ key('alt+n',function(){
       */
 
       var elem = $(':hover').last()
+      // alert(elem.attr('src'))
+      // alert(elem[0].hasAttribute('src'))
       id = create_id(elem)
-      var postop = Math.round(elem.offset().top,1)  || 0;
+      var postop = Math.round(elem.offset().top,1)  || 0; // position of the note in the same as the elem..
       show_note(id, postop)
 
 })
@@ -440,8 +465,6 @@ function active_template(notes){
       $('#note').hide()
 
 }
-
-
 
 
 </script>

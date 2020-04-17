@@ -7,13 +7,11 @@ New page
 var fs = require('fs');
 var init = require('./init');
 
-
 exports.create_new_page = function(app, name_page, io){
 
     make_new_md(name_page)
     io.sockets.emit('load_new_page', '')
     init.handle_pages(app)
-
 
  }
 

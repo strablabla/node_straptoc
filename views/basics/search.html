@@ -1,0 +1,33 @@
+
+<script>
+
+/*
+
+Search
+
+*/
+
+
+var search_state = $('<img/>').attr('src',"capicon/svg/242.svg")  // icon for play_list on/off
+search_state.attr('id','search_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top':'140px',
+                'right':'20px',
+                'width':'17px'
+              })
+$('#content').append(search_state) // 266, 353, 354
+
+$('#search_state').click(function(){
+
+      $('#id_view_image').hide()       // prevent the browser to open the svg..
+      $('#id_view_image_body').hide()   //
+
+      //-------
+
+      $('#todotheme').toggle()
+
+})
+
+</script>
