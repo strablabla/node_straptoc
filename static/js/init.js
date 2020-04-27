@@ -123,8 +123,6 @@ exports.handle_pages = function(app){
             }
         }) // end for
         var data0 = JSON.stringify(lmd)
-        //console.log("########## lmd is " + data)
-        //io.sockets.emit('pages', data)
         var namefile0 = 'static/pages.json'
         fs.writeFile(namefile0 , data0, function(err) {
                 if(err) { return console.log(err); }

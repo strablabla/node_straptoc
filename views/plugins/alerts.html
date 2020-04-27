@@ -2,11 +2,30 @@
 
 <script>
 
+/*
+
+Alerts
+
+format : 20_4_10  -->   y_m_d
+
+*/
+
+function icon_deactivate(){
+
+      /*
+
+      */
+
+      $('#id_view_image').hide()       // prevent the browser to open the svg..
+      $('#id_view_image_body').hide()   //
+    }
 
 function date_day(){
 
       /*
+
       Build the text date
+
       */
 
       var date = new Date()
@@ -38,46 +57,90 @@ function send_mail(subject,message){
     );
 }
 
+// pin icon for alert post-it
+
+var icon_pin_alert = $('<img/>').attr('src',"capicon/svg/143.svg")  // icon for the post-it alert pin..
+icon_pin_alert.attr('id','icon_pin_alert')
+           .css({
+                'background-color':'white',
+                'transform': 'scaleX(-1)',
+                'position':'absolute',
+                'top':'-10px',
+                'margin-bottom':'2px',
+                'left':'0px',
+                'width':'17px'
+              })
+
 function alert_in_strap(elem, postop){
 
       /*
 
+      Alert post-it
+
       */
 
-      elem.css({'background-color':'rgb(255,224,102)',
+      elem.css({
+            //'background-color':'rgb(255,224,102)',
+            'background-color':'rgb(255,224,255)',
             'padding-left': '20px',
             'padding-right': '20px',
             'padding-bottom': '20px',
             'padding-top': '20px',
             'margin-right': '20px',
             'margin-left': '20px',
+            'font-family': "apple_garamond",
+            'text-shadow':'none',
             'box-shadow': '0.5em 0.5em 0.7em',
             'position': 'fixed',
-            'left': '-20px',
-            'top': postop.toString() + 'px',
-            'max-width': '170px',
+            'left': '0px',
+            'top': postop.toString() + 'px',   // top position
+            'width': '250px',
+            //'max-width': '170px',
             'max-height': '300px',
-            //'font-size': '85%',
-            'z-index': '3',
+            'font-size': '120%',
+            'z-index': '4',
             'color': 'black'
             })
+
+      elem.append(icon_pin_alert)
       elem.parents().show()
       elem.draggable()
 }
 
+function format_text_alert(newtxt){
+
+      /*
+
+      Format the text of the Alert postit..
+
+      */
+
+      newtxt[0] = '</br><div style="text-align: center; font-size: 110%;"> {} </div></br>'.replace('{}', newtxt[0])
+      if (newtxt.length>1){                                     // no newtxt[1]
+            newtxt[1] = '<div style="text-align: center"> {} </div></br>'.replace('{}', newtxt[1])
+      }
+      newtxt = newtxt.join(' ')
+      return newtxt
+}
+
+icon_deactivate()
 var reg = '!alert'
-postop = 120
+postop = 120                                                    // top position of the alert..
 $('li').each(function(){
      txt = $(this).text().trim()
      if (txt.match(reg)){
             var date = txt.split(" ").slice(-1)[0]
-            var currdate = date_day()
-            var newtxt = txt.split(" ").slice(1,-1).join(" ")
-            if (date == currdate){                                       // check date
-                $(this).text(newtxt)
+            var currdate = date_day()                           // current date
+            var newtxt = txt.split(" ").slice(1,-1).join(" ")  // remove last element.
+            newtxt = newtxt.split(';')  //
+            newtxt = format_text_alert(newtxt)
+            if (date == currdate){                               // check date
+                var div_alert = $('<div/>').html(newtxt)
+                $(this).replaceWith(div_alert)              // replace li by div..
                 //send_mail('alert nodestrap', newtxt)
-                alert_in_strap($(this), postop) // $(this)
-                postop += 60
+                //alert_in_strap($(this), postop) // $(this)
+                alert_in_strap(div_alert, postop) // $(this)
+                postop += 60                                     // increment top position..
             }
      }
 })

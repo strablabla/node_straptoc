@@ -43,7 +43,7 @@ enter_new_page.css({'background-color':'rgb(100,104,102)',
           'color': 'black'
           })
 
-var butt_save_new_page = $('<input/>').attr({   // save new page
+var butt_save_new_page = $('<input/>').attr({   // button save new page
          type: "button",
          id: "save_new_page",
          value: "save",
@@ -54,7 +54,7 @@ var input_name = $('<input type="text" id="name_new_page" name="name" required m
 input_name.css({'height':'30px', 'width':'150px', 'margin-top':'7px'})
 butt_save_new_page.css({'height':'30px', 'padding-top':'1.2px'})
 enter_new_page.append(input_name)
-              .append(butt_save_new_page) // save page butt
+              .append(butt_save_new_page) // append the save page butt
               .hide()
 
 $('#content').append(enter_new_page)
@@ -71,7 +71,7 @@ butt_save_new_page.click(function(){            // send note to server the name 
 socket.on('load_new_page',function(){
 
       reload_js('global.js');
-      fill_list_page()
+      fill_list_page()  // fill the list of all the pages..
 
 })
 
@@ -84,12 +84,13 @@ dic_css_tp_arr = {'position':'relative',
                   }
 
 var tp_arr = new Arrow('tp_arr', 'pages', dic_css_tp_arr)
-tp_arr_l = tp_arr.make(277).hide()                                 //---- arrow left
-tp_arr_r = tp_arr.make(276)                                        //---- arrow right
+tp_arr_l = tp_arr.make(277)                                           //---- arrow left
+tp_arr_r = tp_arr.make(276).hide()                                    //---- arrow right
 
-
+// 'rgb(200,154,102)'
+var toggle_list_pages_color = '#29a329'
 var toggle_pages = $('<div/>').attr('id','toggle_pages') // small square for hovering..
-toggle_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pages
+toggle_pages.css({'background-color':toggle_list_pages_color, // hover for list of pages
           'box-shadow': '0.5em 0.5em 0.7em',
           'position': 'fixed',
           'left': '1px',
@@ -101,14 +102,17 @@ toggle_pages.css({'background-color':'rgb(200,154,102)', // hover for list of pa
 toggle_pages.append(tp_arr_r).append(tp_arr_l)
 $('#content').append(toggle_pages)
 
-var pages = $('<div/>').attr('id','pages')
-pages.css({'background-color':'rgb(100,104,102)', // List of pages
+// #29a329, 'rgb(100,104,102)', '#c2f0c2', #ff8080, #ff6666 #d27979 #ff4d4d
+// #ff884d
+var list_pages_color = '#000000' //
+var pages = $('<div/>').attr('id','pages')       // Panel with the  List of pages
+pages.css({'background-color':list_pages_color,
           'box-shadow': '0.5em 0.5em 0.7em',
           'padding-bottom':'40px',
           'position': 'fixed',
-          'left': '-120px',
+          'left': '0px',  // '-120px'
           'top': '100px',
-          'width': '120px', // '100px'
+          'width': '130px', // '100px'
           'height': 'auto',
           'color' : 'white',
           'z-index': '3'
@@ -132,17 +136,47 @@ function add_elem_pages_toc(curr_page, name){
                             .text(name)
         link.addClass('main_pages')
         var elem_list = $('<li/>').append(link)
+        var dic_icon_open_page = {'width':'7px',
+                                  'background-color':'white',
+                                  'margin-left':'10px',
+                                  'margin-top':'2px',
+                                  'margin-bottom':'2px',
+                                  'opacity':'0.6'
+                                }
+        var icon_open_page = $('<img/>').attr('src',"capicon/svg/131.svg").css(dic_icon_open_page)  // icon for agenda panel // , 'background-color':'white'
+        var new_page = $('<span/>').attr('id', 'new_page_' + curr_page).addClass('open_new_page') //
+
+        if (curr_page != 'main'){
+              new_page.append(icon_open_page)
+        }
+        new_page.hide()
+        elem_list.mouseover(function(){   // oven link, show page icon
+           new_page.show()
+        })
+        elem_list.mouseout(function(){  // out of link, hide page icon
+           new_page.hide()
+        })
+
+        elem_list.append(new_page)
+        $('.open_new_page').click(function(){
+               var prev_elem = $(this).prev()
+               window.open(prev_elem.attr('href'))  // open the link in a new page..
+          });
         $('#all_pages').append(elem_list)    // add name of pages in #all_pages
 
 }
 
-var curr_page = window.location.href.split('//')[1].split('/')[1] || ''
+var curr_page = window.location.href.split('//')[1].split('/')[1] || '' // name of the current page
+
+if (curr_page == ''){ var tit_page = 'main' }
+else {var tit_page = curr_page}
+$(document).prop('title', tit_page)
 
 function fill_list_page(){
 
-      $('#all_pages').empty()
+      $('#all_pages').empty()              // clear the list
       add_elem_pages_toc('main','Main')    //  add Main in first position in #all_pages
-      $('#link_main').attr('href','/')
+      $('#link_main').attr('href','/')     // specific link for Main
       for (var curr_page of list_pages){
             if (curr_page != 'main'){
                 add_elem_pages_toc(curr_page)
@@ -173,22 +207,25 @@ function change_font_size_curr_page(font_size){
 
     */
 
-    //alert('change size')
-    $('#link_' + curr_page).css({'text-decoration':'underline', 'font-size': font_size + 'px'})
+    dic_deco_list = {'text-decoration':'underline', 'font-size': font_size + 'px'}
+    $('#link_' + curr_page).css(dic_deco_list)    // general case
     if (curr_page == ''){
-       $('#link_main').css({'text-decoration':'underline', 'font-size': font_size + 'px'})
+         $('#link_main').css(dic_deco_list)       // cas Main
     }
 
 }
 
-var pages_open = false // if true, list of pages visible
+var pages_open = true                             // if true, list of pages visible
+change_font_size_curr_page(25)
+var time_page_close = 4000
+//setTimeout(function(){ $('#toggle_pages').click() }, time_page_close);
 
-$('#toggle_pages').on('click', function(){   // toggle list of pages
+$('#toggle_pages').on('click', function(){           // toggle list of pages
 
-     pages_open = !pages_open
-     var translr = '130px' //
-     if (!pages_open){           // close..
-          $('#pages').animate({'left': '-' + translr }) // translate list_pages on the left  to hide it..
+     var translr = '-130px' //
+     if (pages_open){           // close..
+          //alert('closing')
+          $('#pages').animate({'left':  translr })   // translate list_pages on the left  to hide it..
           change_font_size_curr_page(12)
      }
      else{                      // open
@@ -196,6 +233,7 @@ $('#toggle_pages').on('click', function(){   // toggle list of pages
           change_font_size_curr_page(25)
      }
      $('.tp_arr').toggle()                      // exchange right and left arrow
+     pages_open = !pages_open
 })
 
 

@@ -1,0 +1,63 @@
+<script  src="util_panel.js"></script>
+
+<script>
+
+/*
+
+Store
+
+*/
+
+var icon_store = $('<img/>').attr('src',"capicon/svg/135.svg")  // icon for store
+icon_store.attr('id','icon_store')
+           .css({
+                'position':'absolute',
+                'top':'10px',
+                'right':'50%',
+                'width':'17px'
+              })
+
+var store_panel = $('<div/>').attr('id','store_panel')    //-- Store panel
+$('#content').append(store_panel)
+
+var stp_width = 600 // stp store page
+store_panel.css({'background-color': '#ffffff', // Current play list.. '#ecf9f2'
+          'box-shadow': '0.5em 0.5em 2.7em',
+          'padding-bottom': '90px',
+          'padding-top': '30px',
+          'padding-left': '50px',
+          'padding-right': '50px',
+          'position': 'fixed',
+          'right': '-' + stp_width + 'px',   // open
+          'top':'170px',
+          'width': '600px',
+          'height': '400px',
+          'z-index': '3'
+          })
+var tit = $('<h3/>').css({'text-align':'center'}) // titre
+                    .text('Rangement')
+
+// ---- Add elements to store
+
+$('#store_panel').append(icon_store)    // pict helmet
+                   .append(tit)           // title
+
+// ----- store toggle
+
+var pos_store_toggle = 230
+var store_state = $('<img/>').attr('src',"capicon/svg/135.svg")  // icon for play_list on/off
+store_state.attr('id','store_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top': pos_store_toggle + 'px',
+                'right':'20px',
+                'width':'17px'
+              })
+$('#content').append(store_state) // 266, 353, 354
+
+//-------------------
+
+toggle_panel('store')
+
+</script>

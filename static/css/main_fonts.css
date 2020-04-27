@@ -1,0 +1,98 @@
+@font-face {
+    font-family: 'alex';
+    src: url('Alexander/Alexander.ttf');
+}
+
+@font-face {
+    font-family: 'apple_garamond';
+    src: url('apple_garamond/AppleGaramond.ttf');
+}
+
+@font-face {
+    font-family: 'autopia';
+    src: url('Autopia-TTF-v1.1/Autopia-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'anaktoria';
+    src: url('Anaktoria/Anaktoria.ttf');
+}
+
+@font-face {
+    font-family: 'bagnard';
+    src: url('Bagnard-Sans-master/BagnardSans.otf');
+}
+
+@font-face {
+    font-family: 'butler';
+    src: url('Sniglet v2/');
+}
+
+@font-face {
+    font-family: 'caglio';
+    src: url('Cagliostro-regular/Cagliostro-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'capitalis';
+    src: url('Capitalis-minimalis/minicaps.ttf');
+}
+
+@font-face {
+    font-family: 'garam';
+    src: url('BetterEBGaramond-Regular/BetterEBGaramond-Regular-v0.1.otf');
+}
+
+@font-face {
+    font-family: 'GentiumPlus';
+    src: url('GentiumPlus-5.000/GentiumPlus-I.ttf');
+}
+
+@font-face {
+    font-family: 'grund';
+    src: url('grundschrift/Grundschrift-Bold.otf');
+}
+
+@font-face {
+    font-family: 'libre_carlson_display';
+    src: url('Libre-Caslon-Display/LibreCaslonDisplay-Regular.otf');
+}
+
+@font-face {
+    font-family: 'libre_carlson_text';
+    src: url('Libre-Caslon-Text-master/LibreCaslonText-Regular.ttf');
+}
+@font-face {
+    font-family: 'libertinus';
+    src: url('libertinus-serif/libertinusserif-regular.otf ');
+}
+
+@font-face {
+    font-family: 'kolar';
+    src: url('Kolar/Kolar-Regular.otf');
+}
+
+@font-face {
+    font-family: 'museum';
+    src: url('museum/MuseumBible.ttf');
+}
+
+@font-face {
+    font-family: 'opentypeTT';
+    src: url('OpenType-TT/opentypeTT.ttf');
+}
+
+@font-face {
+    font-family: 'Sniglet';
+    src: url('Sniglet v2/Sniglet-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'savate';
+    src: url('Savate-master/savate-regular.otf');
+}
+
+@font-face {
+    font-family: 'walt';
+    src: url('Waltograph/waltograph42.otf');
+}

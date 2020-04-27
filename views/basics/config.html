@@ -54,22 +54,8 @@ config_state.attr('id','config_state')
               })
 $('#content').append(config_state) // 266, 353, 354
 
+//---------------
 
-var config_open = false
-
-$('#config_state').on('click', function(){   // show / hide play_list
-
-     $('#id_view_image').hide()       // prevent the browser to open the svg..
-     $('#id_view_image_body').hide()   //
-
-     var translr = '-' + $('#config_panel').css('width')
-     if (!config_open){
-          $('#config_panel').animate({'right': ($(window).width()-cp_width) / 2 }) // show
-     }
-     else{
-          $('#config_panel').animate({ 'right': translr}) // hide
-     }
-     config_open = !config_open
-})
+toggle_panel('config')
 
 </script>

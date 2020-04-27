@@ -1,0 +1,218 @@
+<html>
+<head>
+
+<script  src="util_panel.js"></script>
+
+<script>
+
+/*
+
+Manuscript
+
+*/
+
+// possible icons.. 071 stylo, 260 pointe stylo
+// 333 binoculars pr recherche..
+
+var num_icon_manuscript = '071'
+var icon_manuscript = $('<img/>').attr('src',"capicon/svg/" + num_icon_manuscript + ".svg")  // icon for manuscript
+icon_manuscript.attr('id','icon_manuscript')
+           .css({
+                'position':'absolute',
+                'top':'10px',
+                'right':'50%',
+                'width':'15px'
+              })
+
+var manuscript_panel = $('<div/>').attr('id','manuscript_panel') //-- Manuscript panel
+$('#content').append(manuscript_panel)
+
+var manuscript_panel_width = 1000 // stp manuscript page
+manuscript_panel.css({
+          'background-color': '#ffffff', // Current play list.. '#ecf9f2'
+          'box-shadow': '0.5em 0.5em 2.7em',
+          'padding-bottom': '90px',
+          'padding-top': '30px',
+          'padding-left': '50px',
+          'padding-right': '50px',
+          'position': 'fixed',
+          'right': '-' + manuscript_panel_width + 'px',   // open
+          'top':'50px',
+          'width': manuscript_panel_width + 'px',
+          'height': '600px',
+          'z-index': '3'
+          })
+var tit = $('<h3/>').css({'text-align':'center'}) // titre
+                    .text('Dessin-Notes')
+
+// ---- Add elements to manuscript
+
+$('#manuscript_panel').append(icon_manuscript)    // pict helmet
+                      .append(tit)           // title
+
+// ----- manuscript toggle
+
+var pos_manuscript_toggle = 320
+var manuscript_state = $('<img/>').attr('src',"capicon/svg/" + num_icon_manuscript + ".svg")  // icon for play_list on/off
+manuscript_state.attr('id','manuscript_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top': pos_manuscript_toggle + 'px',
+                'right':'20px',
+                'width':'17px'
+              })
+$('#content').append(manuscript_state) // 266, 353, 354
+
+//-------------
+
+
+toggle_panel('manuscript')
+
+//---------------
+
+// gomme 263, pointe stylo 260, disquette 226
+// avion envoyer 224, plume 218
+
+var manuscript_icon_bin = $('<img/>').attr('src',"capicon/svg/030.svg")
+                                     .attr('id', 'manuscript_icon_bin')
+manuscript_icon_bin.css({
+                          'background-color': '#ffffff', //
+                          'padding-bottom': '0px',
+                          'padding-top': '0px',
+                          'padding-left': '0px',
+                          'padding-right': '0px',
+                          'position': 'absolute',
+                          'right': '20px',
+                          'bottom':'20px',
+                          'width': '15px',
+                          'z-index': '3'
+
+                        })
+$('#manuscript_panel').append(manuscript_icon_bin)
+$('#manuscript_icon_bin').click(function(){           // refresh the canvas
+      erase(canvas)
+})
+
+function erase(canvas) {
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+      moves = new Array()
+}
+
+//------------- Save
+
+var manuscript_icon_save = $('<img/>').attr('src',"capicon/svg/226.svg")
+                                     .attr('id', 'manuscript_icon_save')
+manuscript_icon_save.css({
+                          'background-color': '#ffffff', //
+                          'padding-bottom': '0px',
+                          'padding-top': '0px',
+                          'padding-left': '0px',
+                          'padding-right': '0px',
+                          'position': 'absolute',
+                          'right': '20px',
+                          'top':'150px',
+                          'width': '15px',
+                          'z-index': '3'
+
+                        })
+$('#manuscript_panel').append(manuscript_icon_save)
+
+$('#manuscript_icon_save').click(function(){     // convert the canvas drawing to picture..
+     convertCanvasToImage($('#canvas'))
+})
+
+var canvas_width = manuscript_panel_width -100
+var canvas_manuscript = $('<div/>').css({
+                                      'width': canvas_width + 'px',
+                                      'height':'450px',
+                                      'background-color':'#f2f2f2'
+                                      })
+                                    .attr('id','canvas_manuscript')
+
+$('#manuscript_panel').append(canvas_manuscript)
+var moves = new Array();
+var pressed;
+
+var canvas, context = false
+function initCanvas() {
+
+      var canvasDiv = document.getElementById('canvas_manuscript');
+      canvas = document.createElement('canvas');
+      canvas.setAttribute('width', canvas_width);
+      canvas.setAttribute('height', 450);
+      canvas.setAttribute('id', 'canvas');
+      canvasDiv.appendChild(canvas);
+      if(typeof G_vmlCanvasManager != 'undefined') {
+          canvas = G_vmlCanvasManager.initElement(canvas);
+      }
+      context = canvas.getContext("2d");
+
+        var offset = $('#canvas').offset()
+
+        $('#canvas').mousedown(function(e){
+          var offset = $('#canvas').offset()
+          pressed= true;
+          moves.push([e.pageX - parseInt(offset.left),
+              e.pageY - parseInt(offset.top),
+              false]);
+          redraw();
+        });
+
+        $('#canvas').mousemove(function(e){
+          var offset = $('#canvas').offset()
+          if(pressed){
+              moves.push([e.pageX - parseInt(offset.left),
+                  e.pageY - parseInt(offset.top),
+                  true]);
+            redraw();
+          }
+        });
+
+        $('#canvas').mouseup(function(e){
+          pressed = false;
+        });
+
+        $('#canvas').mouseleave(function(e){
+          pressed = false;
+        });
+        redraw();
+}
+
+function redraw(){
+      canvas.width = canvas.width; //
+
+      context.strokeStyle = "#0000a0";
+      context.lineJoin = "round";
+      context.lineWidth = 3;
+
+      for(var i=0; i < moves.length; i++)
+      {
+        context.beginPath();
+        if(moves[i][2] && i){
+          context.moveTo(moves[i-1][0], moves[i-1][1]);
+         }else{
+          context.moveTo(moves[i][0], moves[i][1]);
+         }
+         context.lineTo(moves[i][0], moves[i][1]);
+         context.closePath();
+         context.stroke();
+      }
+
+}
+
+function convertCanvasToImage(canvas) {   // Convert canvas drawing to png image..
+       var image = new Image();
+       image.src = canvas[0].toDataURL("image/png"); // png
+        alert(image);
+       return image;
+}
+
+initCanvas()
+
+</script>
+
+</head>
+
+</body>
+</html>

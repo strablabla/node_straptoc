@@ -1,0 +1,242 @@
+<script  src="util_panel.js"></script>
+<!-- <script src="keymaster.js"></script> -->
+
+<script>
+
+/*
+
+Tchat
+
+*/
+
+// 121 tél bulle, 068 bulle avec points.., 004 bulle noire points blancs..
+var panel_tchat_reduced = false
+var icon_tchat_reduce = $('<img/>').attr('src',"capicon/svg/278.svg")  // icon for tchat
+icon_tchat_reduce.attr('id','icon_tchat_reduce')
+                 .css({
+                        'position':'absolute',
+                        'top':'3px',
+                        'right':'10px',
+                        'width':'12px'
+                      })
+
+var num_icon_tchat = '004'
+var icon_tchat = $('<img/>').attr('src',"capicon/svg/" + num_icon_tchat + ".svg")  // icon for tchat
+icon_tchat.attr('id','icon_tchat')
+          .css({
+                'position':'absolute',
+                'top':'10px',
+                'right':'50%',
+                'width':'12px'
+              })
+
+var tchat_panel = $('<div/>').attr('id','tchat_panel') //-- Tchat panel
+$('#content').append(tchat_panel)
+
+icon_tchat.click(function(){
+     $('#tchat_panel').toggle()
+})
+
+var stp_width = 600 // stp tchat page
+tchat_panel.css({
+                'position':'fixed',
+                'background-color': '#ffffff', // Current play list.. '#ecf9f2'
+                'box-shadow': '0.5em 0.5em 2.7em',
+                'padding-bottom': '90px',
+                'padding-top': '30px',
+                'padding-left': '50px',
+                'padding-right': '50px',
+                'position': 'fixed',
+                //'right': '-' + stp_width + 'px',   // open
+                'bottom':'10px',
+                'left': '10px',
+                'width': '500px',
+                'height': '600px',
+                'z-index': '3'
+                })
+var tit = $('<h3/>').css({'text-align':'center'}) // title of the Tchat panel
+                    .text('Tchat')
+
+// -------------------------- Users panel
+var users_panel = $('<div/>').attr('id','users_panel') //-- Tchat panel
+$('#tchat_panel').append(users_panel)
+users_panel.css({
+                'position':'absolute',
+                'background-color': '#ffeb99', // Current play list.. '#ecf9f2'
+                'box-shadow': '0.5em 0.5em 2.7em',
+                'padding-left': '10px',
+                'padding-right': '10px',
+                'padding-left': '20px',
+                'top':'100px',
+                'right': '-70px',
+                'width': '150px',
+                'height': '200px',
+                'max-height': '400px',
+                'z-index': '3'
+                })
+
+var tit_users = $('<h4/>').text('Users').css({'text-align':'center'}) // title of the users panel
+var plus_butt_users = $('<div/>').text('')
+                           .css({
+                                  'position':'absolute',
+                                  'left':'50%',
+                                  'bottom':'10px',
+                                  'font-size': '20px'
+                                })
+                           .attr('id','add_user')
+
+users_panel.append(tit_users)
+           .append(plus_butt_users)
+
+// $('#add_user').click(function(){   // open panel to enter name of new user..
+//       new_user.toggle()
+// })
+
+//------------ new user
+
+var new_user = $('<div/>').attr('id','new_user')
+new_user.css({
+               'position':'absolute',
+               'background-color': '#ffeb99', //
+               'box-shadow': '0.5em 0.5em 2.7em',
+               'padding-left': '10px',
+               'padding-right': '10px',
+               'padding-top': '7px',
+               'top':'305px',
+               'right': '-70px',
+               'width': '150px',
+               'height': '40px',
+               'max-height': '400px',
+               'z-index': '3'
+               })
+
+var input_new_user = $('<input/>').attr('id','input_new_name').css({'width':'132px', 'padding-left':'5px'})
+new_user.append(input_new_user)
+tchat_panel.append(new_user)
+
+$("#input_new_name").on('keyup', function (e) {
+    if (e.keyCode === 13) {                            // Enter
+        //alert('sending the name')
+        new_user.toggle()
+        var name_user = $('#input_new_name').val()
+        socket.emit('new_user', name_user)
+        socket.on('add_new_user', function(mess){
+              var new_user_name = $('<div/>').text(mess.name_new_user)
+                                             .css({'font-size':'14px'})
+              if (mess.id_user == socket.id){ new_user_name.css({'font-weight':'bold'}) }
+              users_panel.append(new_user_name)             // add user name to the user panel..
+        })
+    }
+});
+
+// ---- Add elements to tchat
+
+$('#tchat_panel').append(icon_tchat)    // icon tchat, bubble
+                 .append(tit)           // title
+                 .append(icon_tchat_reduce)
+
+$('#icon_tchat_reduce').click(function(){
+     if (!panel_tchat_reduced){
+         $('#tchat_panel').css({'height':'300px'})
+         $('#tchat_messages').css({'height':'100px'})
+         $(this).attr('src',"capicon/svg/279.svg")
+         users_panel.css({'top':'25px', 'right':'-70px'})
+     }
+     else{
+         $('#tchat_panel').css({'height':'600px'})
+         $('#tchat_messages').css({'height':'400px'})
+         $(this).attr('src',"capicon/svg/278.svg")
+         users_panel.css({'top':'100px', 'right':'-70px'})
+
+     }
+     panel_tchat_reduced ^= -1
+
+})
+
+var tchat_messages = $('<div/>').attr('id','tchat_messages')
+tchat_messages.css({
+
+               'position':'absolute',
+               'background-color': '#f2f2f2', //
+               'padding-left': '40px',
+               'padding-right': '30px',
+               'padding-top': '7px',
+               'padding-top': '20px',
+               'top':'100px',
+               'left': '30px',
+               'width': '390px',
+               'height': '400px',
+               'overflow': 'auto',
+               'overflow-wrap': 'break-word',
+               'z-index': '2'
+               })
+
+var butt_send = $('<input/>').attr({   // button to send message to users..
+        type: "button",
+        id: "send_message",
+        value: "send",
+        class: "btn btn-warning"
+    }).css({'position':'absolute','bottom':'35px', 'right':'50px'})
+
+
+var tchat_textarea = $('<textarea id="tchat_textarea" rows="10" cols="30" style=" width: 300px; height: 30px;" /> ').show()
+tchat_textarea.css({'position':'absolute','bottom':'25px', 'max-height':'100px'})
+
+$('#tchat_panel').append(tchat_textarea)
+                 .append(butt_send)
+                 .append(tchat_messages)
+$('#tchat_panel').hide()
+$('#send_message').click(function(){
+      var curr_message = tchat_textarea.val()
+      //$('#tchat_messages').append($('<div/>').text(curr_message))
+      socket.emit('tchat_message', {curr_message: curr_message})
+      tchat_textarea.val('')  // remove text in textarea..
+})
+dic_col_tchat = { 0: '#ffb566', 1: '#5bd75b' }
+socket.on('broadcast_message', function(mess){  // write the user's message in the panel
+
+      var curr_name_user = $('<span/>').html( '<b>' + mess.name_user + '</b>' + ': ')
+                                       .addClass('tchat_user')
+      var received_mess = $('<span/>').html(mess.mess + '<br>').addClass('tchat_message')
+      received_mess.css({'color': dic_col_tchat[mess.name_user]})
+      var tchat_line = $('<div/>').addClass('tchat_line')
+                                  .append(curr_name_user)
+                                  .append(received_mess)
+      tchat_line.css({'font-size':'13px'})
+      $('#tchat_messages').append(tchat_line)  // add the newline in the tchat line
+      $('.tchat_user').css({'margin-left':'-20px'})
+})
+
+// ----- tchat State, icon on the right
+
+var pos_tchat_toggle = 290
+var tchat_state = $('<img/>').attr('src',"capicon/svg/" + num_icon_tchat + ".svg")  // icon for play_list on/off
+tchat_state.attr('id','tchat_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top': pos_tchat_toggle + 'px',
+                'right':'20px',
+                'width':'17px'
+              })
+$('#content').append(tchat_state) // 266, 353, 354
+
+//------------- Toggle panel
+
+$('#tchat_state').click(function(){
+     $('#tchat_panel').toggle()
+})
+
+var down = {};
+$("#tchat_textarea").keydown(function(e) {  // Enter 13, space 32, ctrl 17 )
+    down[e.keyCode] = true;
+}).keyup(function(e) {
+    if (down[13] && down[17]) {  // ctrl + Return..
+        $('#send_message').click()
+    }
+    down[e.keyCode] = false;
+})
+
+
+
+</script>

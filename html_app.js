@@ -16,6 +16,8 @@ var init = require('./static/js/init');
 var notes = require('./static/js/notes');
 var subtit = require('./static/js/make_subtit');
 var new_obj = require('./static/js/new_obj');
+var store = require('./static/js/store');
+var agenda = require('./static/js/agenda');
 
 //--------------  Server
 
@@ -43,6 +45,16 @@ app.get('/text', function(req, res){ res.render('struct/text.html'); });
 
 init.static_addr(app, express)
 
+//------------- store
+
+store.walkDir('../../../../../../media/sdata/docs/test', function(filePath) {
+  //const fileContents = fs.readFileSync(filePath, 'utf8');
+  console.log('############### WalkDir')
+  //console.log(filePath, fileContents);
+  console.log(filePath)
+
+});
+
 //--------------  websocket
 
 // Loading socket.io
@@ -63,8 +75,18 @@ String.prototype.format = function () {
 
 subtit.make_sub() // make the subtitles..
 
-io.sockets.on('connection', function (socket) {
+var users = {}
+num_user = 0
 
+io.sockets.on('connection', function (socket) {
+      socket.on('new_user', function(name_user){
+          users[socket.id] =  name_user        // parseInt((num_user-1)/2)
+          num_user += 1
+          console.log('users[socket.id] is ' + users[socket.id])
+          io.sockets.emit('add_new_user', { name_new_user: name_user, id_user: socket.id } )
+      })
+
+      //------------
       console.log('A client is connected!');
       re.emit_from_read(socket, patt, html_pos)
       //util.save_regularly_all()                                                // save the regularly the text..
@@ -75,7 +97,12 @@ io.sockets.on('connection', function (socket) {
       init.comm_voc(io)                                            //---- comm voc
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                              //---- pdfs in folders
-      notes.handle(socket)                                         //---- notes
+      notes.handle(socket, 'notes')                                //---- notes
+      agenda.handle(socket)                                        //---- agenda
+
+      socket.on('tchat_message',function(mess){
+          io.sockets.emit('broadcast_message', { mess : mess.curr_message, name_user : users[socket.id] })
+      })
 
 }); // io.sockets.on connection
 

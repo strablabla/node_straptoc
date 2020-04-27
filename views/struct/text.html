@@ -43,7 +43,7 @@
                   mode: 'markdown'
             });
 
-            code_mirror_add_func(editor)
+            code_mirror_add_func(editor) // set CodeMirror width etc.. 
 
              //------------- from textarea to html
 
@@ -90,11 +90,13 @@
           return false;
           });
 
-    socket.on('page_return_to_html', function(){
+    socket.on('page_return_to_html', function(name){
+        // alert(name)
+        // alert(new_loc)
         window.location.href = new_loc;   // return to html..
     })
 
-    document.addEventListener('keydown', function(event) {
+    document.addEventListener('keydown', function(event) {  // alt + s for saving the text..
       //if (event.ctrlKey && event.key === 'z') {
       if (event.altKey && event.key === 's') {
             document.getElementById('submit').click();

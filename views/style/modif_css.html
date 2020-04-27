@@ -1,152 +1,202 @@
-
-<style>
-
-@font-face {
-    font-family: 'walt';
-    src: url('Waltograph/waltograph42.otf');
-}
-
-@font-face {
-    font-family: 'grund';
-    src: url('grundschrift/Grundschrift-Bold.otf');
-}
-
-@font-face {
-    font-family: 'optype';
-    src: url('OpenType-TT/19076.ttf');
-}
-
-@font-face {
-    font-family: 'caglio';
-    src: url('Cagliostro-regular/Cagliostro-Regular.ttf');
-}
-
-@font-face {
-    font-family: 'garam';
-    src: url('BetterEBGaramond-Regular/BetterEBGaramond-Regular-v0.1.otf');
-}
-
-@font-face {
-    font-family: 'alex';
-    src: url('Alexander/Alexander.ttf');
-}
-
-@font-face {
-    font-family: 'autopia';
-    src: url('Autopia-TTF-v1.1/Autopia-Regular.ttf');
-}
-
-@font-face {
-    font-family: 'museum';
-    src: url('museum/MuseumBible.ttf');
-}
-
-@font-face {
-    font-family: 'libre_carlson_display';
-    src: url('Libre-Caslon-Display/LibreCaslonDisplay-Regular.otf');
-}
-
-
-@font-face {
-    font-family: 'libre_carlson_text';
-    src: url('Libre-Caslon-Text-master/LibreCaslonText-Regular.ttf');
-}
-
-@font-face {
-    font-family: 'bagnard';
-    src: url('Bagnard-Sans-master/BagnardSans.otf');
-}
-
-@font-face {
-    font-family: 'GentiumPlus';
-    src: url('GentiumPlus-5.000/GentiumPlus-I.ttf');
-}
-
-@font-face {
-    font-family: 'Sniglet';
-    src: url('Sniglet v2/Sniglet-Regular.ttf');
-}
-
-@font-face {
-    font-family: 'butler';
-    src: url('Sniglet v2/');
-}
-
-@font-face {
-    font-family: 'savate';
-    src: url('Savate-master/savate-regular.otf');
-}
-
-@font-face {
-    font-family: 'libertinus';
-    src: url('libertinus-serif/libertinusserif-regular.otf ');
-}
-
-
-</style>
+<link type="css"  rel="stylesheet" href="css/main_fonts.css">
 
 <script>
 
 //Grundschrift-Bold.otf    Grundschrift-Light.otf  Grundschrift-Regular.otf
 //Grundschrift-Kontur.otf  Grundschrift-Punkt.otf
 
+$(window).load(function(){   // applied after all the page is loaded..
+
+$('#content').css({
+                  'margin-left':'120px',
+                  'margin-right':'120px'
+                })
 $('h1').css({'font-family': "libre_carlson_display", 'text-shadow':'none'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d
 $('h2').css({'color':'#c65353', 'font-family': "libre_carlson_display", '-webkit-text-stroke-width': '0.5px'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d 1a75ff b3d1ff ff3333 ff9999 8cb3d9
 $('h3').css({'color':'#d27979', 'font-family': "libre_carlson_display", 'font-style': 'bold', '-webkit-text-stroke-width': '0.2px'}) // 'Enriqueta', serif
-$('#toc').css({'width':'auto !important', 'font-size':'14px', 'top':'70px', 'background-color':'#ffeecc'})
+$('#toc').css({'min-height': '200px', 'width':'auto !important', 'font-size':'14px', 'top':'70px', 'background-color':'#ffeecc'})
 $('.date').css({"font-family": "'Enriqueta', serif", 'color':'#000000'})
 $('.navbar').css({'position':'fixed'})
 $('.todotheme').css({'width':'auto', 'height':'700px','margin-right':'300px'})
-$('pre').css({ 'display': 'table' }) // 'margin-right':'30%',
+$('pre').css({ 'display': 'table' }) // 'margin-right':'30%'
+//$('.CodeMirror').css({ 'margin-left': '10%', 'width':'80%' }) // 'margin-right':'30%'
 
-// ------------------- actions on elements after date..
+//--------------
+
+$('.help').hide()
+$('.showtoc').css({'right':'70px'})
+
+$('div.onside').find('a').click(function(){
+    try{
+      var poshref = $($(this).attr('href')).offset().top
+      $('html,body').animate({scrollTop: poshref -50}, 'linear')
+    }catch(err){}
+
+})
+
+//------------- Secondary elements
+
+//$('.elem_list_play_selected').css({'font-family': "anaktoria", 'text-shadow':'none'})
+
+// $('a').each(function(){$(this).attr('target','_blank') }) // target="_blank"
+// $('a#vid_name').attr('target','_self')
+
+//------------------ PDFs
+
+$('object').each(function(){
+
+    if($(this).attr('type') == 'application/pdf'){
+        $(this).css({'width':'1100px','height':'900px'}) // 'width':'1200px',
+    }
+
+})
+
+/*
+
+Color specific tag elements which parent is .date and make a border..
+
+*/
 
 var dic_li = { 'job' : {'inside': {'color': '#99dfff'}, 'title': {'color':'#00aeff'} },
-               'prog' : {'inside': {'color': '#ffe6e6'}, 'title': {'color':'#ff9999'} }
+               'prog' : {'inside': {'color': '#ffe6e6'}, 'title': {'color':'#ff9999'} },
+               'phys' : {'inside': {'color': '#adebad'}, 'title': {'color':'#5cd65c'} },
+               'math' : {'inside': {'color': '#ffb380'}, 'title': {'color':'#ff944d'} }
                // ffd9b3 ffbf80
                // ffe6e6 ff9999
-
  }
+ var col_fist_level = '#996633' // '#cc9966'
+ var col_sec_level = '#555555' // '#666666' // '#ff9c33'  // 'black' //''#331a00' //
+
+function color_tags_with_borders(elem, dic_style){
+
+      change_tag_colors(elem, dic_style)
+      make_border(elem, dic_style)
+
+}
+
+function change_tag_colors(elem, dic_style){ // , col_fist_level, col_sec_level
+
+      elem.find('ul li').css({'color' : col_fist_level})         // color 1st level
+      elem.find('ul li li').css({'color' : col_sec_level})     // color 2 level
+      elem.css({'color' : dic_style['title']['color']})  // color heading
+}
+
+function make_border(elem, dic_style){
+
+      elem.children('ul').css({                          // vertical line on the left..
+                      'border-color': dic_style['inside']['color'], // 99dfff, e6f7ff
+                      'border-left': '2px solid', // solid, dashed
+                      'border-spacing': '-10px',
+                      'padding-left' : '20px'
+                    })
+
+}
+
 $('li').each(function(){
+
       var elem = $(this).parent().prev()
       if ( elem.hasClass('date') ){
-          var rubr = $(this).text()
-                            .split('[-]')[0].trim()
-                            .split('\n')[0].trim()
-      for (const [key,dic_style] of Object.entries(dic_li)) {
-           //alert('dic_css is ' + dic_css)
+          var rubr = $(this).text().split('[-]')[0].trim().split('\n')[0].trim()
+      for (const [key, dic_style] of Object.entries(dic_li)) {
            if( rubr == key ){
-                  $(this).find('ul li').css({'color' : 'blue'})         // color 1st level  
-                  $(this).find('ul li li').css({'color' : 'black'})     // color 2 level
-                  $(this).css({'color' : dic_style['title']['color']})  // color heading
-                  $(this).children('ul').css({                          // vertical line on the left..
-                                      'border-color': dic_style['inside']['color'], // 99dfff, e6f7ff
-                                      'border-left': '2px solid', // solid, dashed
-                                      'border-spacing': '-10px',
-                                      'padding-left' : '20px'
-                                    })
-               }
-      }
+                  color_tags_with_borders($(this), dic_style)
+               } // if
+         } // for
     }
 })
 
 // ---------------   Symbols
 
-var dic_symb = {'tél':'041', 'mail':'019'}
+regex_tél = /(\d{2}.){4}\d{2}/g     // regexp for phone number
+regex_mail = /\w+\.?\w+?@.+\.com/g  // regexp for mail
+var dic_symb = {'tél':['041',regex_tél], 'mail':['019',regex_mail]}
+
+function make_span_icon(value){
+
+      var src_icon = 'src="capicon/svg/{}.svg"'.replace('{}',value[0])
+      var im_icon = '<img class="icon_symbol" {} width="15px">'.replace('{}',src_icon)
+      var span_icon = '<span> {} </span/>'.replace('{}', im_icon)
+
+      return span_icon
+}
+
+function replace_associated_information(htm, key, value){
+
+      /*
+
+      Replace the regexp associated to the key
+
+      */
+
+      var reg_match = htm.match(value[1])
+      if (reg_match){
+        htm = htm.replace(reg_match, '<span class="'+ key + '">' + reg_match + '</span>') // replace the phone number or the mail..
+      }
+      return htm
+
+}
+
+function replace_by_symbol(htm, key, value){
+
+      /*
+
+      Replace the command by the corresponding symbol..
+
+      */
+
+      span_icon = make_span_icon(value)
+      regex_replace = new RegExp('\\!' + key, 'g');  // regexp for "key" word
+      htm = htm.replace(regex_replace, span_icon)  // replace the command by the icon..
+      return htm
+
+}
+
+function replace_by_icon_and_association(elem, htm, key, value){
+
+      /*
+
+      Replace the command and the associated regexp..
+
+      */
+
+      htm = replace_by_symbol(htm, key, value)
+      htm = replace_associated_information(htm, key, value)
+      elem.html(htm)  // change in html
+
+}
 
 for (const [key, value] of Object.entries(dic_symb)) {
 
       $('li').each(function(){
-         var htm = $(this).html()
-         var regex = new RegExp('\\!' + key);
-         if (htm.search(regex) != -1){
-              var span_icon = '<span><img class="icon_symbol" src="capicon/svg/{}.svg"  width="15px"></span/>'.replace('{}',value)
-              regex_replace = new RegExp('\\!' + key, 'g');
-              htm = htm.replace(regex_replace, span_icon)  // inset the icon
-              $(this).html(htm)  // change in html
-              }
-        })
-}
+           var htm = $(this).html()
+           var regex = new RegExp('\\!' + key);
+           if (htm.search(regex) != -1){
+
+              replace_by_icon_and_association($(this), htm, key, value) // replace command by icon and change the associated information..
+
+              } // end if
+
+          })
+} // end for
+
+var padding_symb_info = {'lr':'7px', 'tb':'1px'} // paddings left-right and top-bottom
+var dic_frame_info = {
+
+      'border-bottom': '1px solid rgba(0,0,0,.2)',
+      'padding-top': padding_symb_info['tb'],
+      'padding-bottom': padding_symb_info['tb'],
+      'padding-left': padding_symb_info['lr'],
+      'padding-right': padding_symb_info['lr']
+
+      }
+
+// #ccffcc ffe6b3 d9f2d9 d6f5d6 eeeedd d9f2e6
+
+$('.tél').css(dic_frame_info)                     // phone
+$('.tél').css({  'background-color':'#d9f2e6' })
+$('.mail').css(dic_frame_info)                    // mail
+$('.mail').css({ 'background-color':'#ffecb3' })
+
 $('.icon_symbol').css({                          //------- Correction on vertical position of the symbols..
                         'margin-bottom':'0px',
                         'margin-top':'2px'
@@ -154,11 +204,12 @@ $('.icon_symbol').css({                          //------- Correction on vertica
 
 // --------------- Color videos
 
-var color_medias = '#66cc66'
+var color_medias = '#66cc66'                // color f the medias : clear green
 var dic_col_medias = {'color': color_medias}
 $('.strapvid').find('a').css(dic_col_medias)
-$('.strapvid').parent().css(dic_col_medias) // 66cc66, 79d279
+$('.strapvid').parent().css(dic_col_medias)
 $('.strapvid').prev().css(dic_col_medias)
+// 66cc66, 79d279
 
 // ----------------
 
@@ -166,5 +217,6 @@ $('#text').hide()
 
 MathLive.renderMathInDocument();
 
+}) // end $(window).load..
 
 </script>

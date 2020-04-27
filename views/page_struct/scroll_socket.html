@@ -1,11 +1,9 @@
 
-<script  src="global.js"></script>
-<script src="/socket.io/socket.io.js"></script>
+
 <script src="dbl_click_move_to_text.js"></script>
 
 <script>
 
-var socket = io.connect();
 var comment = false;
 
 socket.on('connection', function() {
@@ -16,16 +14,25 @@ socket.on('scroll_html', function(pos) {
       $(document).scrollTop(pos)
  });
 
- socket.on('page_return_to_html', function() {
-       window.location.reload()
+ //------- Refresh
+
+var loc = window.location.href.split('//')[1].split('/')[1]
+
+ socket.on('page_return_to_html', function(name) {  // reload  only a precise page..
+       //alert(name)
+       local_name = name.split('_')[0]
+       cnd0 = (local_name == 'main' & loc == '')
+       //alert(cnd0)
+       if (local_name == loc | cnd0){
+           window.location.reload()                 // reload only the same page on all the network..
+       }
+
   });
 
 // ------------- Double click for switching to textarea
 
 var dic_modes_switch = { '.date': 1, 'li li': 0,
                          'li:not(:has(span))': 0} //,'h1':0,'h2':0}
-console.log('############  in scroll_socket curr_text is ' + window.location.href.split('//')[1].split('/'))
-var loc = window.location.href.split('//')[1].split('/')[1]
 
 Object.entries(dic_modes_switch).forEach(([elem, i]) =>
         dblclick_to_text(socket, $(elem), i, dic_text_id[loc])

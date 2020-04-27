@@ -61,8 +61,10 @@ function voice_onoff(){
                 })
         $('#voice_onoff').append(icon_sound)
             icon_sound.click(function(){
-                      $('#voice_onoff').click()
-                      $('#id_view_image').hide()
+                      //alert('hellloo')
+                      document.getElementById("#voice_onoff").click()
+                      //$('#voice_onoff').click()
+                      $('#id_view_image').hide()      // prevent from opening the icon image..
                       $('#id_view_image_body').hide()
                   })
         manual_flip(elem)
@@ -75,6 +77,7 @@ var dic_trig =  {
         indexes: ['arrête ton char'],
         action: function() {
             //artyom.say("change le toc");
+            $('#voice_onoff').css({'background-color':'blue'})
             artyom.dontObey()
             }
     }
@@ -140,7 +143,6 @@ artyom.addCommands(dic_toc); //
 
 // -------------------------------- Create a new note
 
-
 var dic_note =  {
         indexes: ['nouvelle note', 'ajouter une note'],
         action: function() {
@@ -163,6 +165,50 @@ var dic_search =  {
 
 artyom.addCommands(dic_search); //
 
+// -------------------------------- Putting order..
+
+var dic_put_order =  {
+        indexes: ['Rangement'],
+        action: function() {
+            $('#store_state').click()
+            }
+    }
+
+artyom.addCommands(dic_put_order); //
+
+// -------------------------------- Agenda
+
+var dic_agenda =  {
+        indexes: ['Agenda'],
+        action: function() {
+            $('#agenda_state').click()
+            }
+    }
+
+artyom.addCommands(dic_agenda); //
+
+// -------------------------------- Help
+
+var dic_help =  {
+        indexes: ['Aide'],
+        action: function() {
+            $('#help_state').click()
+            }
+    }
+
+artyom.addCommands(dic_help); //
+
+// -------------------------------- Config
+
+var dic_config =  {
+        indexes: ['Config'],
+        action: function() {
+            $('#config_state').click()
+            }
+    }
+
+artyom.addCommands(dic_config); //
+
 //----------- Dic voc for goto
 
 socket.on('dic_voc', function(dic) {
@@ -177,9 +223,7 @@ socket.on('dic_voc', function(dic) {
 
  });
 
-
  {% include 'basics/voice_specific.html' %}
-
 
 </script>
 

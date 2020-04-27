@@ -1,0 +1,65 @@
+<script  src="util_panel.js"></script>
+
+<script>
+
+/*
+
+Help
+
+*/
+
+var num_icon_help = '045'
+var icon_help = $('<img/>').attr('src',"capicon/svg/" + num_icon_help + ".svg")  // icon for help
+icon_help.attr('id','icon_help')
+           .css({
+                'position':'absolute',
+                'top':'10px',
+                'right':'50%',
+                'width':'12px'
+              })
+
+var help_panel = $('<div/>').attr('id','help_panel') //-- Help panel
+$('#content').append(help_panel)
+
+var stp_width = 600 // stp help page
+help_panel.css({'background-color': '#ffffff', // Current play list.. '#ecf9f2'
+          'box-shadow': '0.5em 0.5em 2.7em',
+          'padding-bottom': '90px',
+          'padding-top': '30px',
+          'padding-left': '50px',
+          'padding-right': '50px',
+          'position': 'fixed',
+          'right': '-' + stp_width + 'px',   // open
+          'top':'170px',
+          'width': '600px',
+          'height': '400px',
+          'z-index': '3'
+          })
+var tit = $('<h3/>').css({'text-align':'center'}) // titre
+                    .text('Aide')
+
+// ---- Add elements to help
+
+$('#help_panel').append(icon_help)    // pict helmet
+                   .append(tit)           // title
+
+// ----- help toggle
+
+var pos_help_toggle = 260
+var help_state = $('<img/>').attr('src',"capicon/svg/" + num_icon_help + ".svg")  // icon for play_list on/off
+help_state.attr('id','help_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top': pos_help_toggle + 'px',
+                'right':'20px',
+                'width':'17px'
+              })
+$('#content').append(help_state) // 266, 353, 354
+
+//-------------
+
+
+toggle_panel('help')
+
+</script>

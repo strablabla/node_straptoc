@@ -1,6 +1,5 @@
 <script src="keymaster.js"></script>
 
-
 <script>
 
 /*
@@ -9,8 +8,7 @@ Notes
 
 */
 
-//var socket = io.connect();
-
+var note_color = '#ffe066'
 var note = $('<p/>').attr('id','note')
 $('#content').append(note)
 
@@ -46,9 +44,6 @@ function toggle_note(){
         toggle_note()
 
         */
-
-        //alert('toggle_note')
-
 
         if (note_activated){      // note_activated = true
               //alert('deactivate note')
@@ -155,7 +150,7 @@ function fill_note(elem, id, postop){
       butt_save.click(function(){            // send note to server..
           var posdate = ' !id ' + id +  date_full()
           var txt = $('#text_note').val() + posdate
-          socket.emit('save_note', txt)
+          socket.emit('save_notes', txt)
           $('#note').hide()
       })
       butt_reduce.click(function(){            // reduce the window
@@ -191,7 +186,7 @@ function note_in_strap(elem, id, postop){
 
       posnote = postop.toString() + 'px' // note position
 
-      elem.css({'background-color':'rgb(255,224,102)',
+      elem.css({'background-color': note_color,
                 'padding-left': '20px',
                 'padding-right': '20px',
                 'padding-bottom': '20px',
@@ -236,12 +231,7 @@ socket.on('create_new_note', function(){      // create new note by voice comman
 
       */
 
-      //alert('in note.html !!!')
-
-      var elem = $(':hover').last()
-      id = create_id(elem)
-      var postop = Math.round( elem.offset().top, 1 )  || 0;
-      show_note(id, postop)
+      create_new_note()
 
 })
 
@@ -361,14 +351,14 @@ function bind_save_butt(key){
 
       /*
 
+
       */
 
       $('#save_note').unbind()
       $('#save_note').click(function(){
             var posdate = ' !id ' + key + date_full() // Math.round(,1)
             var txt = $('#text_note').val() + posdate
-            //alert(txt)
-            socket.emit('save_note', txt)
+            socket.emit('save_notes', txt)
             $('#note').hide()
       })
 }
@@ -433,6 +423,22 @@ function detect_note(key, value){
 
 } // detect_note
 
+function create_new_note(){
+
+  /*
+
+
+
+  */
+
+  note_color = '#ffc299' // orange
+  var elem = $(':hover').last()
+  id = create_id(elem)
+  var postop = Math.round(elem.offset().top,1)  || 0; // position of the note in the same as the elem..
+  show_note(id, postop)
+
+}
+
 key('alt+n',function(){
 
       /*
@@ -441,12 +447,7 @@ key('alt+n',function(){
 
       */
 
-      var elem = $(':hover').last()
-      // alert(elem.attr('src'))
-      // alert(elem[0].hasAttribute('src'))
-      id = create_id(elem)
-      var postop = Math.round(elem.offset().top,1)  || 0; // position of the note in the same as the elem..
-      show_note(id, postop)
+      create_new_note()
 
 })
 
@@ -460,7 +461,8 @@ function active_template(notes){
       var elem = $(':hover').last()
       var first_key = Object.keys(notes)[0]
       var id = first_key
-      var postop = Math.round(elem.offset().top,1)  || 0;
+      var postop = Math.round(elem.offset().top,1)  || 0; // retrieve the position
+      note_color = '#ffe066'
       show_note(id, postop)
       $('#note').hide()
 
