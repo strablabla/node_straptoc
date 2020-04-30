@@ -1,3 +1,3 @@
-var dchandir = {"_curiosity":"curiosity","_fait":"fait","_horus":"horus","_main":"/","_pocus":"pocus"}
-var list_pages = ["curiosity","fait","horus","main","pocus"]
-var dic_text_id = {"curiosity":"text-#curiosity","":"text-#main","fait":"text-#fait","horus":"text-#horus","main":"text-#main","pocus":"text-#pocus"}
+var dchandir = {"_Infos":"Infos","_Personnages":"Personnages","_catchou":"catchou","_curiosity":"curiosity","_fait":"fait","_grim":"grim","_horus":"horus","_job":"job","_main":"/","_pipa":"pipa","_pocus":"pocus","_repolino":"repolino","_tests":"tests","_zblurb":"zblurb","_ziggurat":"ziggurat"}
+var list_pages = ["Infos","Personnages","catchou","curiosity","fait","grim","horus","job","main","pipa","pocus","repolino","tests","zblurb","ziggurat"]
+var dic_text_id = {"Infos":"text-#Infos","":"text-#main","Personnages":"text-#Personnages","catchou":"text-#catchou","curiosity":"text-#curiosity","fait":"text-#fait","grim":"text-#grim","horus":"text-#horus","job":"text-#job","main":"text-#main","pipa":"text-#pipa","pocus":"text-#pocus","repolino":"text-#repolino","tests":"text-#tests","zblurb":"text-#zblurb","ziggurat":"text-#ziggurat"}

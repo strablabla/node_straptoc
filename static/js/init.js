@@ -30,13 +30,56 @@ exports.static_addr = function(app, express){
 
       */
 
+      function case_array(elem,ob){
+          if (Array.isArray(ob)){ return 'array' + elem }
+          else{ return elem }
+      }
+
+      function flattenObject(ob) {
+            var toReturn = {};
+
+            for (var i in ob) {
+                if (!ob.hasOwnProperty(i)) continue;
+
+                if ((typeof ob[i]) == 'object' && ob[i] !== null) {
+                    var flatObject = flattenObject(ob[i]);
+                    for (var x in flatObject) {
+                        if (!flatObject.hasOwnProperty(x)) continue;
+
+                        toReturn[case_array(i,ob) + '§§' + case_array(x,flatObject)] = flatObject[x];
+
+                    }
+                } else {
+
+                    toReturn[case_array(i,ob)] = ob[i];
+
+                }
+            }
+            return toReturn;
+        }
+
+      function make_stat_addr(key,val){
+
+            var newkey = key.replace(/array\d{1,3}/g,'').replace(/^(§§)/,'')
+            newkey = newkey.replace(/(§§)$/,'').replace(/(§§)+/g,'/')
+            if (newkey == ''){ stat_addr = val }
+            else{ stat_addr = newkey + '/' +  val  }
+
+            return stat_addr
+
+      }
+
       fs.readFile('static/addr.json', 'utf8', function (err,text) {
               if (err) { return console.log(err); }
-               let dic_addr = JSON.parse(text);
-               for (stat_addr of dic_addr){
-                   console.log(stat_addr)
-                   app.use(express.static(stat_addr));
-               }
+              flat_dic = flattenObject(JSON.parse(text))
+              console.log("mytests")
+              for (const [key, val] of Object.entries(flat_dic)) {
+                      stat_addr = make_stat_addr(key,val)
+                      console.log('final expr is ' + stat_addr)
+                      app.use(express.static(stat_addr))       // add the address
+
+                   } // for
+
           }); // end fs.readFile
 
     }

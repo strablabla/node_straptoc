@@ -1,0 +1,65 @@
+<script  src="util_panel.js"></script>
+
+<script>
+
+/*
+
+Stat
+
+*/
+
+var num_icon_stat = '265'
+var icon_stat = $('<img/>').attr('src',"capicon/svg/" + num_icon_stat + ".svg")  // icon for stat
+icon_stat.attr('id','icon_stat')
+           .css({
+                'position':'absolute',
+                'top':'10px',
+                'right':'50%',
+                'width':'12px'
+              })
+
+var stat_panel = $('<div/>').attr('id','stat_panel') //-- Stat panel
+$('#content').append(stat_panel)
+
+var stat_panel_width = 800
+stat_panel.css({'background-color': '#ffffff', // Current play list.. '#ecf9f2'
+          'box-shadow': '0.5em 0.5em 2.7em',
+          'padding-bottom': '90px',
+          'padding-top': '30px',
+          'padding-left': '50px',
+          'padding-right': '50px',
+          'position': 'fixed',
+          'right': '-' + stat_panel_width + 'px',   // open
+          'top':'170px',
+          'width': stat_panel_width + 'px',
+          'height': '500px',
+          'z-index': '3'
+          })
+var tit = $('<h3/>').css({'text-align':'center'}) // titre
+                    .text('Stat')
+
+// ---- Add elements to stat
+
+$('#stat_panel').append(icon_stat)    // pict helmet
+                   .append(tit)           // title
+
+// ----- stat toggle
+
+var pos_stat_toggle = 350
+var stat_state = $('<img/>').attr('src',"capicon/svg/" + num_icon_stat + ".svg")  // icon for play_list on/off
+stat_state.attr('id','stat_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top': pos_stat_toggle + 'px',
+                'right':'20px',
+                'width':'17px'
+              })
+$('#content').append(stat_state) // 266, 353, 354
+
+//-------------
+
+
+toggle_panel('stat')
+
+</script>

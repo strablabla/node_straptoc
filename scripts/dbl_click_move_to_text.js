@@ -5,6 +5,10 @@ and send some informations : pattern, scrollpos etc..
 
 */
 
+var text_blocked = -1
+socket.on('blocked', function(val){  // if text_blocked true, it prevents from going to text..
+    text_blocked = val
+})
 
 function dblclick_to_text(socket, elem, index, addr_chann){
 
@@ -14,7 +18,9 @@ function dblclick_to_text(socket, elem, index, addr_chann){
 
       elem.dblclick(function(e){  // when clicking right go back to html
             e.preventDefault();
-            pattern_and_flip(socket, $(this), index, addr_chann)
+            if (!text_blocked){
+                pattern_and_flip(socket, $(this), index, addr_chann)
+              }
             return false;
             });
 }
@@ -27,8 +33,10 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
 
     // ------------ find the pattern
 
-    if (elem.is('li')){ var patt = elem.text().split('\n')[0] }
+    if (elem.is('li')){ var patt = elem.text().split('\n')[0].replace('?','\\?') }
     else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }
+
+    //alert('pattern found is ' + patt)
 
     // ------------ flip to text
 

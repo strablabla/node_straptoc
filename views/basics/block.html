@@ -1,0 +1,39 @@
+
+<script>
+
+/*
+
+"Block unblock text" functionnality
+
+*/
+
+icon_deactivate()
+
+var dic_icone_lock = {'0':'010','-1':'009'}
+var lock_state = $('<img/>').attr('src',"capicon/svg/009.svg")  // icon for agenda toggle
+lock_state.attr('id','lock_state')
+           .attr('val','false')
+           .css({
+                'position':'fixed',
+                'top':'5px',   // '50px'
+                'right':'20px',
+                'width':'17px',
+                'z-index': '10'
+              })
+$('#content').append(lock_state) //
+
+list_pages_open = ['todo', 'fait']
+if ( list_pages_open.indexOf(curr_page) >=0 ){
+    //alert('hello')
+    text_blocked = 0
+    $('#lock_state').attr('src',"capicon/svg/010.svg")
+}
+
+lock_state.click(function(){
+
+    text_blocked ^=-1
+
+    $('#lock_state').attr('src',"capicon/svg/" + dic_icone_lock[text_blocked] + ".svg")
+})
+
+</script>

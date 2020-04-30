@@ -37,7 +37,7 @@ icon_tchat.click(function(){
      $('#tchat_panel').toggle()
 })
 
-var stp_width = 600 // stp tchat page
+var tchat_panel_width = 550 // stp tchat page
 tchat_panel.css({
                 'position':'fixed',
                 'background-color': '#ffffff', // Current play list.. '#ecf9f2'
@@ -50,7 +50,7 @@ tchat_panel.css({
                 //'right': '-' + stp_width + 'px',   // open
                 'bottom':'10px',
                 'left': '10px',
-                'width': '500px',
+                'width': tchat_panel_width + 'px',
                 'height': '600px',
                 'z-index': '3'
                 })
@@ -58,6 +58,7 @@ var tit = $('<h3/>').css({'text-align':'center'}) // title of the Tchat panel
                     .text('Tchat')
 
 // -------------------------- Users panel
+
 var users_panel = $('<div/>').attr('id','users_panel') //-- Tchat panel
 $('#tchat_panel').append(users_panel)
 users_panel.css({
@@ -164,7 +165,7 @@ tchat_messages.css({
                'padding-top': '20px',
                'top':'100px',
                'left': '30px',
-               'width': '390px',
+               'width': tchat_panel_width - 110 + 'px',
                'height': '400px',
                'overflow': 'auto',
                'overflow-wrap': 'break-word',
@@ -176,10 +177,12 @@ var butt_send = $('<input/>').attr({   // button to send message to users..
         id: "send_message",
         value: "send",
         class: "btn btn-warning"
-    }).css({'position':'absolute','bottom':'35px', 'right':'50px'})
+    }).css({'position':'absolute','bottom':'35px', 'right':'80px'})
 
-
-var tchat_textarea = $('<textarea id="tchat_textarea" rows="10" cols="30" style=" width: 300px; height: 30px;" /> ').show()
+var text_bar_basic = '<textarea id="tchat_textarea" rows="10" cols="30" {} /> '
+var size_text_bar_basic =  tchat_panel_width - 210 + 'px'
+text_bar_basic_style = 'style=" width: {} ; height: 30px;"'.replace('{}',size_text_bar_basic)
+var tchat_textarea = $(text_bar_basic.replace('{}', text_bar_basic_style)).show()
 tchat_textarea.css({'position':'absolute','bottom':'25px', 'max-height':'100px'})
 
 $('#tchat_panel').append(tchat_textarea)

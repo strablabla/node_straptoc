@@ -1,5 +1,21 @@
 <link type="css"  rel="stylesheet" href="css/main_fonts.css">
 
+<!-- <style>
+
+[title] {
+    background-color: #ffffff, //
+    box-shadow: 0.5em 0.5em 2.7em,
+    padding-bottom: 3px,
+    padding-top: 2px,
+    padding-left: 2px,
+    padding-right: 0px,
+    width: 400px,
+    height: 300px,
+    z-index: 4
+    }
+
+</style> -->
+
 <script>
 
 //Grundschrift-Bold.otf    Grundschrift-Light.otf  Grundschrift-Regular.otf
@@ -24,31 +40,68 @@ $('pre').css({ 'display': 'table' }) // 'margin-right':'30%'
 //--------------
 
 $('.help').hide()
-$('.showtoc').css({'right':'70px'})
+$('.showtoc').css({'right':'70px'}) // position of TOC..
 
-$('div.onside').find('a').click(function(){
+$('div.onside').find('a').click(function(){   // offset when clicking on a link..
     try{
-      var poshref = $($(this).attr('href')).offset().top
-      $('html,body').animate({scrollTop: poshref -50}, 'linear')
-    }catch(err){}
+
+      var idclick = $(this).attr('href').replace('#','')
+      var intermref = document.getElementById(idclick);
+      var poshref = $(intermref).offset().top // Avril 2020_25/4/20 $(this).attr('href')
+      $('html,body').animate({scrollTop: poshref -60}, 'linear')
+   }catch(err){}
 
 })
 
 //------------- Secondary elements
 
-//$('.elem_list_play_selected').css({'font-family': "anaktoria", 'text-shadow':'none'})
+//---------- Tooltips
 
-// $('a').each(function(){$(this).attr('target','_blank') }) // target="_blank"
-// $('a#vid_name').attr('target','_self')
+// $('h2').attr('data-toggle','tooltip')
+// $('[data-toggle="tooltip"]').tooltip();
 
-//------------------ PDFs
+
+// $('.tooltip').css({
+//           'background-color': '#ffffff', //
+//           'box-shadow': '0.5em 0.5em 2.7em',
+//           'padding-bottom': '3px',
+//           'padding-top': '2px',
+//           'padding-left': '2px',
+//           'padding-right': '0px',
+//           'width': '400px',
+//           'height': '300px',
+//           'z-index': '4',
+//           //'opacity':'1'
+//           })
+
+//-----------  open pages
+
+$('.open_new_page').click(function(){   // open the link in a new page..
+       var prev_elem = $(this).prev()
+       window.open(prev_elem.attr('href'))
+  });
+
+//------------ icône ID
+
+var icon_img = $('#favicon_header').attr('href')
+var id_icon = $('<img/>').attr('src',icon_img)
+                         .css({'width':'25px',
+                                'margin-top':'-5px',
+                                'margin-bottom':'-5px',
+                                'padding-bottom':'3px',
+                                'position' : 'fixed',
+                                'top':'7px',
+                                'left':'52px'
+                               })
+$('#headline').text('')
+$('#headline').append(id_icon)
+
+//------------- pdfs
 
 $('object').each(function(){
-
     if($(this).attr('type') == 'application/pdf'){
-        $(this).css({'width':'1100px','height':'900px'}) // 'width':'1200px',
+        $(this).css({'width':'1100px','height':'900px'})  // 'width':'1200px',  // pdfs size..
     }
-
 })
 
 /*
@@ -60,7 +113,16 @@ Color specific tag elements which parent is .date and make a border..
 var dic_li = { 'job' : {'inside': {'color': '#99dfff'}, 'title': {'color':'#00aeff'} },
                'prog' : {'inside': {'color': '#ffe6e6'}, 'title': {'color':'#ff9999'} },
                'phys' : {'inside': {'color': '#adebad'}, 'title': {'color':'#5cd65c'} },
-               'math' : {'inside': {'color': '#ffb380'}, 'title': {'color':'#ff944d'} }
+               'math' : {'inside': {'color': '#ffb380'}, 'title': {'color':'#ff944d'} },
+               'infos' : {'inside': {'color': '#c2d6d6'}, 'title': {'color':'#85adad'} },
+               'société': {'inside': {'color': '#993300'}, 'title': {'color':'#b33c00'} },
+               'ML': {'inside': {'color': '#e60000'}, 'title': {'color':'#ff0000'} },
+               'drôle' : {'inside': {'color': '#ffcc00'}, 'title': {'color':'#ffd11a'} },
+               'histoire':  {'inside': {'color': '#77b300'}, 'title': {'color':'#88cc00'} },
+               'films':  {'inside': {'color': '#7575a3'}, 'title': {'color':'#8585ad'} },
+               'org':  {'inside': {'color': '#ffe066'}, 'title': {'color':'#ffe680'} },
+               'boulot':  {'inside': {'color': '#cccc00'}, 'title': {'color':'#e6e600'} },
+
                // ffd9b3 ffbf80
                // ffe6e6 ff9999
  }
@@ -107,15 +169,15 @@ $('li').each(function(){
 
 // ---------------   Symbols
 
-regex_tél = /(\d{2}.){4}\d{2}/g     // regexp for phone number
-regex_mail = /\w+\.?\w+?@.+\.com/g  // regexp for mail
-var dic_symb = {'tél':['041',regex_tél], 'mail':['019',regex_mail]}
+regex_tél = /(\d{2}.?){4}\d{2}/g                                      // regexp for phone number
+regex_mail = /\w+\.?\w+?@.+\.com/g                                    // regexp for mail
+var dic_symb = {'tél':['041', regex_tél], 'mail':['019', regex_mail]}
 
 function make_span_icon(value){
 
       var src_icon = 'src="capicon/svg/{}.svg"'.replace('{}',value[0])
       var im_icon = '<img class="icon_symbol" {} width="15px">'.replace('{}',src_icon)
-      var span_icon = '<span> {} </span/>'.replace('{}', im_icon)
+      var span_icon = '<span> {} </span>'.replace('{}', im_icon)
 
       return span_icon
 }
@@ -130,7 +192,9 @@ function replace_associated_information(htm, key, value){
 
       var reg_match = htm.match(value[1])
       if (reg_match){
-        htm = htm.replace(reg_match, '<span class="'+ key + '">' + reg_match + '</span>') // replace the phone number or the mail..
+          for (var elem of reg_match){
+                htm = htm.replace(elem, '<span class="' + key + '">' + elem + '</span>') // replace the phone number or the mail..
+                }
       }
       return htm
 
@@ -192,10 +256,11 @@ var dic_frame_info = {
 
 // #ccffcc ffe6b3 d9f2d9 d6f5d6 eeeedd d9f2e6
 
+var col_text_after_ic = 'rgb(51, 102, 255)'
 $('.tél').css(dic_frame_info)                     // phone
-$('.tél').css({  'background-color':'#d9f2e6' })
+$('.tél').css({  'background-color':'#d9f2e6', 'color': col_text_after_ic }) // , 'color':'blue'
 $('.mail').css(dic_frame_info)                    // mail
-$('.mail').css({ 'background-color':'#ffecb3' })
+$('.mail').css({ 'background-color':'#ffecb3', 'color': col_text_after_ic })
 
 $('.icon_symbol').css({                          //------- Correction on vertical position of the symbols..
                         'margin-bottom':'0px',

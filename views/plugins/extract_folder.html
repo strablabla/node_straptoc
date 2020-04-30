@@ -3,6 +3,7 @@
 
 socket.on('make_elems', function(){
 
+    //alert('Received make_elems !!!! ')
     String.prototype.format = function () {
           var i = 0, args = arguments;
           return this.replace(/{}/g, function () {
@@ -25,11 +26,14 @@ socket.on('make_elems', function(){
         */
 
         var reg = /\!fold/
+        //var fullreg = /\!fold.+\!inside/
         var txt = $(this).html().split('\n')[0]
         //var current_li = $(this)
         //alert(txt)
         //$(this).css({'color':'#ffb3d9'})
-        if (txt.match(reg)){
+        if ( txt.match(reg) ){
+            // & !txt.match(fullreg)
+            //alert("herrreeee")
             //$(this).css({'color':'#ffb3d9'})
             //alert('I am here !! ')
             //var reg = /\!fold/

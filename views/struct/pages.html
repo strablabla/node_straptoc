@@ -158,10 +158,7 @@ function add_elem_pages_toc(curr_page, name){
         })
 
         elem_list.append(new_page)
-        $('.open_new_page').click(function(){
-               var prev_elem = $(this).prev()
-               window.open(prev_elem.attr('href'))  // open the link in a new page..
-          });
+
         $('#all_pages').append(elem_list)    // add name of pages in #all_pages
 
 }

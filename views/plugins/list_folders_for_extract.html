@@ -16,6 +16,11 @@ var addr_relat = []
 var root_addr = {}
 toggle_pdf_ok = false
 
+var list_li = $('body').find('li');
+var length_list_li = list_li.length;
+//alert(length_list_li)
+var num_li = 0
+
 $('li').each(function(){
 
     /*
@@ -27,6 +32,7 @@ $('li').each(function(){
     var reginside = /\!inside/
     var fullreg = /\!fold.+\!inside/
     var txt = $(this).html().split('\n')[0]
+    //if ( txt.match(reg) ){  socket.emit('make_elems', '')  } // alert('founnnndddd !fold !!!!')
     if ( txt.match(fullreg) ){
           //$(this).css({'color':'#ffb3d9'})
           current_li[count_pdf] = $(this)
@@ -52,11 +58,19 @@ $('li').each(function(){
                     $('.funf').click(function(){
                         $(this).parent().next().toggle()
                     })
+                    //alert('make_elems !!!! ')
                     socket.emit('make_elems', '')
                 }
             })
 
         } // if text.match
+      else{
+        num_li += 1
+        if (num_li == length_list_li){      // if no !fold inside found, emit make_elems
+            //alert('emit the signal !!!')
+            socket.emit('make_elems', '')
+        }
+      }
 
   })
 

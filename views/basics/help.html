@@ -21,7 +21,7 @@ icon_help.attr('id','icon_help')
 var help_panel = $('<div/>').attr('id','help_panel') //-- Help panel
 $('#content').append(help_panel)
 
-var stp_width = 600 // stp help page
+var help_panel_width = 600 // stp help page
 help_panel.css({'background-color': '#ffffff', // Current play list.. '#ecf9f2'
           'box-shadow': '0.5em 0.5em 2.7em',
           'padding-bottom': '90px',
@@ -29,9 +29,9 @@ help_panel.css({'background-color': '#ffffff', // Current play list.. '#ecf9f2'
           'padding-left': '50px',
           'padding-right': '50px',
           'position': 'fixed',
-          'right': '-' + stp_width + 'px',   // open
+          'right': '-' + help_panel_width + 'px',   // open
           'top':'170px',
-          'width': '600px',
+          'width': help_panel_width + 'px',
           'height': '400px',
           'z-index': '3'
           })

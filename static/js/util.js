@@ -107,7 +107,7 @@ function save_regularly(name){
 exports.save_regularly_all = function(){
 
     /*
-    
+
     Saving regularly markdown files..
 
     */

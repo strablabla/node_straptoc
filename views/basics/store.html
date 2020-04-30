@@ -20,7 +20,7 @@ icon_store.attr('id','icon_store')
 var store_panel = $('<div/>').attr('id','store_panel')    //-- Store panel
 $('#content').append(store_panel)
 
-var stp_width = 600 // stp store page
+var store_panel_width = 600 // stp store page
 store_panel.css({'background-color': '#ffffff', // Current play list.. '#ecf9f2'
           'box-shadow': '0.5em 0.5em 2.7em',
           'padding-bottom': '90px',
@@ -28,9 +28,9 @@ store_panel.css({'background-color': '#ffffff', // Current play list.. '#ecf9f2'
           'padding-left': '50px',
           'padding-right': '50px',
           'position': 'fixed',
-          'right': '-' + stp_width + 'px',   // open
+          'right': '-' + store_panel_width + 'px',   // open
           'top':'170px',
-          'width': '600px',
+          'width': store_panel_width + 'px',
           'height': '400px',
           'z-index': '3'
           })

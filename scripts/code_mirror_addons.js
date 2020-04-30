@@ -6,6 +6,8 @@
 
 */
 
+
+var nbclick = 0
 posx = null
 posy = null
 function printMousePos(event) {
@@ -27,7 +29,12 @@ function code_mirror_add_func(editor){
         editor.on('gutterClick', function(editor, line, gutter) {
 
            if (gutter === 'CodeMirror-linenumbers') {
-               $('#wrap_url').css({'position':'fixed', 'left': '2%', 'top': posy + 'px'})
+               nbclick += 1
+               if( nbclick == 2 ){$('#tool_text__panel').show() } //
+               if( nbclick == 3 ){$('#tool_text__panel').hide(); nbclick = 0 } //
+               var h = parseInt($('#tool_text__panel').css('height'))
+               var pos_tool_panel = posy-h/2 + 'px' // posy-h-30 + 'px'
+               $('#tool_text__panel').css({'position':'fixed', 'left': '1%', 'top': pos_tool_panel})
                return editor.setSelection(CodeMirror.Pos(line, 0), CodeMirror.Pos(line + 1, 0));
           }
         });
@@ -44,11 +51,31 @@ function code_mirror_add_func(editor){
 
         $('#wrap_url').click(function(){
               var selection = editor.getSelection()
+              if (selection.slice(0,4) == 'http'){selection = '* ' + selection} // case not in a list..
               clean_selection = selection.split('* ')[1].slice(0,-1)
               aster = selection.split('* ')[0]
-              var modified_selection = wrap_hyperlink(aster, clean_selection)  // wrap the link..
+              var suff = find_suffix(selection)
+              var modified_selection = wrap_hyperlink(aster, clean_selection, suff)  // wrap the link..
               editor.replaceSelection(modified_selection)
-              $('#wrap_url').css({'position':'fixed', 'left': '2%', 'top': '520px'}) // replace wrap
+              $('#tool_text__panel').hide()
+              nbclick = 0
+
          })
+
+         $('#insert_date').click(function(){
+               var selection = editor.getSelection()
+               if (selection.length < 2){
+                     //alert(selection.length)
+                     var curr_date = make_date(3)
+                     var lcurr_date = curr_date.slice(2).split('_') // slice to remove the first 2 cifers in the year..
+                     lcurr_date[1] = parseInt(lcurr_date[1]) + 1
+                     var fr_date = lcurr_date.reverse().join('/')
+                     var modified_selection = fr_date + '\n'
+                     editor.replaceSelection(modified_selection)
+                     $('#tool_text__panel').hide()
+                     nbclick = 0
+               }
+
+          })
 
  }
