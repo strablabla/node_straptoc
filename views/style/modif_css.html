@@ -53,6 +53,16 @@ $('div.onside').find('a').click(function(){   // offset when clicking on a link.
 
 })
 
+//------------- Title page up left..
+
+var title_page = $('#toc li:first-child').text().split('[-]')[0]
+tit_page_h2 = $('<h2/>').text(title_page)
+          .css({'position':'fixed', 'top':'-12px',
+           'left':'10%', 'z-index':'5',
+           'font-size': '17px'
+         })
+$('#content').append(tit_page_h2)
+
 //------------- Secondary elements
 
 //---------- Tooltips
@@ -86,17 +96,17 @@ $('.open_new_page').click(function(){   // open the link in a new page..
 var icon_img = $('#favicon_header').attr('href')
 var id_icon = $('<img/>').attr('src',icon_img)
                          .css({'width':'25px',
-                                'margin-top':'-5px',
+                                'margin-top':'-2px',
                                 'margin-bottom':'-5px',
-                                'padding-bottom':'3px',
+                                'padding-bottom':'1px',
                                 'position' : 'fixed',
-                                'top':'7px',
+                                'top':'9px',
                                 'left':'52px'
                                })
 $('#headline').text('')
 $('#headline').append(id_icon)
 
-//------------- pdfs
+//------------- pdfs size
 
 $('object').each(function(){
     if($(this).attr('type') == 'application/pdf'){
@@ -122,6 +132,9 @@ var dic_li = { 'job' : {'inside': {'color': '#99dfff'}, 'title': {'color':'#00ae
                'films':  {'inside': {'color': '#7575a3'}, 'title': {'color':'#8585ad'} },
                'org':  {'inside': {'color': '#ffe066'}, 'title': {'color':'#ffe680'} },
                'boulot':  {'inside': {'color': '#cccc00'}, 'title': {'color':'#e6e600'} },
+               'perso':  {'inside': {'color': '#c6538c'}, 'title': {'color':'#cc6699'} },
+               'docs':  {'inside': {'color': '#00cc00'}, 'title': {'color':'#00e600'} },
+               'admin':  {'inside': {'color': '#ff9966'}, 'title': {'color':'#ffaa80'} },
 
                // ffd9b3 ffbf80
                // ffe6e6 ff9999

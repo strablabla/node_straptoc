@@ -33,7 +33,9 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
 
     // ------------ find the pattern
 
-    if (elem.is('li')){ var patt = elem.text().split('\n')[0].replace('?','\\?') }
+    if (elem.is('li')){ var patt = elem.text().split('\n')[0]
+                            patt = patt.replace('?','\\?').replace('+','\\+')
+                           }
     else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }
 
     //alert('pattern found is ' + patt)

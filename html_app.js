@@ -103,6 +103,9 @@ io.sockets.on('connection', function (socket) {
       socket.on('tchat_message',function(mess){
           io.sockets.emit('broadcast_message', { mess : mess.curr_message, name_user : users[socket.id] })
       })
+      socket.on('trig_voice',function(name_page){
+          io.sockets.emit('trig_voice_recogn', name_page)
+      })
 
 }); // io.sockets.on connection
 
