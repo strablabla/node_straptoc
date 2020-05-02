@@ -75,6 +75,9 @@ socket.on('load_new_page',function(){
 
 })
 
+
+var pos_list_pages = 80
+
 // -- Arrows for list pages
 
 dic_css_tp_arr = {'position':'relative',
@@ -89,12 +92,13 @@ tp_arr_r = tp_arr.make(276).hide()                                    //---- arr
 
 // 'rgb(200,154,102)'
 var toggle_list_pages_color = '#29a329'
-var toggle_pages = $('<div/>').attr('id','toggle_pages') // small square for hovering..
-toggle_pages.css({'background-color':toggle_list_pages_color, // hover for list of pages
+var toggle_pages = $('<div/>').attr('id','toggle_pages') // small square
+toggle_pages.css({
+          'background-color': toggle_list_pages_color, // toggle list of pages
           'box-shadow': '0.5em 0.5em 0.7em',
           'position': 'fixed',
           'left': '1px',
-          'top': '80px',
+          'top': pos_list_pages-20 + 'px',
           'width': '20px',
           'height': '20px',
           'z-index': '3'
@@ -104,6 +108,9 @@ $('#content').append(toggle_pages)
 
 // #29a329, 'rgb(100,104,102)', '#c2f0c2', #ff8080, #ff6666 #d27979 #ff4d4d
 // #ff884d
+
+// list of pages..
+
 var list_pages_color = '#000000' //
 var pages = $('<div/>').attr('id','pages')       // Panel with the  List of pages
 pages.css({'background-color':list_pages_color,
@@ -111,7 +118,7 @@ pages.css({'background-color':list_pages_color,
           'padding-bottom':'40px',
           'position': 'fixed',
           'left': '0px',  // '-120px'
-          'top': '100px',
+          'top': pos_list_pages + 'px',
           'width': '130px', // '100px'
           'height': 'auto',
           'color' : 'white',

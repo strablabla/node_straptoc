@@ -110,6 +110,7 @@ var pl_act_bin = make_icon_action('bin', '030')
 var elem0 = $('<div/>').attr('id','vid_play_list')
 $('#content').append(elem0)
 col_panel_list_play = color_play_list.replace(')', ', 0.9)')
+var pos_right_init = '50px'
 elem0.css({
           'position': 'fixed',
           'background-color': col_panel_list_play, // Current play list..
@@ -119,7 +120,7 @@ elem0.css({
           'padding-left': '50px',
           'padding-right': '50px',
           'border-radius': '10px',
-          'right': '30px',   // open
+          'right': '50px',   // open
           'bottom': '70px',
           'width': 'auto',
           'height': 'auto',
@@ -277,12 +278,12 @@ $('#toggle_play_list').on('click', function(){   //
       */
 
      play_list_open = !play_list_open
-     var translr = '-' + $('#vid_play_list').css('width')
+     var translr = '-' + $('#vid_play_list').css('width')  // translate right
      if (!play_list_open){
           $('#vid_play_list').animate({'right': translr }) // hide
      }
      else{
-          $('#vid_play_list').animate({ 'right': '30px' }) // show
+          $('#vid_play_list').animate({ 'right': pos_right_init }) // show
      }
      $('.tpl_arr').toggle()                      // exchange right and left arrow
 })

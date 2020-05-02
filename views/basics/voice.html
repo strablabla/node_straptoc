@@ -20,7 +20,7 @@ var socket = io.connect();
  icon_micro.attr('id','icon_micro')
             .css({
                  'position':'fixed',
-                 'bottom':'20px',
+                 'bottom':'50px',
                  'right':'10px',
                  'width':'24px'
                })
@@ -39,7 +39,7 @@ var socket = io.connect();
           voice_triggered ^= -1
       }
       else{
-         window.location.reload() // reload the page
+         window.location.reload() // reload the page for removing artyom if instantiated
       }
  })
 
