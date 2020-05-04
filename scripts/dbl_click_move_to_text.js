@@ -18,6 +18,7 @@ function dblclick_to_text(socket, elem, index, addr_chann){
 
       elem.dblclick(function(e){  // when clicking right go back to html
             e.preventDefault();
+            e.stopPropagation();
             if (!text_blocked){
                 pattern_and_flip(socket, $(this), index, addr_chann)
               }
@@ -37,8 +38,7 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
                             patt = patt.replace('?','\\?').replace('+','\\+')
                            }
     else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }
-
-    //alert('pattern found is ' + patt)
+    else if (elem.is('.tag_a_to_text')){ patt = elem.parent().text() }
 
     // ------------ flip to text
 

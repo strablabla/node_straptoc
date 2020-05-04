@@ -24,11 +24,11 @@ function reload_js(src) {                     // reload a script..
 // New page
 
 var enter_new_page = $('<div/>').attr('id','enter_new_page')
-enter_new_page.css({'background-color':'rgb(100,104,102)',
+enter_new_page.css({'background-color':'#000000',
           'padding-left': '50px',
           'padding-right': '20px',
           'padding-bottom': '2px',
-          'padding-top': '10px',
+          'padding-top': '12px',
           'margin-right': '20px',
           'margin-left': '20px',
           'box-shadow': '0.5em 0.5em 0.7em',
@@ -74,7 +74,6 @@ socket.on('load_new_page',function(){
       fill_list_page()  // fill the list of all the pages..
 
 })
-
 
 var pos_list_pages = 80
 
@@ -126,7 +125,7 @@ pages.css({'background-color':list_pages_color,
           })
 
 $('#content').append(pages)
-$('#pages').append($('<h1/>').text('Pages'))  // title
+$('#pages').append($('<h1/>').text('Pages').attr('id','title_list_pages'))  // title
            .append($('<ul/>').attr('id','all_pages'))
 
 function add_elem_pages_toc(curr_page, name){
@@ -143,14 +142,15 @@ function add_elem_pages_toc(curr_page, name){
                             .text(name)
         link.addClass('main_pages')
         var elem_list = $('<li/>').append(link)
-        var dic_icon_open_page = {'width':'7px',
+        var dic_icon_open_page = {'width':'9px',
                                   'background-color':'white',
                                   'margin-left':'10px',
                                   'margin-top':'2px',
                                   'margin-bottom':'2px',
-                                  'opacity':'0.6'
+                                  'opacity':'1'
                                 }
-        var icon_open_page = $('<img/>').attr('src',"capicon/svg/131.svg").css(dic_icon_open_page)  // icon for agenda panel // , 'background-color':'white'
+        var addr_icon_open_page = "various_icon/icon_simple_page.png"
+        var icon_open_page = $('<img/>').attr('src',addr_icon_open_page).css(dic_icon_open_page)  //
         var new_page = $('<span/>').attr('id', 'new_page_' + curr_page).addClass('open_new_page') //
 
         if (curr_page != 'main'){
@@ -192,8 +192,8 @@ function fill_list_page(){
       $('#all_pages').append(plus_butt) //
       $('.main_pages').css({'color':'white'})
       $('#add_page').click(function(){
-           butt_offset = $(this).offset()
-           $('#enter_new_page').css({ 'top' : butt_offset.top })
+           var butt_offset = $(this).offset().top-$(window).scrollTop()
+           $('#enter_new_page').css({ 'top' : butt_offset })
                                .toggle()
       })
 
@@ -222,7 +222,6 @@ function change_font_size_curr_page(font_size){
 var pages_open = true                             // if true, list of pages visible
 change_font_size_curr_page(25)
 var time_page_close = 4000
-//setTimeout(function(){ $('#toggle_pages').click() }, time_page_close);
 
 $('#toggle_pages').on('click', function(){           // toggle list of pages
 

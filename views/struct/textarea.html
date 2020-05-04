@@ -59,7 +59,7 @@ var css_button = {
 
 var wrap_butt = $('<input/>').attr('id','wrap_url')
                              .attr('type','button')
-                             .addClass("btn btn-warning")
+                             .addClass("btn btn-warning chgtxt")
 wrap_butt.css(css_button)
 wrap_butt.css({'top':'50px'})
 wrap_butt.val('wrap')
@@ -69,10 +69,19 @@ $('#tool_text__panel').append(wrap_butt)
 
 var date_butt = $('<input/>').attr('id','insert_date')
                              .attr('type','button')
-                             .addClass("btn btn-warning")
+                             .addClass("btn btn-warning chgtxt")
 date_butt.css(css_button)
 date_butt.css({'top':'90px'})
 date_butt.val('date')
 $('#tool_text__panel').append(date_butt)
+
+//------------- Text button
+
+$('.chgtxt').mouseover(function(){
+                $(this).css({'background-position': '0 30px'})
+          }).mouseout(function(){
+                $(this).css({'background-position': '0 0px'})
+                })
+
 
 </script>

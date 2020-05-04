@@ -70,11 +70,57 @@ $('#vid_name').click(function(){   // offset when clicking on th video link..
 
 var title_page = $('#toc li:first-child').text().split('[-]')[0]
 tit_page_h2 = $('<h2/>').text(title_page)
-          .css({'position':'fixed', 'top':'-12px',
-           'left':'10%', 'z-index':'5',
-           'font-size': '17px'
-         })
+                      .addClass('tit_page_in_nav')
+                      .css({'position':'fixed', 'top':'-12px',
+                       'left':'100px', 'z-index':'5', //'left':'10%'
+                       'font-size': '17px'
+                      })
 $('#content').append(tit_page_h2)
+
+// Indicating the closest h2..
+
+function shift_sec_lev(){
+    var w = parseInt($('.tit_page_in_nav').css('width').split('px')[0])
+    var offset = $('.tit_page_in_nav').offset().left
+    var shift = offset + w + 30
+    return shift
+}
+sec_lev = $('<h3/>').text('')
+          .attr('id','sec_lev')
+          .css({'position':'fixed', 'top':'-12px',
+           'left': '20%', 'z-index':'5',
+           'font-size': '15px',
+
+         })
+$('#content').append(sec_lev)
+
+function dist_from_top(elem){
+
+    var scrollTop = $(window).scrollTop(),
+    elementOffset = elem.offset().top,
+    dist = Math.abs(elementOffset - scrollTop);
+    return dist
+}
+
+$(window).scroll(function() {
+
+    var min = 1000
+    var text = ''
+    var list_dist = ''
+    $('h2').each(function(){
+      if (! $(this).hasClass('tit_page_in_nav')){
+           var dist = dist_from_top($(this))
+           if ( dist < min){
+              min = dist
+             text = $(this).text()
+           }
+       }
+    })
+
+    $('#sec_lev').text(text)
+                 .css({'left': shift_sec_lev() + 'px'})
+
+})
 
 //------------- Secondary elements
 
@@ -104,7 +150,7 @@ $('.open_new_page').click(function(){   // open the link in a new page..
        window.open(prev_elem.attr('href'))
   });
 
-//------------ icône ID
+//------------ icône ID pour l'appli
 
 var icon_img = $('#favicon_header').attr('href')
 var id_icon = $('<img/>').attr('src',icon_img)
@@ -126,6 +172,53 @@ $('object').each(function(){
         $(this).css({'width':'1100px','height':'900px'})  // 'width':'1200px',  // pdfs size..
     }
 })
+
+// ------------------ go to text with links..
+
+var dic_icon_tag_a_to_text = {'width':'10px',
+                          'background-color':'white',
+                          'margin-left':'10px',
+                          'margin-top':'2px',
+                          'margin-bottom':'2px',
+                        }
+$('a').each(function(){
+
+     var elem = $(this).parents().hasClass('section')
+     if (elem){
+           var tag_a_to_text_icon = $('<img/>').attr('src',"capicon/svg/261.svg")
+                                           .css(dic_icon_tag_a_to_text)
+           var tag_a_to_text = $('<span/>').addClass('tag_a_to_text')
+                                       .append(tag_a_to_text_icon)
+
+           if (!$(this).children().hasClass('::')){
+               $(this).append(tag_a_to_text) //
+
+           }
+           tag_a_to_text.hide()
+           $(this).mouseover(function(){   // oven link, show page icon
+              if (!text_blocked){
+                  tag_a_to_text.show()
+              }
+
+           })
+           $(this).mouseout(function(){  // out of link, hide page icon
+              tag_a_to_text.hide()
+           })
+
+           tag_a_to_text.click(function (e) {
+                e.preventDefault();   // stopping propagation to parent.. !!!
+                e.stopPropagation();
+                //alert($(this).parent().text())
+           })
+
+     }
+
+})
+
+var loc = window.location.href.split('//')[1].split('/')[1]
+dblclick_to_text(socket, $('.tag_a_to_text'), 0, dic_text_id[loc]) // add double click
+
+// ------------- colored tags..
 
 /*
 

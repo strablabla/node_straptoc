@@ -1,6 +1,8 @@
 <html>
 <head>
 
+</head>
+
 <script  src="util_panel.js"></script>
 
 <script>
@@ -66,7 +68,6 @@ $('#content').append(manuscript_state) // 266, 353, 354
 
 //-------------
 
-
 toggle_panel('manuscript')
 
 //---------------
@@ -121,6 +122,49 @@ $('#manuscript_panel').append(manuscript_icon_save)
 $('#manuscript_icon_save').click(function(){     // convert the canvas drawing to picture..
      convertCanvasToImage($('#canvas'))
 })
+
+//------------- Palette
+
+var manuscript_icon_palette = $('<img/>').attr('src',"capicon/svg/039.svg")
+                                     .attr('id', 'manuscript_icon_palette')
+manuscript_icon_palette.css({
+                          'background-color': '#ffffff', //
+                          'padding-bottom': '0px',
+                          'padding-top': '0px',
+                          'padding-left': '0px',
+                          'padding-right': '0px',
+                          'position': 'absolute',
+                          'right': '20px',
+                          'top':'250px',
+                          'width': '15px',
+                          'z-index': '3'
+
+                        })
+$('#manuscript_panel').append(manuscript_icon_palette)
+
+var palette = $('<div/>').addClass("palette")
+                         .attr('id',"colorPalette")
+                         .css({'z-index':'6','position':'absolute','right':'60px'})
+var input_color = $('<input/>').addClass("inp")
+                        .attr('id',"colorPicker")
+                        .hide()
+
+$('#manuscript_panel').append(palette)
+$('#manuscript_panel').append(input_color)
+
+$('#manuscript_icon_palette').click(function(){     // convert the canvas drawing to picture..
+     //alert('hupppeee')
+     input_color.click()
+     palette.click(function(){
+         colstroke = $('.inp').val()
+         list_moves_col.push([moves.length,colstroke])
+     })
+
+})
+
+
+
+//-----------
 
 var canvas_width = manuscript_panel_width -100
 var canvas_manuscript = $('<div/>').css({
@@ -179,25 +223,32 @@ function initCanvas() {
         redraw();
 }
 
+var colstroke = "#0000a0"
+var list_moves_col = [[0,colstroke]]
 function redraw(){
       canvas.width = canvas.width; //
 
-      context.strokeStyle = "#0000a0";
       context.lineJoin = "round";
       context.lineWidth = 3;
 
-      for(var i=0; i < moves.length; i++)
-      {
-        context.beginPath();
-        if(moves[i][2] && i){
-          context.moveTo(moves[i-1][0], moves[i-1][1]);
-         }else{
-          context.moveTo(moves[i][0], moves[i][1]);
-         }
-         context.lineTo(moves[i][0], moves[i][1]);
-         context.closePath();
-         context.stroke();
+      list_moves_col.push([moves.length, colstroke]) // adding last element..
+      for(var j=0; j < list_moves_col.length; j++){
+            context.strokeStyle = list_moves_col[j][1];
+
+            for(var i=list_moves_col[j][0]; i < list_moves_col[j+1][0]; i++)
+            {
+                  context.beginPath();
+                  if(moves[i][2] && i){
+                    context.moveTo(moves[i-1][0], moves[i-1][1]);
+                   }else{
+                    context.moveTo(moves[i][0], moves[i][1]);
+                   }
+                   context.lineTo(moves[i][0], moves[i][1]);
+                   context.closePath();
+                   context.stroke();
+            }
       }
+      list_moves_col.pop() // removing last element..
 
 }
 
@@ -212,7 +263,7 @@ initCanvas()
 
 </script>
 
-</head>
+<script  src="la_color_picker.js"></script>
 
 </body>
 </html>
