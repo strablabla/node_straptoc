@@ -11,7 +11,6 @@ function trigger_voice(){
 
       })
 
-
       // --------------------------------
 
       voice_onoff()

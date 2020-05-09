@@ -35,10 +35,11 @@ var socket = io.connect();
  socket.on('trig_voice_recogn', function(name_page){
       //alert(name_page)
       if (curr_page == name_page & !voice_triggered){
-          trigger_voice()
+          trigger_voice()  // artyom = 
           voice_triggered ^= -1
       }
       else{
+         //delete artyom
          window.location.reload() // reload the page for removing artyom if instantiated
       }
  })

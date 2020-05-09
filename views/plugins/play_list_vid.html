@@ -60,7 +60,7 @@ butt_play.css({'position':'absolute',  // play button css
 dic_css_tpl_arr = {'position':'relative', // css for play list arrows
                   'width':'10px',
                   'bottom':'7px',
-                  'left':'6px'    // position from the left of the  arrow in the square.. 
+                  'left':'6px'    // position from the left of the  arrow in the square..
                   }
 
 var tpl_arr = new Arrow('tpl_arr', 'play_list', dic_css_tpl_arr)
@@ -122,7 +122,7 @@ elem0.css({
           'border-radius': '10px',
           'right': '50px',   // open
           'bottom': '70px',
-          'width': 'auto',
+          'width': '370px',
           'height': 'auto',
           'z-index': '3'
           })
@@ -138,17 +138,17 @@ $('#vid_play_list').append(img_helmet)    // pict helmet
 
 function reinit_act(selection, elem, action){
 
-  /*
+      /*
 
-  Reinitialize elem with action..
+      Reinitialize elem with action..
 
-  */
+      */
 
-  elem.each(function(){
-        if( $(this).attr('index') != selection.attr('index') ){
-              eval(action)
-        }
-   })
+      elem.each(function(){
+            if( $(this).attr('index') != selection.attr('index') ){
+                  eval(action)
+            }
+       })
 }
 
 function reinitialize(sel){
@@ -173,8 +173,6 @@ function selection_click(elem_li, selection, numsel){
       Actions produced when clicking the element of the play_list..
 
       */
-
-
 
       selection.click(function(){
            reinitialize($(this))
@@ -211,14 +209,39 @@ function fill_play_list(elem_li, vid_id, numsel){
                .attr('id', 'sel_' + currid)
                .text('...' + vid_id.slice(-30,-4).toLowerCase())
                .append(icon_sound.hide())
+               .append($('<span/>').text(' - ').hide().addClass('remove_vid').css({'font-size':'20px'}))
                .css({'font-size':'17px','font-family': "apple_garamond", 'text-shadow':'none'})
-               // kolar, anaktoria, opentypeTT, kolar, garam, apple_garamond
-               // 'font-size':'20px',
-               /*
-               opentypeTT pas mal..
-               */
+
       $('#vid_play_list').append(selection)     // add media title to the play list..
+
       selection_click(elem_li, selection, numsel)
+      $('.elem_list_play_selected').mouseover(function(){   //
+         $(this).find('.remove_vid').show()
+      })
+      $('.elem_list_play_selected').mouseout(function(){  //
+         $(this).find('.remove_vid').hide()
+      })
+      // $('.remove_vid').click(function(){
+      //      var par = $(this).parent()
+      //      var currindex = parseInt(par.attr('index'))
+      //      alert(currindex)
+      //      $('#vid_num' + currindex).attr('id','vid_num' + (currindex + 100))
+      //
+      //      // par.attr('id','sel_vid_num' + currindex + 100)
+      //      // par.attr('index', currindex + 100)
+      //      //alert(list_vid.length)
+      //      for (var ii = currindex+1; i < list_vid.length; i++){
+      //           // $('#sel_' + i).attr('index', i-1)
+      //           // $('#sel_' + i).attr('id', 'sel_vid_num' + i-1)
+      //           // var newid = 'vid_num' + (i-1)
+      //           // alert(i)
+      //           // alert(newid)
+      //           $('#vid_num' + ii).attr('id', ii)
+      //      }
+      //      //$('#sel_vid_num' + par.attr('index')).css({'color':'black'})
+      //      //alert($(this).parent().attr('index'))
+      //      //$(this).parent().click(function(){return false}).hide()
+      // })
 
 }
 
@@ -255,7 +278,7 @@ $("li").click( function(){
     if ( vid ){
         if(elem_li.children('ul').hasClass('strapvid')){  // filter the li element..
             var vid_id = vid.attr('src')
-            if (list_vid.indexOf(vid_id) == -1){
+            if (list_vid.indexOf(vid_id) == -1){      // if not yet in the list..
                 if ($('#vid_play_list').is(':visible')){
                     add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
                 }

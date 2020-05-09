@@ -2,17 +2,9 @@
 
 <!-- <style>
 
-[title] {
-    background-color: #ffffff, //
-    box-shadow: 0.5em 0.5em 2.7em,
-    padding-bottom: 3px,
-    padding-top: 2px,
-    padding-left: 2px,
-    padding-right: 0px,
-    width: 400px,
-    height: 300px,
-    z-index: 4
-    }
+.no-bullets {
+    list-style-type: none;
+}
 
 </style> -->
 
@@ -30,21 +22,25 @@ $('#content').css({
 $('h1').css({'font-family': "libre_carlson_display", 'text-shadow':'none'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d
 $('h2').css({'color':'#c65353', 'font-family': "libre_carlson_display", '-webkit-text-stroke-width': '0.5px'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d 1a75ff b3d1ff ff3333 ff9999 8cb3d9
 $('h3').css({'color':'#d27979', 'font-family': "libre_carlson_display", 'font-style': 'bold', '-webkit-text-stroke-width': '0.2px'}) // 'Enriqueta', serif
-$('#toc').css({'min-height': '200px', 'width':'auto !important', 'font-size':'14px', 'top':'70px', 'background-color':'#ffeecc'})
+$('#toc').css({'height': 'auto', 'width':'auto !important', 'font-size':'15px', 'top':'70px', 'background-color':'#ffeecc'})
 $('.date').css({"font-family": "'Enriqueta', serif", 'color':'#000000'})
 $('.navbar').css({'position':'fixed'})
 $('.todotheme').css({'width':'auto', 'height':'700px','margin-right':'300px'})
 $('pre').css({ 'display': 'table' }) // 'margin-right':'30%'
 //$('.CodeMirror').css({ 'margin-left': '10%', 'width':'80%' }) // 'margin-right':'30%'
+//$('.onside').find('ul').show()
+$('#toc>ul>li>a').css({'font-size':'18px'})
+$('#toc').niceScroll();
+//$('body').niceScroll();
 
 //--------------  TOC
 
-function correct_position(elem, postop){
+function correct_position(elem, postop){  // correct vertical position when clicking  in a link of the TOC..
 
-  var idclick = elem.attr('href').replace('#','') // retrieve the name
-  var intermref = document.getElementById(idclick);
-  var poshref = $(intermref).offset().top //
-  $('html,body').animate({scrollTop: poshref - postop}, 'linear')
+    var idclick = elem.attr('href').replace('#','') // retrieve the name
+    var intermref = document.getElementById(idclick);
+    var poshref = $(intermref).offset().top //
+    $('html,body').animate({scrollTop: poshref - postop}, 'linear')
 
 }
 
@@ -77,7 +73,7 @@ tit_page_h2 = $('<h2/>').text(title_page)
                       })
 $('#content').append(tit_page_h2)
 
-// Indicating the closest h2..
+//---------------  Indicating the closest h2.. and show it after title of the page..
 
 function shift_sec_lev(){
     var w = parseInt($('.tit_page_in_nav').css('width').split('px')[0])
@@ -112,13 +108,27 @@ $(window).scroll(function() {
            var dist = dist_from_top($(this))
            if ( dist < min){
               min = dist
-             text = $(this).text()
+              text = $(this).text()
            }
        }
     })
 
-    $('#sec_lev').text(text)
+    $('#sec_lev').text(text)                   // text after title (h2 tags)
                  .css({'left': shift_sec_lev() + 'px'})
+
+     // ------- change in toc
+
+     $('.lev1>li>a').css( {'font-size':'100%'} )  // {'color':'#d9230f'}
+     $('#toc').find('a').each(function(){
+         var txt = $(this).text().split('[-]')[0].trim()
+         //alert(txt)
+         if (txt == text.trim()){
+
+            //$(this).css({'color':'blue'})
+            $(this).css({'font-size':'150%'})
+         }
+         //else(alert(txt + '_' + text))
+     })
 
 })
 
@@ -170,6 +180,36 @@ $('#headline').append(id_icon)
 $('object').each(function(){
     if($(this).attr('type') == 'application/pdf'){
         $(this).css({'width':'1100px','height':'900px'})  // 'width':'1200px',  // pdfs size..
+    }
+})
+
+//-------------------------- no bullet with vertical deco..
+
+$('li').each(function(){
+    var txt = $(this).text()
+    var elem = $(this).find('li')
+    if (txt.search(/\!mev/) != -1 & !elem.length){   // mev = mise en valeur
+        var ltext = txt.split('\n')
+        var new_text = ltext.splice(1).join('<br>')
+        //alert(new_text)
+        var new_elem = $('<div/>').html(new_text)
+                                  .css({                          // vertical line on the left..
+                                        'border-left': '2px solid', // solid, dashed
+                                        'border-spacing': '-10px',
+                                        'padding-left' : '40px',
+                                        'padding-right' : '40px',
+                                        'padding-top' : '30px',
+                                        'margin-top' : '20px',
+                                        'margin-bottom' : '20px',
+                                        'margin-right' : '20%',
+                                        'padding-bottom' : '30px',
+                                        'background-color': '#ffffff',
+                                        'display': 'table',
+                                        'box-shadow': '0.1em 0.1em 0.3em',
+                                      })
+        new_elem.css({'border-color': 'red'})
+        $(this).replaceWith(new_elem) // .addClass('.no-bullets')
+
     }
 })
 
@@ -226,9 +266,11 @@ Color specific tag elements which parent is .date and make a border..
 
 */
 
-var dic_li = { 'job' : {'inside': {'color': '#99dfff'}, 'title': {'color':'#00aeff'} },
+var dic_li = {
+               'job' : {'inside': {'color': '#99dfff'}, 'title': {'color':'#00aeff'} },
                'prog' : {'inside': {'color': '#ffe6e6'}, 'title': {'color':'#ff9999'} },
                'phys' : {'inside': {'color': '#adebad'}, 'title': {'color':'#5cd65c'} },
+               'astroph' : {'inside': {'color': '#d279a6'}, 'title': {'color':'#d98cb3'} },
                'math' : {'inside': {'color': '#ffb380'}, 'title': {'color':'#ff944d'} },
                'infos' : {'inside': {'color': '#c2d6d6'}, 'title': {'color':'#85adad'} },
                'société': {'inside': {'color': '#993300'}, 'title': {'color':'#b33c00'} },
@@ -242,6 +284,21 @@ var dic_li = { 'job' : {'inside': {'color': '#99dfff'}, 'title': {'color':'#00ae
                'docs':  {'inside': {'color': '#00cc00'}, 'title': {'color':'#00e600'} },
                'admin':  {'inside': {'color': '#ff9966'}, 'title': {'color':'#ffaa80'} },
                'énergie':  {'inside': {'color': '#88cc00'}, 'title': {'color':'#99e600'} },
+               'réflexion':  {'inside': {'color': '#99e699'}, 'title': {'color':'#adebad'} },
+               'divers':  {'inside': {'color': '#33bbff'}, 'title': {'color':'#4dc3ff'} },
+               'tests':  {'inside': {'color': '#ff6666'}, 'title': {'color':'#ff8080'} },
+               'écologie':  {'inside': {'color': '#47d147'}, 'title': {'color':'#5cd65c'} },
+               'techno':  {'inside': {'color': '#99cc00'}, 'title': {'color':'#ace600'} },
+               'bricolage':  {'inside': {'color': '#1ab2ff'}, 'title': {'color':'#33bbff'} },
+               'réparations':  {'inside': {'color': '#88cc00'}, 'title': {'color':'#99e600'} },
+               'idées':  {'inside': {'color': '#cc8800'}, 'title': {'color':'#e69900'} },
+               'lire':  {'inside': {'color': '#ffcc99'}, 'title': {'color':'#ffd9b3'} },
+               'remarque':  {'inside': {'color': '#cccc00'}, 'title': {'color':'#e6e600'} },
+               'potes':  {'inside': {'color': '#adad85'}, 'title': {'color':'#b8b894'} },
+               'santé':  {'inside': {'color': '#99cc00'}, 'title': {'color':'#ace600'} },
+               'phrases':  {'inside': {'color': '#00aaff'}, 'title': {'color':'#1ab2ff'} },
+               'récup':  {'inside': {'color': '#e085c2'}, 'title': {'color':'#e699cc'} },
+               'projets':  {'inside': {'color': '#ffaa80'}, 'title': {'color':'#ffbb99'} },
 
                // ffd9b3 ffbf80
                // ffe6e6 ff9999

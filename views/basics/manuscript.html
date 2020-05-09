@@ -153,24 +153,133 @@ $('#manuscript_panel').append(palette)
 $('#manuscript_panel').append(input_color)
 
 $('#manuscript_icon_palette').click(function(){     // convert the canvas drawing to picture..
-     //alert('hupppeee')
-     input_color.click()
+
+     if (palette.css('display') == 'none'){
+        input_color.click()
+     }
+     else{ palette.hide() }
      palette.click(function(){
          colstroke = $('.inp').val()
-         list_moves_col.push([moves.length,colstroke])
+         list_moves_col.push([moves.length, colstroke, linewidth])
+         $('#control_size_color').css({'background-color': colstroke, 'border': 'none'})
      })
 
 })
 
+//------------- Rubber
 
+var manuscript_icon_rubber = $('<img/>').attr('src',"capicon/svg/263.svg")
+                                     .attr('id', 'manuscript_icon_rubber')
+manuscript_icon_rubber.css({
+                          'background-color': '#ffffff', //
+                          'padding-bottom': '0px',
+                          'padding-top': '0px',
+                          'padding-left': '0px',
+                          'padding-right': '0px',
+                          'position': 'absolute',
+                          'right': '20px',
+                          'top':'280px',
+                          'width': '15px',
+                          'z-index': '3'
 
-//-----------
+                        })
+$('#manuscript_panel').append(manuscript_icon_rubber)
+$('#manuscript_icon_rubber').click(function(){
+     //alert($('#canvas_manuscript').css('background-color'))
+     colstroke = manuscript_canvas_color
+     list_moves_col.push([moves.length, colstroke, linewidth])
+     $('#control_size_color').css({'background-color': '#ffffff','border': '3px solid black'})
+     //alert(colstroke)
+})
 
-var canvas_width = manuscript_panel_width -100
+//-----------  line width
+
+var manuscript_icon_linewidth = $('<img/>').attr('src',"capicon/svg/217.svg")
+                                     .attr('id', 'manuscript_icon_linewidth')
+manuscript_icon_linewidth.css({
+                          'background-color': '#ffffff', //
+                          'padding-bottom': '0px',
+                          'padding-top': '0px',
+                          'padding-left': '0px',
+                          'padding-right': '0px',
+                          'position': 'absolute',
+                          'right': '20px',
+                          'top':'310px',
+                          'width': '15px',
+                          'z-index': '3'
+
+                        })
+$('#manuscript_panel').append(manuscript_icon_linewidth)
+
+var linewidth_choices = $('<div/>').addClass("linewidth")
+                         .attr('id',"linewidth_choices")
+                         .css({
+                                'z-index':'6',
+                                'background-color': '#ffffff', //
+                                'box-shadow': '0.5em 0.5em 2.7em',
+                                'position':'absolute',
+                                'right':'60px',
+                                'width': '70px',
+                                'height': '120px',
+                                'padding-left':'25px'
+                              })
+
+all_sizes = {}
+var list_tool_sizes = {'small':[10,5],'medium':[13,13], 'big':[16,20]}
+for (tool_size of Object.keys(list_tool_sizes)) {
+    var curr_size = list_tool_sizes[tool_size][1]
+    var size_icon = list_tool_sizes[tool_size][0]
+    all_sizes[tool_size] = $('<div/>').addClass('tool_size')
+                                      .attr('size', curr_size)
+    all_sizes[tool_size].append($('<img/>').attr('src',"capicon/svg/260.svg").css({'width': size_icon + 'px'}))
+    all_sizes[tool_size].click(function(){
+         //alert('changing the size !!')
+         linewidth = $(this).attr('size')
+         list_moves_col.push([moves.length, colstroke, linewidth])
+         $('#control_size_color').css({'height': linewidth, 'margin-bottom':-linewidth/2})
+    })
+
+    linewidth_choices.append(all_sizes[tool_size])
+}
+
+linewidth_choices.show()
+$('#manuscript_panel').append(linewidth_choices)
+
+$('#manuscript_icon_linewidth').click(function(){
+          //alert('I am here !!!!')
+          linewidth_choices.toggle()
+       })
+
+// ------------- Control current size and color..
+
+var control_size_color = $('<div/>').attr('id',"control_size_color")
+                         .css({
+                                'z-index':'6',
+                                'background-color': '#0000a0', //
+                                //'box-shadow': '0.5em 0.5em 2.7em',
+                                'padding-top':'3px',
+                                'position':'absolute',
+                                'right':'50%',
+                                'bottom': '25px',
+                                'width': '50px',
+                                'height': '5px',
+                                'padding-left':'25px',
+                                'color': colstroke,
+                                //'font-size': '20px',
+
+                              })
+
+$('#manuscript_panel').append(control_size_color)
+//control_size_color.text('---')
+
+//-----------   canvas
+
+var manuscript_canvas_color = '#f2f2f2'
+var canvas_width = manuscript_panel_width - 100
 var canvas_manuscript = $('<div/>').css({
                                       'width': canvas_width + 'px',
                                       'height':'450px',
-                                      'background-color':'#f2f2f2'
+                                      'background-color': manuscript_canvas_color
                                       })
                                     .attr('id','canvas_manuscript')
 
@@ -178,7 +287,41 @@ $('#manuscript_panel').append(canvas_manuscript)
 var moves = new Array();
 var pressed;
 
+function canvas_actions(){
+
+    context = canvas.getContext("2d");
+
+    var offset = $('#canvas').offset()
+
+    $('#canvas').mousedown(function(e){
+          var offset = $('#canvas').offset()
+          pressed= true;
+          save_pixel(e, moves, offset, false)
+          redraw();
+
+    });
+
+    $('#canvas').mousemove(function(e){
+          var offset = $('#canvas').offset()
+          if(pressed){
+             save_pixel(e, moves, offset, true)
+             redraw();
+      }
+    });
+
+    $('#canvas').mouseup(function(e){
+      pressed = false;
+    });
+
+    $('#canvas').mouseleave(function(e){
+      pressed = false;
+    });
+    redraw();
+
+}
+
 var canvas, context = false
+
 function initCanvas() {
 
       var canvasDiv = document.getElementById('canvas_manuscript');
@@ -190,65 +333,50 @@ function initCanvas() {
       if(typeof G_vmlCanvasManager != 'undefined') {
           canvas = G_vmlCanvasManager.initElement(canvas);
       }
-      context = canvas.getContext("2d");
 
-        var offset = $('#canvas').offset()
+      canvas_actions()
 
-        $('#canvas').mousedown(function(e){
-          var offset = $('#canvas').offset()
-          pressed= true;
-          moves.push([e.pageX - parseInt(offset.left),
-              e.pageY - parseInt(offset.top),
-              false]);
-          redraw();
-        });
+}
 
-        $('#canvas').mousemove(function(e){
-          var offset = $('#canvas').offset()
-          if(pressed){
-              moves.push([e.pageX - parseInt(offset.left),
-                  e.pageY - parseInt(offset.top),
-                  true]);
-            redraw();
-          }
-        });
 
-        $('#canvas').mouseup(function(e){
-          pressed = false;
-        });
+function draw_one_color(i){
 
-        $('#canvas').mouseleave(function(e){
-          pressed = false;
-        });
-        redraw();
+      context.beginPath();
+      if(moves[i][2] && i){ context.moveTo(moves[i-1][0], moves[i-1][1]);
+      }else{ context.moveTo(moves[i][0], moves[i][1]); }
+      context.lineTo(moves[i][0], moves[i][1]);
+      context.closePath();
+      context.stroke();
+
 }
 
 var colstroke = "#0000a0"
-var list_moves_col = [[0,colstroke]]
+var linewidth = 5
+var list_moves_col = [[0, colstroke, linewidth]]  // initialisation
 function redraw(){
       canvas.width = canvas.width; //
 
       context.lineJoin = "round";
-      context.lineWidth = 3;
 
-      list_moves_col.push([moves.length, colstroke]) // adding last element..
-      for(var j=0; j < list_moves_col.length; j++){
+
+      list_moves_col.push([moves.length, colstroke, linewidth]) // adding last element..
+      for(var j = 0; j < list_moves_col.length-1; j++){
+            context.lineWidth = list_moves_col[j][2];
             context.strokeStyle = list_moves_col[j][1];
-
-            for(var i=list_moves_col[j][0]; i < list_moves_col[j+1][0]; i++)
-            {
-                  context.beginPath();
-                  if(moves[i][2] && i){
-                    context.moveTo(moves[i-1][0], moves[i-1][1]);
-                   }else{
-                    context.moveTo(moves[i][0], moves[i][1]);
-                   }
-                   context.lineTo(moves[i][0], moves[i][1]);
-                   context.closePath();
-                   context.stroke();
-            }
+            for(var i = list_moves_col[j][0]; i < list_moves_col[j+1][0]; i++)
+              {
+                draw_one_color(i)
+              }
       }
       list_moves_col.pop() // removing last element..
+
+}
+
+function save_pixel(e, moves, offset, state){
+
+  moves.push([e.pageX - parseInt(offset.left),
+      e.pageY - parseInt(offset.top),
+      state]);
 
 }
 

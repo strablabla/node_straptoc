@@ -21,7 +21,7 @@ function make_date(depth){
       var minute = date.getMinutes();
       var hour = date.getHours();
       var day = date.getDate();
-      var month = date.getMonth();
+      var month = date.getMonth()+1;
       var year = date.getFullYear();
       var txt_date = [year, month, day, hour, minute, sec]
       txt_date = txt_date.slice(0,depth).join('_')
@@ -40,7 +40,7 @@ exports.save_current_version = function(data, with_date, name){
       */
 
       var basename = 'views/saved/'+ name +'_old'
-      txt_date = make_date(5)  // 6 --> sec
+      txt_date = make_date(4)  // 4 --> hour, 6 --> sec
       if ( with_date ){             // case where it is saved with a date..
           //console.log('txt_date ' + txt_date)
           var namefile = basename + '_' + txt_date + ".html"
@@ -85,7 +85,7 @@ function save_regularly(name){
 
       list_saved = []         // global
       lim_nb_saved = 3        // max versions saved
-      var min_interv = 10     // interval in minute
+      var min_interv = 3     // interval in minute
 
       console.log('reading before saving in utils.js.. ')
       console.log('name is ' + name)
@@ -96,7 +96,7 @@ function save_regularly(name){
       setInterval(function() {
               fs.readFile(addr, 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
-                      console.log(make_date(6)) // 6 --> sec
+                      console.log(make_date(4)) // 6 --> sec
                       console.log('inside setInterval, name.. is ' + name)
                       exports.save_current_version(data, true, name) // with date
                   });   // end fs.readFile

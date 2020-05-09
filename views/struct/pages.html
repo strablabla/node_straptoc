@@ -31,9 +31,9 @@ enter_new_page.css({'background-color':'#000000',
           'padding-top': '12px',
           'margin-right': '20px',
           'margin-left': '20px',
-          'box-shadow': '0.5em 0.5em 0.7em',
+          //'box-shadow': '0.5em 0.5em 0.7em',
           'position': 'fixed',
-          'left': '100px',
+          'left': '50px',
           'top': '100px',  //function(){return $('#page').attr('height')}
           'width': '300px',
           'height': '70px',
@@ -118,7 +118,7 @@ pages.css({'background-color':list_pages_color,
           'position': 'fixed',
           'left': '0px',  // '-120px'
           'top': pos_list_pages + 'px',
-          'width': '130px', // '100px'
+          'width': '150px', // '100px'
           'height': 'auto',
           'color' : 'white',
           'z-index': '3'
@@ -192,7 +192,7 @@ function fill_list_page(){
       $('#all_pages').append(plus_butt) //
       $('.main_pages').css({'color':'white'})
       $('#add_page').click(function(){
-           var butt_offset = $(this).offset().top-$(window).scrollTop()
+           var butt_offset = $(this).offset().top-$(window).scrollTop()+2
            $('#enter_new_page').css({ 'top' : butt_offset })
                                .toggle()
       })
@@ -225,7 +225,7 @@ var time_page_close = 4000
 
 $('#toggle_pages').on('click', function(){           // toggle list of pages
 
-     var translr = '-130px' //
+     var translr = '-' + $('#pages').css('width')//'-130px' //
      if (pages_open){           // close..
           //alert('closing')
           $('#pages').animate({'left':  translr })   // translate list_pages on the left  to hide it..
@@ -239,6 +239,37 @@ $('#toggle_pages').on('click', function(){           // toggle list of pages
      pages_open = !pages_open
 })
 
+var icon_page = $('<img/>').attr('id', 'icon_page').attr('src',"capicon/svg/001.svg")
+icon_page.css({
+                'background-color': '#ffffff', //
+                'padding-bottom': '0px',
+                'padding-top': '0px',
+                'padding-left': '0px',
+                'padding-right': '0px',
+                'position': 'fixed',
+                'right': '200px',
+                'top':'5px',
+                'width': '15px',
+                'z-index': '10'
 
+              })
+$('#content').append(icon_page)
+
+var dic_icon_pages = {
+                      'todo': '044', 'science':'205',
+                      'fait':'265', 'infos':'341',
+                      'main':'001','idees': '040',
+                      'musique':'084', 'good_links':'034',
+                      'culture':'238', 'sante':'008',
+                      'chansons':'067'
+                    }
+
+try{
+  var num_icon = dic_icon_pages[curr_page]
+  $('#icon_page').attr('src',"capicon/svg/" + num_icon + ".svg")
+
+}catch(err){
+  console.log('no icon in the dic')
+}
 
 </script>
