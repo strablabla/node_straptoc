@@ -87,14 +87,16 @@ io.sockets.on('connection', function (socket) {
       })
 
       //------------
+
       console.log('A client is connected!');
       re.emit_from_read(socket, patt, html_pos)
-      //util.save_regularly_all()                                                // save the regularly the text..
+      util.save_regularly_all()                                                // save the regularly the text..
       socket.on('join', function(data) { socket.emit('scroll', patt) });       // end socket.on join
 
       new_obj.create(socket, app, io)
 
-      init.comm_voc(io)                                            //---- comm voc
+      // init.comm_voc(io)                                            //---- comm voc
+      // init.latex_voc(io)                                           //---- lateX voc commands
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                              //---- pdfs in folders
       notes.handle(socket, 'notes')                                //---- notes
@@ -105,7 +107,10 @@ io.sockets.on('connection', function (socket) {
       })
       socket.on('trig_voice',function(name_page){
           io.sockets.emit('trig_voice_recogn', name_page)
+          init.comm_voc(io)                                            //---- comm voc
+          init.latex_voc(io)                                           //---- lateX voc commands
       })
+
 
 }); // io.sockets.on connection
 

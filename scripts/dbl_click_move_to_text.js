@@ -6,9 +6,10 @@ and send some informations : pattern, scrollpos etc..
 */
 
 var text_blocked = -1
-socket.on('blocked', function(val){  // if text_blocked true, it prevents from going to text..
-    text_blocked = val
-})
+// socket.on('blocked', function(val){  // if text_blocked true, it prevents from going to text..
+//     //text_blocked = val
+//     alert('text_blocked is ' + text_blocked)
+// })
 
 function dblclick_to_text(socket, elem, index, addr_chann){
 
@@ -21,6 +22,7 @@ function dblclick_to_text(socket, elem, index, addr_chann){
             e.stopPropagation();
             if (!text_blocked){
                 pattern_and_flip(socket, $(this), index, addr_chann)
+                
               }
             return false;
             });

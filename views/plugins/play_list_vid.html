@@ -221,6 +221,25 @@ function fill_play_list(elem_li, vid_id, numsel){
       $('.elem_list_play_selected').mouseout(function(){  //
          $(this).find('.remove_vid').hide()
       })
+
+      $('.remove_vid').click(function(e){
+            //if(!e.detail || e.detail == 1){
+            // if (! change){
+            //      var par = $(this).parent()
+            //      var currindex = parseInt(par.attr('index'))
+            //      alert(currindex)
+            //      $('#vid_num' + currindex).attr('id','vid_num' + (currindex + 100))
+            //      $('#vid_num' + (currindex+1)).attr('id','vid_num' + currindex)
+            //      change = true
+            //    }
+
+           // par.attr('id','sel_vid_num' + currindex + 100)
+           // par.attr('index', currindex + 100)
+           //alert(list_vid.length)
+
+      })
+
+
       // $('.remove_vid').click(function(){
       //      var par = $(this).parent()
       //      var currindex = parseInt(par.attr('index'))

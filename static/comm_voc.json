@@ -1,5 +1,66 @@
 { "#Science_":
       [
-      "Géologie"
-      ]
+      "Physique", "Chimie", "Gros instruments",
+      "Grands organismes", "Publications libres",
+      "Mathématiques", "Algos", "Traitement du signal",
+      "Neuroscience", "Biologie", "Géologie",
+      "Planétologie", "Evolution", "Astrophysique",
+      "Zoologie", "Linguistique", "Archéologie",
+      "Histoire", "Psychologie", "Médecine santé",
+      "Podcast science"
+      ],
+
+    "#Culture_" :
+        [
+        "Mediathèque", "Biblis en ligne", "Les jardins",
+        "Architecture", "Cinéma", "Musique", "Danse",
+        "Chanson", "Dessin","Peinture", "Photo",
+        "Littérature", "Langues", "Bande dessinée",
+        "Série télé", "Animation",
+        "Echecs", "Les ailleurs", " Voyages",
+        "Langues_Latin", "Cuisine", "Sport",
+        "Personnes intéressantes", "Personnes diverses"
+        ],
+
+    "#Culture_Langues_" :
+        [
+        "Latin", "Français", "Turc", "Arabe", "Chinois", "Russe",
+        "Allemand", "Thaï", "Vietnamien", "Anglais"
+        ],
+
+    "#Culture_Chanson_" :
+        [
+        "Oriental", "Pop", "Ska", "Anglosaxonne", "Créole", "Variantes", "Latine",
+        "Brésilienne", "Italienne", "Française", "Variantes", "Artisanale",
+        "Bollywoodienne", "Planante", "Asiatique", "Slave"
+        ],
+
+    "#Recherche jobs_" :
+
+        [
+        "Entretien", "Demandes job faites", "Travail", "Bordel"
+        ],
+
+     "#Société_Thèmes_" :
+
+        [
+        "Cartes", "Europe", "Ecologie", "Evolution",
+        "Egalité", "Féminisme", "liberté d'expression", "Liberté",
+        "Education", "Recherche",
+        "Economie", "Histoire géo", "Circulation", "l'humour",
+        "Le travail", "Les autres", "Santé et société", "Energie",
+        "Futur", "Prison", "Prostitution", "Sexalité", "Xénophobie",
+        "Action sociale", "Laïcité", "initiatives intelligentes",
+        "Progrès et dangers associés", "Honnêteté intellectuelle",
+        "Fanatisme", "Sectes", "Nucléaire", "Femmes", "Discrimination",
+        "Vie régentée", "Développement", "Education", "Politique"
+        ],
+     "#" :
+
+        [
+         "Santé", "Marrant", "Administratif", "Réflexion", "Innovation", "Science",
+         "Pratique", "Mes Projets", "Le Monde", "Le Courrier International", "Programmation",
+         "Contacts"
+        ]
+
 }

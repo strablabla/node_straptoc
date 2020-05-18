@@ -85,7 +85,7 @@ function save_regularly(name){
 
       list_saved = []         // global
       lim_nb_saved = 3        // max versions saved
-      var min_interv = 3     // interval in minute
+      var min_interv = 15     // interval in minute
 
       console.log('reading before saving in utils.js.. ')
       console.log('name is ' + name)
@@ -96,7 +96,7 @@ function save_regularly(name){
       setInterval(function() {
               fs.readFile(addr, 'utf8', function (err,data) {
                       if (err) { return console.log(err); }
-                      console.log(make_date(4)) // 6 --> sec
+                      console.log(make_date(4)) // 4 --> hour, 6 --> sec
                       console.log('inside setInterval, name.. is ' + name)
                       exports.save_current_version(data, true, name) // with date
                   });   // end fs.readFile

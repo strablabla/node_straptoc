@@ -242,7 +242,7 @@ for (tool_size of Object.keys(list_tool_sizes)) {
     linewidth_choices.append(all_sizes[tool_size])
 }
 
-linewidth_choices.show()
+linewidth_choices.hide()
 $('#manuscript_panel').append(linewidth_choices)
 
 $('#manuscript_icon_linewidth').click(function(){
@@ -271,6 +271,47 @@ var control_size_color = $('<div/>').attr('id',"control_size_color")
 
 $('#manuscript_panel').append(control_size_color)
 //control_size_color.text('---')
+
+// ------------- Geometric shapes
+
+var panel_geom_shapes = $('<div/>').attr('id', 'panel_geom_shapes')
+
+panel_geom_shapes.css({
+                          'background-color': '#ffffff', //
+                          'box-shadow': '0.5em 0.5em 2.7em',
+                          'padding-bottom': '0px',
+                          'padding-top': '0px',
+                          'padding-left': '0px',
+                          'padding-right': '0px',
+                          'position': 'absolute',
+                          'right': '60px',
+                          'top':'100px',
+                          'width': '200px',
+                          'height': '200px',
+                          'z-index': '3'
+
+                        })
+$('#manuscript_panel').append(panel_geom_shapes)
+
+var geom_shapes_icon = $('<img/>').attr('src',"various_icon/compas.svg")
+                                     .attr('id', 'geom_shapes_icon')
+geom_shapes_icon.css({
+                          'background-color': '#ffffff', //
+                          'padding-bottom': '0px',
+                          'padding-top': '0px',
+                          'padding-left': '0px',
+                          'padding-right': '0px',
+                          'position': 'absolute',
+                          'right': '20px',
+                          'top':'350px',
+                          'width': '15px',
+                          'z-index': '3'
+
+                        })
+$('#manuscript_panel').append(geom_shapes_icon)
+$('#geom_shapes_icon').click(function(){
+     $('#panel_geom_shapes').toggle()
+})
 
 //-----------   canvas
 

@@ -197,13 +197,51 @@ function trigger_voice(){
 
       artyom.addCommands(dic_config); //
 
+      // -------------------------------- Text
+
+      function make_comm_latex(name, comm){
+
+            var dic_comm_latex =  {
+                indexes: [name],
+                action: function() {
+                    editor.replaceSelection(comm)
+                    }
+            }
+            return dic_comm_latex
+
+      }
+
+
+      socket.on('dic_latex', function(dic) {
+
+            var dic_latex = JSON.parse(dic)
+            //alert('################################ dic_latex ' )
+            for (var name of Object.keys(dic_latex)){                 // keys
+                var comm = dic_latex[name]
+                artyom.addCommands(make_comm_latex(name, comm)); //
+
+            } // end for
+
+       });
+
+      var dic_voice_text =  {
+              indexes: ['fraction'],
+              action: function() {
+                  //socket.emit('make_fraction')
+                  editor.replaceSelection('\\frac{}{}')
+                  }
+          }
+
+      artyom.addCommands(dic_voice_text); //
+
       //----------- Dic voc for goto
 
       socket.on('dic_voc', function(dic) {
 
             var dic_voc = JSON.parse(dic)
+            //alert('################################ dic_voc ')
             for (var root in dic_voc){                 // keys
-                curr_list = dic_voc[root]         // current list
+                curr_list = dic_voc[root]              // current list
                 for (var name of curr_list){
                     artyom.addCommands(goto(root, name)); //
                 }

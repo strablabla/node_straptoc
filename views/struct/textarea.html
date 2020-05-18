@@ -1,3 +1,7 @@
+<script src="voice.js"></script>
+<script src="voice_specific.js"></script>
+<script src="artyom.window.min.js"></script>
+
 <nav id='text-navbar'  class="navbar navbar-light bg-light">
 
 </nav>
@@ -33,6 +37,27 @@ $('#text-navbar').css(dic_css_text_navbar)
 </div>
 
 <script>
+
+var icon_micro = $('<img/>').attr('src',"various_icon/micro2.svg")  // icon for agenda panel
+icon_micro.attr('id','icon_micro')
+           .css({
+                'position':'absolute',
+                'bottom':'50px',
+                'right':'10px',
+                'width':'24px',
+                'z-index':'10'
+              })
+
+$('body').append(icon_micro)
+icon_micro.click(function(){
+      //alert(curr_page)
+      trigger_voice()
+      socket.emit('trig_voice', '')
+})
+
+var voice_triggered = 0
+
+//------------
 
 var tool_text__panel = $('<div/>').attr('id','tool_text__panel')
 $('body').append(tool_text__panel)

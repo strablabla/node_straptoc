@@ -26,6 +26,7 @@ var socket = io.connect();
                })
 
  $('#content').append(icon_micro)
+
  icon_micro.click(function(){
        //alert(curr_page)
        socket.emit('trig_voice', curr_page)
@@ -35,10 +36,10 @@ var socket = io.connect();
  socket.on('trig_voice_recogn', function(name_page){
       //alert(name_page)
       if (curr_page == name_page & !voice_triggered){
-          trigger_voice()  // artyom = 
+          trigger_voice()  // artyom =
           voice_triggered ^= -1
       }
-      else{
+      else if (voice_triggered){
          //delete artyom
          window.location.reload() // reload the page for removing artyom if instantiated
       }

@@ -19,9 +19,20 @@ function printMousePos(event) {
       }
     }
 
+function make_date_todo_list(){
+
+      var curr_date = make_date(3)
+      var lcurr_date = curr_date.slice(2).split('_') // slice to remove the first 2 cifers in the year..
+      lcurr_date[1] = parseInt(lcurr_date[1]) + 1
+      var fr_date = lcurr_date.reverse().join('/')
+
+      return fr_date
+
+}
+
 document.addEventListener("click", printMousePos);
 
-function code_mirror_add_func(editor){
+function code_mirror_add_func(editor, socket){
 
 
         editor.setSize('80%',500);
@@ -66,10 +77,7 @@ function code_mirror_add_func(editor){
                var selection = editor.getSelection()
                if (selection.length < 2){
                      //alert(selection.length)
-                     var curr_date = make_date(3)
-                     var lcurr_date = curr_date.slice(2).split('_') // slice to remove the first 2 cifers in the year..
-                     lcurr_date[1] = parseInt(lcurr_date[1]) + 1
-                     var fr_date = lcurr_date.reverse().join('/')
+                     var fr_date = make_date_todo_list()
                      var modified_selection = fr_date + '\n'
                      editor.replaceSelection(modified_selection)
                      $('#tool_text__panel').hide()

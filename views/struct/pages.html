@@ -257,19 +257,47 @@ $('#content').append(icon_page)
 
 var dic_icon_pages = {
                       'todo': '044', 'science':'205',
-                      'fait':'265', 'infos':'341',
-                      'main':'001','idees': '040',
+                      'fait':'265', 'infos':'342',
+                      'idees': '040','a_lire':'195',
                       'musique':'084', 'good_links':'034',
                       'culture':'238', 'sante':'008',
-                      'chansons':'067'
+                      'chansons':'067', 'medias': '070',
+                      'innovation':'345', 'pratique':'072',
+                      'reflexion':'081', 'société':'050',
+                      'job':'376', 'médias':'377'
                     }
+if (curr_page){
 
-try{
-  var num_icon = dic_icon_pages[curr_page]
-  $('#icon_page').attr('src',"capicon/svg/" + num_icon + ".svg")
+      try{
+        var num_icon = dic_icon_pages[curr_page]
+        $('#icon_page').attr('src',"capicon/svg/" + num_icon + ".svg")
 
-}catch(err){
-  console.log('no icon in the dic')
+      }catch(err){
+        console.log('no icon in the dic')
+      }
+
 }
+
+//------- backgrnd_icons
+/*
+Background for showing well the icons..
+*/
+backgrnd_icons = $('<div/>').attr('id','backgrnd_icons')
+backgrnd_icons.css({
+                    'background-color': '#ffffff', //
+                    'box-shadow': '0.5em 0.5em 0.7em',
+                    'padding-bottom': '0px',
+                    'padding-top': '0px',
+                    'padding-left': '0px',
+                    'padding-right': '0px',
+                    'position': 'fixed',
+                    'right': '7px',
+                    'width': '40px',
+                    'height' : '400px',
+                    'top':'70px',
+                    'z-index': '0',
+
+                  })
+$('#content').append(backgrnd_icons)
 
 </script>

@@ -8,8 +8,10 @@ Stat
 
 */
 
-var num_icon_stat = '265'
-var icon_stat = $('<img/>').attr('src',"capicon/svg/" + num_icon_stat + ".svg")  // icon for stat
+// var num_icon_stat = '265'
+// "capicon/svg/" + num_icon_stat + ".svg"
+var icon_stat_addr = 'various_icon/statistics.svg'
+var icon_stat = $('<img/>').attr('src',icon_stat_addr)  // icon for stat
 icon_stat.attr('id','icon_stat')
            .css({
                 'position':'absolute',
@@ -46,7 +48,7 @@ $('#stat_panel').append(icon_stat)    // pict helmet
 // ----- stat toggle
 
 var pos_stat_toggle = 350
-var stat_state = $('<img/>').attr('src',"capicon/svg/" + num_icon_stat + ".svg")  // icon for play_list on/off
+var stat_state = $('<img/>').attr('src',icon_stat_addr)  // icon for play_list on/off
 stat_state.attr('id','stat_state')
            .attr('val','false')
            .css({

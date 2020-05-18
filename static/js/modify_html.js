@@ -8,8 +8,8 @@ function modify_html_with_newtext(io, fs, util, new_text, name){
     */
 
     console.log('save before changing the text')
-    util.save_current_version(new_text, false, name)      // save before change
-    io.sockets.emit('page_return_to_html', name)       // 
+    util.save_current_version(new_text, false, name + '_before_change')      // save before change
+    io.sockets.emit('page_return_to_html', name)       //
     var addr = "views/md/" + name + ".html"
     fs.writeFile(addr, new_text, function(err) {
           if(err) { return console.log(err); }

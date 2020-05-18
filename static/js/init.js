@@ -21,6 +21,20 @@ exports.comm_voc = function(io){
           }); // end fs.readFile
   }
 
+  exports.latex_voc = function(io){
+
+        /*
+
+
+
+        */
+
+        fs.readFile('static/latex_voc.json', 'utf8', function (err,text) {
+                if (err) { return console.log(err); }
+                 io.sockets.emit('dic_latex', text)
+            }); // end fs.readFile
+    }
+
 exports.static_addr = function(app, express){
 
       /*
