@@ -3,6 +3,7 @@
 
 </head>
 
+<!-- panel show hide -->
 <script  src="util_panel.js"></script>
 
 <script>
@@ -187,8 +188,8 @@ $('#manuscript_panel').append(manuscript_icon_rubber)
 $('#manuscript_icon_rubber').click(function(){
      //alert($('#canvas_manuscript').css('background-color'))
      colstroke = manuscript_canvas_color
-     list_moves_col.push([moves.length, colstroke, linewidth])
-     $('#control_size_color').css({'background-color': '#ffffff','border': '3px solid black'})
+     list_moves_col.push([moves.length, colstroke, linewidth])  // change color
+     $('#control_size_color').css({'background-color': '#ffffff','border': '3px solid black'}) // change color of indicator
      //alert(colstroke)
 })
 
@@ -235,8 +236,8 @@ for (tool_size of Object.keys(list_tool_sizes)) {
     all_sizes[tool_size].click(function(){
          //alert('changing the size !!')
          linewidth = $(this).attr('size')
-         list_moves_col.push([moves.length, colstroke, linewidth])
-         $('#control_size_color').css({'height': linewidth, 'margin-bottom':-linewidth/2})
+         list_moves_col.push([moves.length, colstroke, linewidth])  // change linewidth value..
+         $('#control_size_color').css({'height': linewidth, 'margin-bottom':-linewidth/2}) // change linewisth indicator
     })
 
     linewidth_choices.append(all_sizes[tool_size])

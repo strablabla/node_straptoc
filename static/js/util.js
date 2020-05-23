@@ -39,7 +39,7 @@ exports.save_current_version = function(data, with_date, name){
 
       */
 
-      var basename = 'views/saved/'+ name +'_old'
+      var basename = 'views/saved/' + name + '_old'
       txt_date = make_date(4)  // 4 --> hour, 6 --> sec
       if ( with_date ){             // case where it is saved with a date..
           //console.log('txt_date ' + txt_date)

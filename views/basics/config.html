@@ -1,3 +1,4 @@
+<script  src="my_color_picker.js"></script>
 
 <script>
 
@@ -22,14 +23,14 @@ var config_panel = $('<div/>').attr('id','config_panel')
 $('#content').append(config_panel)
 
 var cp_width = 600
-config_panel.css({'background-color': '#ffffff', // Current play list.. '#ecf9f2'
+config_panel.css({'background-color': '#ffffff', //
           'box-shadow': '0.5em 0.5em 2.7em',
           'padding-bottom': '90px',
           'padding-top': '30px',
           'padding-left': '50px',
           'padding-right': '50px',
           'position': 'fixed',
-          'right': '-' + cp_width + 'px',   // open
+          'right': '-' + cp_width + 'px',   // hidden
           'top': '170px',
           'width': '600px',
           'height': '400px',
@@ -41,7 +42,7 @@ var tit = $('<h3/>').css({'text-align':'center'})
 // ---- Add elements to play list..
 
 $('#config_panel').append(icon_config)    // pict helmet
-                   .append(tit)           // title
+                  .append(tit)           // title
 
 var config_state = $('<img/>').attr('src',"capicon/svg/272.svg")  // icon for play_list on/off
 config_state.attr('id','config_state')
@@ -52,6 +53,108 @@ config_state.attr('id','config_state')
                 'right':'20px',
                 'width':'17px'
               })
+
+//--------------
+
+function tag_infos(name){
+
+      /*
+
+
+      */
+
+      var list_select = $('<span/>').css({
+                                            'padding': '15px 5px 5px 25px',
+                                            'box-shadow': '0.5em 0.5em 2.7em',
+                                            'position':'absolute',
+                                            'left':'100px',
+                                            'width':'130px',
+                                            'margin-top':'-20px'
+                                          })
+      var listopt = ['left', 'center']
+      list_select.append($('<h4/>').text('position'))
+      for (opt of listopt){
+          list_select.append($('<h5/>').text(opt).addClass('hposition'))
+      }
+      list_select.append($('<h4/>').text('color').addClass('showcolor'))
+      list_select.hide()
+      list_select.click(function(){    // deactivate list..
+        return false
+      })
+      add_palette(list_select, name)
+
+
+      return list_select
+
+}
+
+function add_palette(elem, name){
+
+
+      var name_inp = "inp_pal" + name
+      var input_color = $('<input/>').addClass("inp")
+                              .attr('id', name_inp)
+                              .hide()
+      var name_pal = "pal" + name
+      var palette = $('<div/>').addClass("palette")
+                               .attr('id', name_pal)
+                               .css({'z-index':'100','position':'absolute','right':'10px'})
+                               .hide()
+
+      elem.append(input_color)
+      elem.append(palette)
+
+
+}
+
+function make_tag_infos(tagname){
+
+      var list_select = tag_infos(tagname)
+      var tagselect = $('<h4/>').text(tagname).append(list_select)
+      tagselect.attr('tag',tagname)
+      tagselect.click(function(){
+           list_select.toggle()
+      })
+      $('#config_panel').append(tagselect)
+      make_palette('inp_pal' + tagname, 'pal' + tagname)
+      list_select.find('.showcolor').click(function(){     //
+
+           if (list_select.find('.palette').css('display') == 'none'){
+              list_select.find('.inp').click()
+              list_select.find('.palette').show()
+
+           }else{ list_select.find('.palette').hide() }
+
+           list_select.find('.palette').click(function(){
+               var curr_col = list_select.find('.inp').val()
+               $(tagname).css({'color':curr_col})    // change color of tagname
+
+           })
+
+      })
+
+}
+
+//--------- Color
+
+var configname = $('<h3/>').text(curr_page)
+                          .css({
+                            //'position':'fixed',
+                            //'text-align':'center'
+                            })
+$('#config_panel').append(configname)
+make_tag_infos('h2')
+make_tag_infos('h3')
+
+//-----
+
+$('.hposition').click(function(){
+    $('.hposition').css({'color' : 'rgb(85, 85, 85)'})
+    $(this).css({'color':'blue'}) // #ffcccc
+    var curr_tag = $(this).parent().parent().attr('tag')
+    $(curr_tag).css({'text-align':$(this).text()})
+})
+
 $('#content').append(config_state) // 266, 353, 354
 
 //---------------

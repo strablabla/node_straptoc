@@ -4,10 +4,7 @@ Agenda
 
 */
 
-
-
-var fs = require('fs');
-
+var fs = require('fs')
 
 function date_day(){
 

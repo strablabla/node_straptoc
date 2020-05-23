@@ -21,11 +21,11 @@ exports.comm_voc = function(io){
           }); // end fs.readFile
   }
 
-  exports.latex_voc = function(io){
+exports.latex_voc = function(io){
 
         /*
 
-
+        Dictionary of vocal commands for Latex syntax..
 
         */
 
@@ -100,15 +100,15 @@ exports.static_addr = function(app, express){
 
 function make_html_around_md(file){
 
-  var list_plugins =  '\n'
-  var files = fs.readdirSync('views/plugins')
-  for (var f of files) {
-      list_plugins += "    {% include 'plugins/" + f + "' %}' \n"
-  }
-  console.log("### list_plugins_text " + list_plugins)
-  page = '\n  {% include "md/inserted_file" %}  \n'.replace('inserted_file', file)
+      var list_plugins =  '\n'
+      var files = fs.readdirSync('views/plugins')
+      for (var f of files) {
+          list_plugins += "    {% include 'plugins/" + f + "' %}' \n"
+      }
+      console.log("### list_plugins_text " + list_plugins)
+      page = '\n  {% include "md/inserted_file" %}  \n'.replace('inserted_file', file)
 
-  var base = function(){/*
+      var base = function(){/*
 
   {% extends "page_struct/base.html" %}
 
@@ -123,10 +123,10 @@ function make_html_around_md(file){
   */}.toString().slice(14,-3).replace('insert_page', page)
                              .replace('insert_plugins', list_plugins)
 
-console.log(base)
-return base
+    console.log(base)
+    return base
 
-}
+    }
 
 function fill_globals(elem){
 
@@ -147,13 +147,13 @@ function fill_globals(elem){
 
 exports.handle_pages = function(app){
 
-  /*
+    /*
 
 
 
-  */
+    */
 
-  fs.readdir('views/md', (err, files) => {
+    fs.readdir('views/md', (err, files) => {
 
         /*
 
@@ -239,3 +239,26 @@ function pages(){
         }); // end fs.readFile
 
   }
+
+
+exports.color_tags = function(io){
+
+  fs.readFile('static/color_tags.json', 'utf8', function (err,text) {
+          if (err) { return console.log(err); }
+          console.log('pingpong...')
+          console.log(text)
+          io.sockets.emit('dic_color_tags', text)
+
+      }); // end fs.readFile
+}
+
+exports.drawing_state = function(io){
+
+  fs.readFile('static/drawing_state.json', 'utf8', function (err,text) {
+          if (err) { return console.log(err); }
+          console.log('drawing_state...')
+          console.log(text)
+          io.sockets.emit('dic_drawing_state', text)
+
+      }); // end fs.readFile
+}

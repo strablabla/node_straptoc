@@ -6,7 +6,6 @@
 
 */
 
-
 var nbclick = 0
 posx = null
 posy = null
@@ -33,7 +32,6 @@ function make_date_todo_list(){
 document.addEventListener("click", printMousePos);
 
 function code_mirror_add_func(editor, socket){
-
 
         editor.setSize('80%',500);
 

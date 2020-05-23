@@ -109,6 +109,11 @@ io.sockets.on('connection', function (socket) {
           io.sockets.emit('trig_voice_recogn', name_page)
           init.comm_voc(io)                                            //---- comm voc
           init.latex_voc(io)                                           //---- lateX voc commands
+          init.drawing_state(io)                                       //---- drawing color
+      })
+      socket.on('ask_color_tags',function(){
+          init.color_tags(io)
+
       })
 
 

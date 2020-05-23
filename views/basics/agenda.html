@@ -31,7 +31,8 @@ function date_day(){
 
 //-- Agenda panel
 
-var icon_agenda = $('<img/>').attr('src',"capicon/svg/033.svg")  // icon for agenda panel
+var addr_icon_agenda = "capicon/svg/033.svg"
+var icon_agenda = $('<img/>').attr('src',addr_icon_agenda)  // icon for agenda panel
 icon_agenda.attr('id','icon_agenda')
            .css({
                 'position':'absolute',
@@ -70,7 +71,7 @@ var tit = $('<h3/>').css({'text-align':'center'})
 $('#agenda_panel').append(icon_agenda)    // pict Agenda
                   .append(tit)           // title
 
-var agenda_state = $('<img/>').attr('src',"capicon/svg/033.svg")  // icon for agenda toggle
+var agenda_state = $('<img/>').attr('src',addr_icon_agenda)  // icon for agenda toggle
 agenda_state.attr('id','agenda_state')
            .attr('val','false')
            .css({
@@ -377,8 +378,8 @@ function make_notes_areas(text, index_cell){
       //------------
       $('#pan_day').append(evening)
 
-      for (j=0; j < 3; j++){                // morning, afternoon, evening..
-            for (i=0; i < 6; i++){          // hours
+      for (j = 0; j < 3; j++){                // morning, afternoon, evening..
+            for (i = 0; i < 6; i++){          // hours
 
                 numh = 6*j + 8 + i          // number hour..
                 if (numh < 23){
@@ -399,7 +400,6 @@ function make_notes_areas(text, index_cell){
 
             }
         }
-
 }
 
 var hour_note_size = 14
@@ -427,7 +427,7 @@ function note_interact(){             // text <---> input
 
 $('#content').append(pan_day) // .text('aeaekahehaohea')
 
-//----------------------
+//---------------------- Make day cells for a month..
 
 for (i=1; i < 8; i++){
 
@@ -435,7 +435,7 @@ for (i=1; i < 8; i++){
 
       if ( calc_index_cell(i,j) < dic_months[lmonths[selected_month-1]] +1 ){ //
             curr_cell = fill_cell(i,j)
-            $('#agenda_panel').append(curr_cell)
+            $('#agenda_panel').append(curr_cell)    // adding a day cell..
 
           }
     }
