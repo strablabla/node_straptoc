@@ -18,6 +18,7 @@ var subtit = require('./static/js/make_subtit');
 var new_obj = require('./static/js/new_obj');
 var store = require('./static/js/store');
 var agenda = require('./static/js/agenda');
+var config = require('./static/js/config');
 
 //--------------  Server
 
@@ -95,16 +96,16 @@ io.sockets.on('connection', function (socket) {
 
       new_obj.create(socket, app, io)
 
-      // init.comm_voc(io)                                            //---- comm voc
-      // init.latex_voc(io)                                           //---- lateX voc commands
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                              //---- pdfs in folders
       notes.handle(socket, 'notes')                                //---- notes
       agenda.handle(socket)                                        //---- agenda
+      config.handle(io,socket)
 
       socket.on('tchat_message',function(mess){
           io.sockets.emit('broadcast_message', { mess : mess.curr_message, name_user : users[socket.id] })
       })
+
       socket.on('trig_voice',function(name_page){
           io.sockets.emit('trig_voice_recogn', name_page)
           init.comm_voc(io)                                            //---- comm voc
@@ -113,7 +114,6 @@ io.sockets.on('connection', function (socket) {
       })
       socket.on('ask_color_tags',function(){
           init.color_tags(io)
-
       })
 
 

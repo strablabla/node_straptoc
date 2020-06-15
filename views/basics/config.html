@@ -1,5 +1,6 @@
 <script  src="my_color_picker.js"></script>
 
+
 <script>
 
 /*
@@ -104,7 +105,6 @@ function add_palette(elem, name){
       elem.append(input_color)
       elem.append(palette)
 
-
 }
 
 function make_tag_infos(tagname){
@@ -127,12 +127,15 @@ function make_tag_infos(tagname){
 
            list_select.find('.palette').click(function(){
                var curr_col = list_select.find('.inp').val()
-               $(tagname).css({'color':curr_col})    // change color of tagname
+               var dic_col = { 'color': curr_col }
+               $(tagname).css(dic_col)    // change color of tagname
+               var curr_tag = $(this).parent().parent().attr('tag')
+               //alert(curr_tag)
+               var dic_sent = make_dic_sent(curr_page, curr_tag, dic_col)
+               socket.emit('save_config', JSON.stringify(dic_sent)) //
 
            })
-
       })
-
 }
 
 //--------- Color
@@ -148,11 +151,26 @@ make_tag_infos('h3')
 
 //-----
 
+function make_dic_sent(curr_page, curr_tag, dic_pos){
+
+    var dic_sent = {}
+    dictag = {}
+    dictag[curr_tag] = dic_pos
+    dic_sent[curr_page] = dictag
+
+    return dic_sent
+
+}
+
 $('.hposition').click(function(){
     $('.hposition').css({'color' : 'rgb(85, 85, 85)'})
     $(this).css({'color':'blue'}) // #ffcccc
     var curr_tag = $(this).parent().parent().attr('tag')
-    $(curr_tag).css({'text-align':$(this).text()})
+    var dic_pos = {'text-align': $(this).text()}
+    $(curr_tag).css(dic_pos)
+    var dic_sent = make_dic_sent(curr_page, curr_tag, dic_pos)
+    socket.emit('save_config', JSON.stringify(dic_sent)) // JSON.stringify(dic_sent)
+
 })
 
 $('#content').append(config_state) // 266, 353, 354

@@ -262,3 +262,14 @@ exports.drawing_state = function(io){
 
       }); // end fs.readFile
 }
+
+exports.config_state = function(io){
+
+  fs.readFile('static/config.json', 'utf8', function (err,text) {
+          if (err) { return console.log(err); }
+          console.log('config_state...')
+          console.log(text)
+          io.sockets.emit('config_state', text)
+
+      }); // end fs.readFile
+}

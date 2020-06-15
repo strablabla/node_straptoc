@@ -1,13 +1,5 @@
 <link type="css"  rel="stylesheet" href="css/main_fonts.css">
 
-<!-- <style>
-
-.no-bullets {
-    list-style-type: none;
-}
-
-</style> -->
-
 <script>
 
 //Grundschrift-Bold.otf    Grundschrift-Light.otf  Grundschrift-Regular.otf
@@ -19,19 +11,22 @@ $('#content').css({
                   'margin-left':'120px',
                   'margin-right':'120px'
                 })
-$('h1').css({'font-family': "libre_carlson_display", 'text-shadow':'none'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d
-$('h2').css({'color':'#c65353', 'font-family': "libre_carlson_display", '-webkit-text-stroke-width': '0.5px'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d 1a75ff b3d1ff ff3333 ff9999 8cb3d9
-$('h3').css({'color':'#d27979', 'font-family': "libre_carlson_display", 'font-style': 'bold', '-webkit-text-stroke-width': '0.2px'}) // 'Enriqueta', serif
-$('#toc').css({'height': 'auto', 'width':'auto !important', 'font-size':'15px', 'top':'70px', 'background-color':'#ffeecc'})
-$('.date').css({"font-family": "'Enriqueta', serif", 'color':'#000000'})
-$('.navbar').css({'position':'fixed'})
-$('.todotheme').css({'width':'auto', 'height':'700px','margin-right':'300px'})
-$('pre').css({ 'display': 'table' }) // 'margin-right':'30%'
-//$('.CodeMirror').css({ 'margin-left': '10%', 'width':'80%' }) // 'margin-right':'30%'
-//$('.onside').find('ul').show()
-$('#toc>ul>li>a').css({'font-size':'18px'})
-$('#toc').niceScroll();
-//$('body').niceScroll();
+function default_style(){
+
+      $('h1').css({'font-family': "libre_carlson_display", 'text-shadow':'none'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d
+      $('h2').css({'color':'#c65353', 'font-family': "libre_carlson_display", '-webkit-text-stroke-width': '0.5px'}) // 0086b3 e64d00 40bf40 c65353 ff4d4d 1a75ff b3d1ff ff3333 ff9999 8cb3d9
+      $('h3').css({'color':'#d27979', 'font-family': "libre_carlson_display", 'font-style': 'bold', '-webkit-text-stroke-width': '0.2px'}) // 'Enriqueta', serif
+      $('#toc').css({'height': 'auto', 'width':'auto !important', 'font-size':'15px', 'top':'70px', 'background-color':'#ffeecc'})
+      $('.date').css({"font-family": "'Enriqueta', serif", 'color':'#000000'})
+      $('.navbar').css({'position':'fixed'})
+      $('.todotheme').css({'width':'auto', 'height':'700px','margin-right':'300px'})
+      $('pre').css({ 'display': 'table' }) // 'margin-right':'30%'
+      //$('.CodeMirror').css({ 'margin-left': '10%', 'width':'80%' }) // 'margin-right':'30%'
+      //$('.onside').find('ul').show()
+      $('#toc>ul>li>a').css({'font-size':'18px'})
+      $('#toc').niceScroll();
+      //$('body').niceScroll();
+}
 
 //--------------  TOC
 
@@ -425,6 +420,22 @@ $('.strapvid').find('a').css(dic_col_medias)
 $('.strapvid').parent().css(dic_col_medias)
 $('.strapvid').prev().css(dic_col_medias)
 // 66cc66, 79d279
+
+//------------- Config
+
+socket.emit('ask_config','')
+socket.on('config_state',function(text){
+
+      var config_state = JSON.parse(text)
+      default_style()
+      for (var [page, dic_config] of Object.entries(config_state)) {
+          if(curr_page == page){
+             for (var [tag, dic_css] of Object.entries(dic_config)) {
+                 $(tag).css(dic_css)
+          }
+        } // if
+      }
+})
 
 // ----------------
 

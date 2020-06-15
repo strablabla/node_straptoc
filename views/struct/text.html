@@ -28,6 +28,27 @@
     var new_loc = ''
     var editor;
 
+    function name_origin_page(curr_page){
+
+          /*
+
+          name of the page
+
+          */
+
+          var name_page = $('<h4/>').text('Text of page : ' + curr_page)
+          name_page.attr('id','name_page')
+                     .css({
+                          'position':'absolute',
+                          'top':'10px',
+                          'left':'10px',
+                          //'width':'24px',
+                          'z-index':'10'
+                        })
+
+          $('body').append(name_page)
+    }
+
     //------------- Scroll position
 
     socket.on('scroll', function(code) {
@@ -53,7 +74,7 @@
                  }) // end click
       })
 
-    socket.on('scroll_html', function(pos) {  // save html position of scroll
+    socket.on('scroll_html', function(pos) {              // save html position of scroll
             scroll_html_pos = pos
             if (comment){ alert(' scroll_html pos = ' + pos) }
       })
@@ -71,6 +92,9 @@
               $('#comment').val(message);
               if (comment){ alert('received message  !! ') }
               new_loc = k
+
+              name_origin_page(new_loc)
+
             })
     )
 

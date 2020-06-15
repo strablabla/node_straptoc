@@ -61,15 +61,27 @@
 "c" : "c",
 "carré" : "^2",
 "cube" : "^3",
-"égal" : "=",
+"égal" : " = ",
 "plus" : "+",
 "moins" : "-",
 "scalaire" : ".",
-"inférieur" : "<",
-"supérieur" : ">",
+"inférieur" : "< ",
+"supérieur" : "> ",
 "équivalent" : "\\Leftrightarrow",
-"calligraphique" : "\\mathcal{}",
-"latex addresses" : "https://latex.wikia.org/wiki/List_of_LaTeX_symbols"
+"calligraphique" : "\\mathcal{} ",
+"quelque soit" : "\\forall ",
+"il existe" : "\\exists ",
+"sur" : "\\overset{}{} ",
+"sous" : "\\underset{}{} ",
+"tilde" : "\\tilde{} ",
+"chapeau" : "\\hat{} ",
+"souligne" : "\\underline{} ",
+"ligne au-dessus" : "\\overline{}",
+"cartésien" : "\\otimes",
+"implique" : "\\Rightarrow",
+"nabla" : "\\nabla",
+"partielle" : "\\partial",
+"h barre" : "\\hbar"
 
 
 }
