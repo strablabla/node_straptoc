@@ -9,11 +9,15 @@ var fs = require('fs');
 var srt2vtt = require('srt2vtt');
 
 exports.make_sub = function(){
+
+
       fs.readFile('static/subtit.json', 'utf8', function (err,text) {
             if (err) { return console.log(err); }
             var root = text.trim()
             console.log('#### root for subtit is ' + root)
+            //try{
             fs.readdir(root, (err, files) => {
+                if (err) { return console.log(err); }
                 files.forEach(file => {
                    if (file.search('.srt') != -1){
                      var file_vtt = root + '/' + file.split('.srt')[0] + '.vtt'
@@ -35,5 +39,9 @@ exports.make_sub = function(){
                    }
               });
         }); // end fs.readdir
+      // }
+      // catch(err){
+      //     console.log('issue with subtitles')
+      // }
     }); // end fs.readFile
 }

@@ -8,8 +8,9 @@ Play list
 
 // rgb(255, 255, 204) pale yellow
 var color_play_list = 'rgb(255, 255, 204)'
+var icon_helmet = "capicon/svg/227.svg"
 
-var list_play_state = $('<img/>').attr('src',"capicon/svg/227.svg")  // icon for play_list, helmet
+var list_play_state = $('<img/>').attr('src',icon_helmet)  // icon for play_list, helmet
 list_play_state.css({
                 'position':'fixed',
                 'top':'80px',
@@ -37,7 +38,7 @@ list_play_state.click(function(event) {     // click on the helmet..
 
 // Toggle panel play list
 
-var img_helmet = $('<img/>').attr('src',"capicon/svg/227.svg") // helmet
+var img_helmet = $('<img/>').attr('src',icon_helmet) // helmet
 img_helmet.css({'position':'relative',
                 'margin-top':'25px',
                 'margin-left':'50%',
@@ -225,52 +226,77 @@ function fill_play_list(elem_li, vid_id, numsel){
       $('#vid_play_list').append(selection)     // add media title to the play list..
 
       selection_click(elem_li, selection, numsel)
+      // show the sign - for removing video
       $('.elem_list_play_selected').mouseover(function(){   //
          $(this).find('.remove_vid').show()
       })
+      // hide the sign - for removing video
       $('.elem_list_play_selected').mouseout(function(){  //
          $(this).find('.remove_vid').hide()
       })
 
-      $('.remove_vid').click(function(e){
-            //if(!e.detail || e.detail == 1){
-            // if (! change){
-            //      var par = $(this).parent()
-            //      var currindex = parseInt(par.attr('index'))
-            //      alert(currindex)
-            //      $('#vid_num' + currindex).attr('id','vid_num' + (currindex + 100))
-            //      $('#vid_num' + (currindex+1)).attr('id','vid_num' + currindex)
-            //      change = true
-            //    }
+      // $('.remove_vid').click(function(e){
+      $('.remove_vid').one('click', function(){
 
-           // par.attr('id','sel_vid_num' + currindex + 100)
-           // par.attr('index', currindex + 100)
-           //alert(list_vid.length)
+           //if(!e.detail || e.detail == 1){     // prevent multiple clicks
 
+                 var par = $(this).parent()
+                 var currindex = parseInt(par.attr('index'))
+                 //alert(currindex)
+                 $('#sel_vid_num' + currindex).remove()
+
+                 var tit_index_sel = '.ul_selected[index="'+ currindex + '"]'
+                 // ul_selected
+                 var tit = $(tit_index_sel)
+                 tit.next().find('.icon_title').remove()
+                 var addr = tit.find('a').attr('href')
+                 index_addr = list_vid.indexOf(addr)
+
+                 if (index_addr != -1){
+                    //alert(index_addr)
+                    list_vid.splice(index_addr,1)
+                 }
+
+                 //alert( tit.attr('index') )
+                 //numsel -= 1
+                 tit.parent().css({'color':'rgb(102, 204, 102)'})
+                 tit.removeAttr('index')
+                 tit.hide()
+                 tit.removeClass("ul_selected")
+                 tit.parent().removeClass("selected_title")
+                 var vid_sel = tit.find('.vid_selected')
+                 vid_sel.removeAttr('index')
+                 vid_sel.removeAttr('id')
+                 vid_sel.removeClass('vid_selected')
+
+              // }
+              // else { return false; }
       })
 
+      // // remove the titles in the playlist..
+      // $('.elem_list_play_selected').remove()
+      // // doublon list empty to permit to put again the same vids..
+      // list_vid = []
+      // // remove the icons after the titles..
+      // $('.icon_title').remove()
+      // // reset the index at 0
+      // numsel = 0
+      // // go back to green color for the titles
+      // $('.selected_title').css({'color':'rgb(102, 204, 102)'})
+      // // stop playing the current video
+      // currvid.pause()
+      // currvid = null
+      // //----------
+      // $('.ul_selected').removeAttr('index')
+      // $('.ul_selected').hide()
+      // $('.ul_selected').removeClass("ul_selected")
+      // $('.selected_title').removeClass("selected_title")
+      // //----------
+      // $('.vid_selected').removeAttr('index')
+      // $('.vid_selected').removeAttr('id')
+      // $('.vid_selected').removeClass('vid_selected')
 
-      // $('.remove_vid').click(function(){
-      //      var par = $(this).parent()
-      //      var currindex = parseInt(par.attr('index'))
-      //      alert(currindex)
-      //      $('#vid_num' + currindex).attr('id','vid_num' + (currindex + 100))
-      //
-      //      // par.attr('id','sel_vid_num' + currindex + 100)
-      //      // par.attr('index', currindex + 100)
-      //      //alert(list_vid.length)
-      //      for (var ii = currindex+1; i < list_vid.length; i++){
-      //           // $('#sel_' + i).attr('index', i-1)
-      //           // $('#sel_' + i).attr('id', 'sel_vid_num' + i-1)
-      //           // var newid = 'vid_num' + (i-1)
-      //           // alert(i)
-      //           // alert(newid)
-      //           $('#vid_num' + ii).attr('id', ii)
-      //      }
-      //      //$('#sel_vid_num' + par.attr('index')).css({'color':'black'})
-      //      //alert($(this).parent().attr('index'))
-      //      //$(this).parent().click(function(){return false}).hide()
-      // })
+
 
 }
 
@@ -284,9 +310,12 @@ function clear_play_list(){
     $('.icon_title').remove()
     // reset the index at 0
     numsel = 0
+    // go back to green color for the titles
     $('.selected_title').css({'color':'rgb(102, 204, 102)'})
+    // stop playing the current video
     currvid.pause()
     currvid = null
+    //----------
     $('.ul_selected').removeAttr('index')
     $('.ul_selected').hide()
     $('.ul_selected').removeClass("ul_selected")
@@ -313,7 +342,7 @@ function add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons){
          .attr('index', numsel)             // number associated to the video..
          .addClass('vid_selected')          // assigning class vid_selected to all the video selected..
       elem_li.css({'color':'black'})        // color the link in the main document
-      list_icons[numsel] = $('<img/>').attr('src',"capicon/svg/227.svg")    // icon to indicate vid is in the play list
+      list_icons[numsel] = $('<img/>').attr('src',icon_helmet)    // icon to indicate vid is in the play list
                                       .css({'width':'12px', 'margin':'0px'})
                                       .addClass('icon_title')
       elem_li.append($('<span/>').text(' ').append(list_icons[numsel]))  // add icon in the doc
@@ -338,6 +367,7 @@ $("li").click( function(){
                     add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
                 }
             }
+            // increment the number of selected elements ..
             numsel += 1
        }
     } // end if vid
@@ -393,7 +423,22 @@ function play_vid_list(i){
             try{
                 reinitialize($('#sel_vid_num' + i))    // reinit last vid
                 reinitialize($('#sel_vid_num' + i-1))  // reinit vid before last vid
-                play_vid_list(i+1)     // recurrence
+                for (var j=1;j<100;j++){
+
+                          var next_ind = i+j
+                          try{
+                              play_vid_list(next_ind)     // recurrence
+                          }catch(err){
+
+                          }
+                          var l = $('#sel_vid_num' + next_ind).length
+                          //alert(l)
+                          if(l){   // if the Id exists stop screening..
+                            break
+                          }
+
+                  }
+
               }catch(err){
                 //alert('enddd!!!')
               }
