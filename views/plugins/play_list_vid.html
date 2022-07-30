@@ -35,6 +35,8 @@ list_play_state.click(function(event) {     // click on the helmet..
 
   });
 
+// Toggle panel play list
+
 var img_helmet = $('<img/>').attr('src',"capicon/svg/227.svg") // helmet
 img_helmet.css({'position':'relative',
                 'margin-top':'25px',
@@ -42,6 +44,9 @@ img_helmet.css({'position':'relative',
                 'left':'-12.5px',
                 'width':'15px'
               })
+
+// Play
+
 var butt_play = $('<input/>').attr({   // play button
                    type: "button",
                    id: "butt_play",
@@ -87,14 +92,17 @@ toggle_play_list.append(tpl_arr_r).append(tpl_arr_l)
 
 // -- Actions  for Play list
 
-dic_css_pl_act = {'position':'absolute', // dic css play_list actions
+dic_css_pl_act = {'position':'absolute',    // dic css play_list actions
                   'width':'15px',
                   'bottom':'20px',
                   'right':'12px'
                   }
 
 function make_icon_action(name, num){
-      var pl_act = $('<img/>').attr('src',"capicon/svg/" + num + ".svg") // toggle play_list_arrow left
+
+      // associate an icon, an Id and a css
+
+      var pl_act = $('<img/>').attr('src',"capicon/svg/" + num + ".svg")
                               .attr('id','pl_act_' + name)
       pl_act.css(dic_css_pl_act)
 
@@ -113,7 +121,7 @@ col_panel_list_play = color_play_list.replace(')', ', 0.9)')
 var pos_right_init = '50px'
 elem0.css({
           'position': 'fixed',
-          'background-color': col_panel_list_play, // Current play list..
+          'background-color': col_panel_list_play,    // Current play list..
           'box-shadow': '0.5em 0.5em 0.7em',
           'padding-bottom': '90px',
           'padding-top': '10px',
@@ -162,6 +170,7 @@ function reinitialize(sel){
       reinit_act(sel, $('.vid_selected'),'$(this)[0].pause()')
       reinit_act(sel, $('.elem_list_play_selected'),"$(this).css({'color':'black'})")
       reinit_act(sel, $('.ul_selected'),'$(this).hide()')
+      // hide sound's icon after the name
       reinit_act(sel, $('.icon_sound'),'$(this).hide()')
 
 }
@@ -181,7 +190,7 @@ function selection_click(elem_li, selection, numsel){
            var sel_vid = $(currvidid)[0]
            if (sel_vid.paused){                      // if video stopped.
                play_vid_list(numsel)
-             }else{                                  // if video active..
+             } else {                                  // if video active..
               selection.css({'color':'black'})
               sel_vid.pause()
             }
@@ -197,7 +206,8 @@ function fill_play_list(elem_li, vid_id, numsel){
 
       */
 
-      var icon_sound = $('<img/>').attr('src',"capicon/svg/073.svg")    // icon to indicate vid is in the play list
+      // icon to indicate vid is in the play list
+      var icon_sound = $('<img/>').attr('src',"capicon/svg/073.svg")
                                   .css({'width':'13px', 'margin-left':'10px'})
                                   .attr('index', numsel)
                                   .addClass('icon_sound')
@@ -261,6 +271,18 @@ function fill_play_list(elem_li, vid_id, numsel){
       //      //alert($(this).parent().attr('index'))
       //      //$(this).parent().click(function(){return false}).hide()
       // })
+
+}
+
+function clear_play_list(){
+
+    $('.elem_list_play_selected').remove()
+    list_vid = []
+    for (icon of list_icons){
+        icon.remove()
+    }
+    //list_icons = []
+    numsel = 0
 
 }
 
@@ -362,9 +384,19 @@ function play_vid_list(i){
       })
 }
 
+// Launch the playlist.. 
+
 $('#butt_play').click(function(){
 
     play_vid_list(0)
+
+})
+
+// Clear the whole play list..
+
+$('#pl_act_bin').click(function(){
+
+    clear_play_list()
 
 })
 

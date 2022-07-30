@@ -24,8 +24,7 @@
 
     "#Culture_Langues_" :
         [
-        "Latin", "Français", "Turc", "Arabe", "Chinois", "Russe",
-        "Allemand", "Thaï", "Vietnamien", "Anglais"
+        "hop"
         ],
 
     "#Culture_Chanson_" :
@@ -55,12 +54,20 @@
         "Fanatisme", "Sectes", "Nucléaire", "Femmes", "Discrimination",
         "Vie régentée", "Développement", "Education", "Politique"
         ],
+
      "#" :
 
         [
          "Santé", "Marrant", "Administratif", "Réflexion", "Innovation", "Science",
-         "Pratique", "Mes Projets", "Le Monde", "Le Courrier International", "Programmation",
-         "Contacts"
-        ]
+         "Pratique", "Mes Projets", "Programmation",
+         "Contacts", "Latin", "Français", "Turc", "Arabe", "Chinois", "Russe",
+         "Allemand", "Thaï", "Vietnamien", "Anglais"
+         ],
+
+     "##" :
+        [
+          "Le Monde", "Le Courrier International"
+         ]
+
 
 }
