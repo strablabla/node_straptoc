@@ -276,13 +276,25 @@ function fill_play_list(elem_li, vid_id, numsel){
 
 function clear_play_list(){
 
+    // remove the titles in the playlist..
     $('.elem_list_play_selected').remove()
+    // doublon list empty to permit to put again the same vids..
     list_vid = []
-    for (icon of list_icons){
-        icon.remove()
-    }
-    //list_icons = []
+    // remove the icons after the titles..
+    $('.icon_title').remove()
+    // reset the index at 0
     numsel = 0
+    $('.selected_title').css({'color':'rgb(102, 204, 102)'})
+    currvid.pause()
+    currvid = null
+    $('.ul_selected').removeAttr('index')
+    $('.ul_selected').hide()
+    $('.ul_selected').removeClass("ul_selected")
+    $('.selected_title').removeClass("selected_title")
+    //----------
+    $('.vid_selected').removeAttr('index')
+    $('.vid_selected').removeAttr('id')
+    $('.vid_selected').removeClass('vid_selected')
 
 }
 
@@ -294,6 +306,7 @@ function add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons){
 
       */
 
+      elem_li.addClass('selected_title')
       elem_li.children('ul').addClass('ul_selected')
                             .attr('index', numsel)
       vid.attr('id', 'vid_num' + numsel)
@@ -302,6 +315,7 @@ function add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons){
       elem_li.css({'color':'black'})        // color the link in the main document
       list_icons[numsel] = $('<img/>').attr('src',"capicon/svg/227.svg")    // icon to indicate vid is in the play list
                                       .css({'width':'12px', 'margin':'0px'})
+                                      .addClass('icon_title')
       elem_li.append($('<span/>').text(' ').append(list_icons[numsel]))  // add icon in the doc
       list_vid.push(vid_id)                 // save the videos id to avoid doublons.
 
@@ -352,6 +366,8 @@ $('#toggle_play_list').on('click', function(){   //
      $('.tpl_arr').toggle()                      // exchange right and left arrow
 })
 
+currvid = null;
+
 function play_vid_list(i){
 
       /*
@@ -361,7 +377,7 @@ function play_vid_list(i){
       */
 
       vid_id = '#vid_num' + i
-      var currvid = $(vid_id)[0]
+      currvid = $(vid_id)[0]
       currvid.play()
       var curr_ul;
       $('.strapvid').each(function(){
@@ -384,7 +400,7 @@ function play_vid_list(i){
       })
 }
 
-// Launch the playlist.. 
+// Launch the playlist..
 
 $('#butt_play').click(function(){
 
