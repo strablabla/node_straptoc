@@ -189,9 +189,9 @@ function selection_click(elem_li, selection, numsel){
            var currid = $(this).attr('id').split('sel_')[1] // vid current id ..
            var currvidid = '#' + currid
            var sel_vid = $(currvidid)[0]
-           if (sel_vid.paused){                      // if video stopped.
+           if (sel_vid.paused){                             // if video stopped.
                play_vid_list(numsel)
-             } else {                                  // if video active..
+             } else {                                       // if video active..
               selection.css({'color':'black'})
               sel_vid.pause()
             }
@@ -226,6 +226,7 @@ function fill_play_list(elem_li, vid_id, numsel){
       $('#vid_play_list').append(selection)     // add media title to the play list..
 
       selection_click(elem_li, selection, numsel)
+
       // show the sign - for removing video
       $('.elem_list_play_selected').mouseover(function(){   //
          $(this).find('.remove_vid').show()
@@ -273,30 +274,6 @@ function fill_play_list(elem_li, vid_id, numsel){
               // else { return false; }
       })
 
-      // // remove the titles in the playlist..
-      // $('.elem_list_play_selected').remove()
-      // // doublon list empty to permit to put again the same vids..
-      // list_vid = []
-      // // remove the icons after the titles..
-      // $('.icon_title').remove()
-      // // reset the index at 0
-      // numsel = 0
-      // // go back to green color for the titles
-      // $('.selected_title').css({'color':'rgb(102, 204, 102)'})
-      // // stop playing the current video
-      // currvid.pause()
-      // currvid = null
-      // //----------
-      // $('.ul_selected').removeAttr('index')
-      // $('.ul_selected').hide()
-      // $('.ul_selected').removeClass("ul_selected")
-      // $('.selected_title').removeClass("selected_title")
-      // //----------
-      // $('.vid_selected').removeAttr('index')
-      // $('.vid_selected').removeAttr('id')
-      // $('.vid_selected').removeClass('vid_selected')
-
-
 
 }
 
@@ -341,12 +318,16 @@ function add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons){
       vid.attr('id', 'vid_num' + numsel)
          .attr('index', numsel)             // number associated to the video..
          .addClass('vid_selected')          // assigning class vid_selected to all the video selected..
-      elem_li.css({'color':'black'})        // color the link in the main document
-      list_icons[numsel] = $('<img/>').attr('src',icon_helmet)    // icon to indicate vid is in the play list
+      // color the link in the main document
+      elem_li.css({'color':'black'})
+      // icon to indicate vid is in the play list
+      list_icons[numsel] = $('<img/>').attr('src',icon_helmet)
                                       .css({'width':'12px', 'margin':'0px'})
                                       .addClass('icon_title')
-      elem_li.append($('<span/>').text(' ').append(list_icons[numsel]))  // add icon in the doc
-      list_vid.push(vid_id)                 // save the videos id to avoid doublons.
+      // add icon in the doc
+      elem_li.append($('<span/>').text(' ').append(list_icons[numsel]))
+      // save the videos id to avoid doublons.
+      list_vid.push(vid_id)
 
       //-----------
 
@@ -356,6 +337,9 @@ function add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons){
 var list_vid = []      // list of videos fingerprint..
 var list_icons = []
 var numsel = 0
+
+// action when clicking on a gren video name
+
 $("li").click( function(){
     var elem_li = $(this)
     var vid = elem_li.find('ul li div video')
@@ -366,12 +350,34 @@ $("li").click( function(){
                 if ($('#vid_play_list').is(':visible')){
                     add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
                 }
+                // increment the number of selected elements ..
+                numsel += 1
             }
-            // increment the number of selected elements ..
-            numsel += 1
+
        }
     } // end if vid
 })
+
+// select videos by group
+
+$("li").dblclick( function(){
+    var elem_li_grp = $(this)
+    if (elem_li_grp.hasClass('strapvid_inside')){
+        // find each video..
+        elem_li_grp.find('video').each( function(){
+            var vid_id = $(this).attr('src')
+            var elem_li = $(this).parents().eq(3)
+            //alert(elem_li.text())
+            if (list_vid.indexOf(vid_id) == -1){      // if not yet in the list..
+                if ($('#vid_play_list').is(':visible')){
+                    add_vid(elem_li, $(this), vid_id, numsel, list_vid, list_icons)
+                }
+                // increment the number of selected elements ..
+                numsel += 1
+            }
+        })
+    }
+  })
 
 $('#vid_play_list').hide()
 $('#toggle_play_list').hide()
@@ -423,6 +429,7 @@ function play_vid_list(i){
             try{
                 reinitialize($('#sel_vid_num' + i))    // reinit last vid
                 reinitialize($('#sel_vid_num' + i-1))  // reinit vid before last vid
+                // handle if missing indices for the videos
                 for (var j=1;j<100;j++){
 
                           var next_ind = i+j
