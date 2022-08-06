@@ -199,6 +199,8 @@ function selection_click(elem_li, selection, numsel){
 
 }
 
+var len_lim = 35
+
 function fill_play_list(elem_li, vid_id, numsel){
 
       /*
@@ -215,13 +217,24 @@ function fill_play_list(elem_li, vid_id, numsel){
 
       var currid = 'vid_num' + numsel
       var selection = $('<div/>')
+
+      vid_name = vid_id.split('/').pop()
+      if (vid_name.length > len_lim){
+          vid_name = '...' + vid_name.slice(-len_lim,-4)
+      }
+
       selection.addClass('elem_list_play_selected').attr('index', numsel)
                .attr('src', vid_id)
                .attr('id', 'sel_' + currid)
-               .text('...' + vid_id.slice(-30,-4).toLowerCase())
+               .text(vid_name.toLowerCase())
                .append(icon_sound.hide())
-               .append($('<span/>').text(' - ').hide().addClass('remove_vid').css({'font-size':'20px'}))
-               .css({'font-size':'17px','font-family': "apple_garamond", 'text-shadow':'none'})
+               .append($('<span/>').text(' - ')
+                                   .hide()
+                                   .addClass('remove_vid')
+                                   .css({'font-size':'20px'}))
+               .css({'font-size':'17px',
+                     'font-family': "apple_garamond",
+                     'text-shadow':'none'})
 
       $('#vid_play_list').append(selection)     // add media title to the play list..
 
@@ -338,7 +351,7 @@ var list_vid = []      // list of videos fingerprint..
 var list_icons = []
 var numsel = 0
 
-// action when clicking on a gren video name
+// action when clicking on a green video name
 
 $("li").click( function(){
     var elem_li = $(this)
