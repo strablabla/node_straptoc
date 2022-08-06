@@ -170,6 +170,21 @@ var id_icon = $('<img/>').attr('src',icon_img)
 $('#headline').text('')
 $('#headline').append(id_icon)
 
+//------------- Centering image for Intro page
+// just call it "img_intro"
+
+$('img').each(function(){
+  
+     try{
+         if ($(this).attr('alt').split(' ')[0] == 'img_intro'){
+             $(this).css({ 'margin':'60px auto',
+                           'display': 'block' })
+            }
+        }catch(err){
+
+        }
+})
+
 //------------- pdfs size
 
 $('object').each(function(){

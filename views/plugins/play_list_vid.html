@@ -126,12 +126,12 @@ elem0.css({
           'box-shadow': '0.5em 0.5em 0.7em',
           'padding-bottom': '90px',
           'padding-top': '10px',
-          'padding-left': '50px',
+          'padding-left': '80px',
           'padding-right': '50px',
           'border-radius': '10px',
           'right': '50px',   // open
           'bottom': '70px',
-          'width': '370px',
+          'width': '570px',
           'height': 'auto',
           'z-index': '3'
           })
@@ -199,7 +199,18 @@ function selection_click(elem_li, selection, numsel){
 
 }
 
-var len_lim = 35
+var len_lim = 60
+
+function change_vid_name(vid_id){
+
+      vid_name = vid_id.split('/').pop()
+      if (vid_name.length > len_lim){
+          vid_name = '...' + vid_name
+      }
+      vid_name = vid_name.slice(-len_lim,-4)
+
+      return vid_name
+}
 
 function fill_play_list(elem_li, vid_id, numsel){
 
@@ -218,11 +229,7 @@ function fill_play_list(elem_li, vid_id, numsel){
       var currid = 'vid_num' + numsel
       var selection = $('<div/>')
 
-      vid_name = vid_id.split('/').pop()
-      if (vid_name.length > len_lim){
-          vid_name = '...' + vid_name.slice(-len_lim,-4)
-      }
-
+      vid_name = change_vid_name(vid_id)
       selection.addClass('elem_list_play_selected').attr('index', numsel)
                .attr('src', vid_id)
                .attr('id', 'sel_' + currid)
@@ -306,7 +313,7 @@ function clear_play_list(){
     try{
         currvid.pause()
        }catch(err){
-         
+
        }
     currvid = null
     //----------

@@ -1,0 +1,42 @@
+
+
+<script>
+
+/*
+
+Make the pics bigger..
+
+*/
+
+var wpic = '300px'
+var hpic = '600px'
+var bigpic_panel = $('<div/>').attr('id',"bigpic_panel")  //
+                              .css({  'position':'fixed',
+                                      'box-shadow': '0.5em 0.5em 0.7em',
+                                      'top':'110px',
+                                      'right':'200px',
+                                      'width':wpic,
+                                      'height':hpic
+                                    })
+bigpic_panel.append($('<img/>').attr('id','bigpic')).draggable()
+bigpic_panel.hide()
+$('#content').append(bigpic_panel) //
+
+// close the panel
+
+bigpic_panel.dblclick(function(){
+      $(this).hide()
+})
+
+
+// open the image in big
+
+$('img').click(function(){
+    if ($(this).parent().parent().hasClass('thumbnail')){
+        bigpic_panel.show()
+        $('#bigpic').attr('src',$(this).attr('src'))
+                    .css({'width':wpic, 'height':hpic})
+    }
+})
+
+</script>
