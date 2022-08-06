@@ -303,7 +303,11 @@ function clear_play_list(){
     // go back to green color for the titles
     $('.selected_title').css({'color':'rgb(102, 204, 102)'})
     // stop playing the current video
-    currvid.pause()
+    try{
+        currvid.pause()
+       }catch(err){
+         
+       }
     currvid = null
     //----------
     $('.ul_selected').removeAttr('index')
