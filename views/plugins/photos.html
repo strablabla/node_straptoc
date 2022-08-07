@@ -1,4 +1,4 @@
-
+<script src="keymaster.js"></script>
 
 <script>
 
@@ -8,35 +8,118 @@ Make the pics bigger..
 
 */
 
-var wpic = '300px'
-var hpic = '600px'
-var bigpic_panel = $('<div/>').attr('id',"bigpic_panel")  //
+var curr_photo = ''
+var wpic = 300
+var hpic = 600
+var list_big_pics = []
+var nb_bpics = 0 // nb of bg pics
+var pic_yet_open = []
+var one_img = false
+
+function make_big_pic(wpic, hpic, idpic){
+
+    var new_pic =  $('<div/>').attr('id', idpic)  //
                               .css({  'position':'fixed',
-                                      'box-shadow': '0.5em 0.5em 0.7em',
-                                      'top':'110px',
-                                      'right':'200px',
-                                      'width':wpic,
-                                      'height':hpic
+                                      'border-style':'solid',
+                                      'border-width': '10px',
+                                      'border-color': 'white',
+                                      'box-shadow': '0.1em 0.1em 1.2em',
+                                      'top':110+10*nb_bpics+'px',
+                                      'right':200+10*nb_bpics+'px',
+                                      'width': wpic + 10 + 'px',
+                                      'height': hpic + 10 + 'px',
+                                      'z-index': 20 + nb_bpics
                                     })
-bigpic_panel.append($('<img/>').attr('id','bigpic')).draggable()
-bigpic_panel.hide()
-$('#content').append(bigpic_panel) //
+    var new_img = $('<img/>').attr('id','imbp_'+ idpic)
 
-// close the panel
+    new_pic.append(new_img)
+    new_pic.addClass('bigpic')
+    new_pic.draggable().hide()
 
-bigpic_panel.dblclick(function(){
-      $(this).hide()
+    // close the current open photo
+
+    new_pic.dblclick(function(){
+          //alert( $(this).attr('id') )
+          $(this).hide()
+          var addr_pic = $(this).find('img').attr('src')
+          var ind = pic_yet_open.indexOf(addr_pic)
+          pic_yet_open.splice(ind,1)
+          list_big_pics.splice(ind,1)
+          //nb_bpics -= 1
+    })
+
+    $('#content').append(new_pic) //
+
+    return new_pic
+
+}
+
+//var bigpic_panel = make_big_pic(wpic, hpic, "bigpic_panel")
+
+// option for watching only one photo at a time or many
+
+key('alt+i',function(){
+
+    one_img = !one_img
+
 })
 
+// reset all the parameters
 
-// open the image in big
+function reset_bigpic(){
+    $('.bigpic').remove()
+    //$('.bigpic').hide()
+    list_big_pics = []
+    nb_bpics = 0 // nb of bg pics
+    pic_yet_open = []
 
-$('img').click(function(){
-    if ($(this).parent().parent().hasClass('thumbnail')){
-        bigpic_panel.show()
-        $('#bigpic').attr('src',$(this).attr('src'))
-                    .css({'width':wpic, 'height':hpic})
+}
+
+// Double click to close all the photos
+
+$('figure').dblclick(function(){
+    if ($(this).parent().hasClass('thumbnail')){
+        reset_bigpic()
+    }
+  })
+
+
+function add_new_bigpic(addr_pic){
+
+    //alert('oppp')
+    pic_yet_open.push(addr_pic)
+    nb_bpics += 1
+    id_new_pic = 'bp' + nb_bpics
+    list_big_pics.push( make_big_pic(wpic, hpic, id_new_pic) )
+    list_big_pics[pic_yet_open.length-1].show()
+    var new_pic = $('#imbp_' + id_new_pic)
+    // add the src..
+    new_pic.attr( 'src', addr_pic )
+           .css({'width' : wpic + 'px',
+                      'height' : hpic -10 + 'px',
+                      'margin' : '0px'})
+
+}
+
+// click on the figure to open a new photo
+
+$('figure').click(function(){
+    if ($(this).parent().hasClass('thumbnail')){
+        //alert('figgg')
+        var addr_pic = $(this).find('img').attr('src')
+        if (one_img){
+
+            reset_bigpic()
+
+        }
+        if ( pic_yet_open.indexOf(addr_pic) == -1 ){
+
+            add_new_bigpic(addr_pic)
+
+           }
     }
 })
+
+
 
 </script>
