@@ -24,8 +24,8 @@ function make_big_pic(wpic, hpic, idpic){
                                       'border-width': '10px',
                                       'border-color': 'white',
                                       'box-shadow': '0.1em 0.1em 1.2em',
-                                      'top':110+10*nb_bpics+'px',
-                                      'right':200+10*nb_bpics+'px',
+                                      'top':110 + 10*nb_bpics+'px',
+                                      'right':200 + 10*nb_bpics+'px',
                                       'width': wpic + 10 + 'px',
                                       'height': hpic + 10 + 'px',
                                       'z-index': 20 + nb_bpics
@@ -83,6 +83,34 @@ $('figure').dblclick(function(){
     }
   })
 
+function vertical_with_ratio(img,ratio_hw){
+
+      nw = wpic
+      nh = nw*ratio_hw
+      img.parent().css({
+        'width': nw + 10 + 'px',
+        'height': nh + 10 + 'px',
+      })
+      img.css({'width' : nw + 'px',
+               'height' : nh -10 + 'px',
+               'margin' : '0px'})
+
+}
+
+function horizontal_with_ratio(img,ratio_hw){
+
+      nh = hpic
+      nw = nh/ratio_hw
+      img.parent().css({
+        'width': nw + 10 + 'px',
+        'height': nh + 10 + 'px',
+      })
+      img.css({'width' : nw + 'px',
+               'height' : nh -10 + 'px',
+               'margin' : '0px'})
+
+}
+
 
 function add_new_bigpic(addr_pic){
 
@@ -92,12 +120,28 @@ function add_new_bigpic(addr_pic){
     id_new_pic = 'bp' + nb_bpics
     list_big_pics.push( make_big_pic(wpic, hpic, id_new_pic) )
     list_big_pics[pic_yet_open.length-1].show()
+    // <img/> object..
     var new_pic = $('#imbp_' + id_new_pic)
     // add the src..
-    new_pic.attr( 'src', addr_pic )
-           .css({'width' : wpic + 'px',
-                      'height' : hpic -10 + 'px',
-                      'margin' : '0px'})
+    modif_img = new_pic.attr( 'src', addr_pic )
+
+    // adapt the size
+    
+    $(modif_img).load(function() {
+
+         var w = new_pic.width()
+         var h = new_pic.height()
+
+         var ratio_hw = h/w
+         if (new_pic.width < new_pic.height){
+              vertical_with_ratio(new_pic,ratio_hw)
+          }else{
+              horizontal_with_ratio(new_pic,ratio_hw)
+          }
+
+      })
+
+
 
 }
 
