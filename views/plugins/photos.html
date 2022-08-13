@@ -30,10 +30,27 @@ function make_big_pic(wpic, hpic, idpic){
                                       'height': hpic + 10 + 'px',
                                       'z-index': 20 + nb_bpics
                                     })
+    //--- Slider
+
+    var inp_slider = $('<input>').attr('id','imslider_'+ idpic)
+                                 .attr('data-slider-id','slider_'+ idpic)
+                                 .attr('data-slider-min',"-1")
+                                 .attr('data-slider-max',"1")
+                                 .attr('data-slider-step',"0.01")
+                                 .attr('data-slider-value',"0")
+                                 .attr('data-provide',"slider")
+    var pic_slider = $('<div/>').append(inp_slider)
+                                .css({'position':'absolute',
+                                      'bottom':'-50px'})
+
+    //-------
+
     var new_img = $('<img/>').attr('id','imbp_'+ idpic)
 
     new_pic.append(new_img)
     new_pic.addClass('bigpic')
+    new_pic.append(pic_slider)
+
     new_pic.draggable().hide()
 
     // close the current open photo
@@ -83,8 +100,9 @@ $('figure').dblclick(function(){
     }
   })
 
-function vertical_with_ratio(img,ratio_hw){
+function vertical_with_ratio(img,ratio_hw,wpic){
 
+      //alert('wpic ' + wpic)
       nw = wpic
       nh = nw*ratio_hw
       img.parent().css({
@@ -97,8 +115,9 @@ function vertical_with_ratio(img,ratio_hw){
 
 }
 
-function horizontal_with_ratio(img,ratio_hw){
+function horizontal_with_ratio(img,ratio_hw,hpic){
 
+      //alert('hpic ' + hpic)
       nh = hpic
       nw = nh/ratio_hw
       img.parent().css({
@@ -111,6 +130,29 @@ function horizontal_with_ratio(img,ratio_hw){
 
 }
 
+function save_wh_xy(p){
+
+      p.attr('w',p.width())
+      p.attr('h',p.height())
+      p.attr('x',parseInt(p.parent().css('right')))
+      p.attr('y',parseInt(p.parent().css('top')))
+
+}
+
+function adapt_pic_dim(new_pic,wpic,hpic){
+
+      //alert(wpic)
+      var w = new_pic.width()
+      var h = new_pic.height()
+
+      var ratio_hw = h/w
+      if (new_pic.width < new_pic.height){
+                vertical_with_ratio(new_pic,ratio_hw,wpic)
+         }else{
+                horizontal_with_ratio(new_pic,ratio_hw,hpic)
+              }
+      save_wh_xy(new_pic)
+}
 
 function add_new_bigpic(addr_pic){
 
@@ -126,22 +168,68 @@ function add_new_bigpic(addr_pic){
     modif_img = new_pic.attr( 'src', addr_pic )
 
     // adapt the size
-    
+
     $(modif_img).load(function() {
 
-         var w = new_pic.width()
-         var h = new_pic.height()
-
-         var ratio_hw = h/w
-         if (new_pic.width < new_pic.height){
-              vertical_with_ratio(new_pic,ratio_hw)
-          }else{
-              horizontal_with_ratio(new_pic,ratio_hw)
-          }
+          adapt_pic_dim(new_pic,wpic,hpic)
 
       })
 
+}
 
+
+function act_deact_drag_slider(){
+
+        var curr_img = null
+        $('.slider').mouseover(function(){
+                             curr_img = $(this).parents().eq(1)
+                             curr_img.draggable({ disabled: true});
+                          }).mouseout(function(){
+                             curr_img.draggable({ disabled: false});
+                          })
+        }
+
+
+
+
+function change_dim_with_slider(pic,val){
+
+      var w = pic.attr('w')
+      var h = pic.attr('h')
+      pic.css({'width':w*(1+val)+'px'})
+      pic.parent().css({'width':w*(1+val)+10})
+      pic.css({'height':h*(1+val)-10+'px'})
+      pic.parent().css({'height':h*(1+val)+10})
+      //----
+      pp = pic.parent()
+      var y = parseInt(pic.attr('y'))
+      var x = parseInt(pic.attr('x'))
+      pp.css({'top':y-h*val+'px'})
+      pp.css({'right':x-w*val+'px'})
+
+}
+
+function hook_slider(){
+
+        var slider = $('#imslider_bp' + nb_bpics)
+        slider.bootstrapSlider({                                                   // slider for opacity
+              formatter: function(val) {
+                    var pic = $('#imbp_bp' + nb_bpics)
+                    change_dim_with_slider(pic,val)
+                  }
+              })
+        act_deact_drag_slider()
+
+}
+
+function save_pos_drag(){
+
+      $( ".bigpic" ).draggable({
+       drag: function( event, ui ) {
+            var img = $(this).find('img')
+            save_wh_xy(img)
+       }
+      });
 
 }
 
@@ -159,6 +247,8 @@ $('figure').click(function(){
         if ( pic_yet_open.indexOf(addr_pic) == -1 ){
 
             add_new_bigpic(addr_pic)
+            hook_slider()
+            save_pos_drag()
 
            }
     }
