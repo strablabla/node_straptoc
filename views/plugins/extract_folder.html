@@ -11,6 +11,57 @@ socket.on('make_elems', function(){
           });
         };
 
+    function sort_list_pattern(array, list){
+          var arr = new Array(array.length);
+          var supp_list = []
+          for (var i in array){
+              var ind = index_in_list(array[i], list)
+              if (ind != null){
+                  arr[ind] = array[i]
+
+              }
+              else{
+                 supp_list.push(array[i])
+              }
+
+          }
+          new_arr = []
+          for (var i in arr){
+              if (arr[i].length >0){
+
+                new_arr.push(arr[i])
+
+              }
+          }
+          var arr = [...supp_list, ...new_arr]
+
+          return arr
+
+        }
+
+
+    var pdf_months = ['_janv_', '_fev_', '_mars_', '_avr_', '_mai_',
+                      '_juin_', '_juill_', '_aout_', '_sept_', '_oct_',
+                      '_nov_', '_dec_']
+
+
+    function index_in_list(a,list){
+
+        for (var i in list){
+              //console.log(i+'\n')
+              var m = a.match(list[i])
+              if (m != null){
+                  var ind = list.indexOf(m[0]);
+                  // alert(a)
+                  // alert(ind)
+                  break;
+                  }
+                ind = m
+              } // for
+
+        return ind
+        }
+
     var count_pdf = 0;
     var count_pdf_insocket = 0;
     var current_li = {}
@@ -70,7 +121,10 @@ socket.on('make_elems', function(){
                     // alert("strap_addr " + strap_addr)
                     // alert('addr_relat[current_count] ' +  addr_relat[current_count])
                     list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
-                    list_pdf.forEach(function(elem){ make_li_embed(addr_relat[current_count], elem, list_papers) })
+
+                    var sorted_pdf_list = sort_list_pattern(list_pdf, pdf_months)
+                    sorted_pdf_list.forEach(function(elem){ make_li_embed(addr_relat[current_count], elem, list_papers) })
+
                     list_papers.hide()
                     //list_papers.parent().css({'color':'#ffe6f2'})
                     //alert("changed html with pdfs.. ")

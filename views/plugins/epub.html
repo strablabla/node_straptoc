@@ -1,0 +1,54 @@
+
+<script>
+
+function set_margin(){
+    $('.epub-view').children().css({'margin': '0 0 0 0'})
+}
+
+$('.§§').click(function(){
+
+    var ul = $(this).parent().parent().next()
+    var obj = ul.find('object')
+    var addr = obj.attr('data')
+    if (addr.search(/\.epub/) != -1){
+
+        // alert('found addr as ' + addr)
+        var block_epub = $('<div/>')
+        block_epub.append($('<div/>').attr('id',addr))
+                  .append($('<span/>').text('prev').attr('id','prev_page'))
+                  .append($('<span/>').text('.    .'))
+                  .append($('<span/>').text('next').attr('id','next_page'))
+
+
+        ul.find('li').replaceWith(block_epub)
+
+        var book = ePub(addr);
+        var rendition = book.renderTo(addr, {
+                                              flow: "scrolled-doc",
+                                              width: 600,
+                                              height: 660
+                                            });
+
+        rendition.display();
+
+
+        // $('#' + addr).css({'overflow': 'auto'})
+
+        $('#next_page').click(function(){
+            //alert('next')
+            rendition.next();
+            setTimeout(set_margin, 100);
+
+        })
+        $('#prev_page').click(function(){
+            //alert('next')
+            rendition.prev();
+            setTimeout(set_margin, 100);
+        })
+
+
+    } // if
+})
+
+
+</script>
