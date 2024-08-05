@@ -100,10 +100,16 @@ exports.static_addr = function(app, express){
 
 function make_html_around_md(file){
 
+      /*
+
+      Make the html around the markdown..
+
+      */
+
       var list_plugins =  '\n'
       var files = fs.readdirSync('views/plugins')
       for (var f of files) {
-          list_plugins += "    {% include 'plugins/" + f + "' %}' \n"
+          list_plugins += "    {% include 'plugins/" + f + "' %} \n"
       }
       console.log("### list_plugins_text " + list_plugins)
       page = '\n  {% include "md/inserted_file" %}  \n'.replace('inserted_file', file)
