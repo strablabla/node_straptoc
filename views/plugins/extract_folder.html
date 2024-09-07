@@ -68,42 +68,67 @@ socket.on('make_elems', function(){
     var addr_relat = []
     //var addr_short = []
     toggle_elem_ok = false
+    var trig_epub = false
+    var trig_djvu = false
+
+    function open_epub(){
+
+          $('.fold_epub').click(function(){
+
+              var disp = $(this).parent().next()
+              var obj = disp.find('object')
+              var addr = obj.attr('data').split('? ')[0]
+              var li = disp.parent().parent()
+
+              if ( addr.search(/\.epub/ ) != -1){
+
+                    make_epub(li, addr)
+
+                    }
+
+              }) // click
+
+      }
+
+    function open_djvu(){
+
+            $('.fold_djvu').click(function(){
+
+                var disp = $(this).parent().next()
+                var obj = disp.find('object')
+                var addr = obj.attr('data').split('? ')[0]
+                var li = disp.parent().parent()
+
+                if ( addr.search(/\.djvu/) != -1 ){
+
+                      make_djvu(li, addr)
+
+                     }
+
+                }) // click
+
+    }
+
 
     $('li').each(function(){
 
         /*
+
         Make the list of pdfs..
         Replace !fold by the list in question..
+
         */
 
         var reg = /\!fold/
-        //var fullreg = /\!fold.+\!inside/
+
         var txt = $(this).html().split('\n')[0]
-        //var current_li = $(this)
-        //alert(txt)
-        //$(this).css({'color':'#ffb3d9'})
+
         if ( txt.match(reg) ){
-            // & !txt.match(fullreg)
-            //alert("herrreeee")
-            //$(this).css({'color':'#ffb3d9'})
-            //alert('I am here !! ')
-            //var reg = /\!fold/
-            //$(this).addClass('fold')
-            // $('ul').each(function(){
-            //   var txt = $(this).html()
-            //   if (txt.match(reg)){
-            //       //alert(txt)
-            //       }
-            // })
 
             current_li[count_pdf] = $(this)
             var addr = txt.split('!fold')[1].trim()
-            // alert("addr " + addr)
-            //alert($(this).html())
             addr_short = addr.split('/').slice(1).join('/')
             addr_relat[count_pdf] = relative_addr(addr,addr_short)
-            // alert("addr_short " + addr_short)
-            // alert("addr_relat " + addr_relat)
             count_pdf += 1;
             //alert("count_pdf " + count_pdf)
             var count = count_pdf-1
@@ -113,36 +138,55 @@ socket.on('make_elems', function(){
             socket.emit('folder_extract', addr + '§§' + count)
             socket.on('folder_extract',function(strap_addr){
 
-                    //alert("strap_addr before" + strap_addr)
-                    current_count = parseInt(strap_addr.split('§§')[0])
-                    strap_addr = strap_addr.split('§§')[1]
-                    //alert("current_count after parseInt " + current_count)
-                    var list_papers = $('<ul/>')
-                    // alert("strap_addr " + strap_addr)
-                    // alert('addr_relat[current_count] ' +  addr_relat[current_count])
-                    list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
+                        //alert("strap_addr before" + strap_addr)
+                        current_count = parseInt(strap_addr.split('§§')[0])
+                        strap_addr = strap_addr.split('§§')[1]
+                        //alert("current_count after parseInt " + current_count)
+                        var list_papers = $('<ul/>')
+                        list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
 
-                    var sorted_pdf_list = sort_list_pattern(list_pdf, pdf_months)
-                    sorted_pdf_list.forEach(function(elem){ make_li_embed(addr_relat[current_count], elem, list_papers) })
+                        // sorted list
 
-                    list_papers.hide()
-                    //list_papers.parent().css({'color':'#ffe6f2'})
-                    //alert("changed html with pdfs.. ")
-                    current_li[current_count].parent().replaceWith(list_papers)  // replace the tag with the list of li embed..
-                    //list_papers.parent().parent().css({'color':'#2eb82e'})
-                    //css({'color':'#ffe6f2'})
-                    //current_li[current_count].parent().css({'color':'#ffe6f2'})
-                    if ( current_count == Object.keys(current_li).length-1 & !toggle_elem_ok){
-                        //alert('toggle activated !!! ')
-                        //.css({'color':'#ffb3d9'})
-                        toggle_elem()            // when clicking on - or + open or close..
-                        toggle_elem_ok = true
-                    }
-                })
+                        var sorted_pdf_list = sort_list_pattern(list_pdf, pdf_months)
+
+                        // change the code
+
+                        sorted_pdf_list.forEach( function(elem){
+                                        make_li_embed(addr_relat[current_count], elem, list_papers)
+                                   })
+                        //alert(sorted_pdf_list)
+                        list_papers.hide()
+                        // replace the tag with the list of li embed..
+                        current_li[current_count].parent().replaceWith(list_papers)
+                        if ( current_count == Object.keys(current_li).length-1 & !toggle_elem_ok){
+                            toggle_elem()            // when clicking on - or + open or close..
+                            toggle_elem_ok = true
+                        }
+
+                        setTimeout(function(){
+
+                            // djvu case
+                            if (!trig_djvu){
+                                    open_djvu()
+                                    trig_djvu = true
+                              }
+                            // epub case
+                            if (!trig_epub){
+                                    open_epub()
+                                    trig_epub = true
+                              }
+
+                        },2000)
+
+
+                }) // socket on
+
             } // if text.match
             //var size = Object.keys(myObj).length;
 
-      })
+      }) // li each
+
+
 
     function relative_addr(addr, addr_short){
 
@@ -162,40 +206,72 @@ socket.on('make_elems', function(){
           return addr
     }
 
+
     function make_li_embed(addr,elem,list_papers){
 
           /*
-          List of pdfs with embedding..
+
+          List of files with embedding..
+          Full address is addr + '/' + elem
+
           */
 
           var obj = embed_elem(addr + '/' + elem)
-          var divpdf = $('<div/>').text(elem.split('.pdf')[0]).addClass('embed_pdf')
-          var divpdf_plus = divpdf.append($('<span/>').addClass('tog_elem').append($('<a/>').text(' [-]')))
-          list_papers.append($('<li/>').append(divpdf_plus.append($('<div/>').html(obj).hide())))
+
+          var div_format = $('<div/>').text(elem.split('.pdf')[0]).addClass('embed_pdf')
+          var a_deploy = $('<a/>').text(' [-]')
+          var span_tog = $('<span/>').addClass('tog_elem').append(a_deploy)
+
+          // case epub
+
+          if ( elem.search(/\.epub/ ) != -1){
+              a_deploy.addClass('fold_epub')
+            }
+
+          // case djvu
+
+          if ( elem.search(/\.djvu/ ) != -1){
+              a_deploy.addClass('fold_djvu')
+            }
+
+          var divformat_plus = div_format.append(span_tog)
+          var div_obj = $('<div/>').html(obj).hide()
+          var curr_li = $('<li/>').addClass('fold_li')
+          list_papers.append( curr_li.append( divformat_plus.append( div_obj ) ) )
+
 
     }
 
     function toggle_elem(){
 
         /*
+
         Code for closing, opening the pdfs..
+
         */
 
         //alert('toggle !!!')
         $('.tog_elem').click(function(){
+
                 var taga = $(this).find('a')
                 if (taga.text() == ' [-]'){
+
                     taga.text(' [+]')
-                }
-                else{ taga.text(' [-]') }
-                $(this).next().toggle()
+
+                } else {
+
+                    taga.text(' [-]') }
+                    $(this).next().toggle()
+
             })
     }
 
     function embed_elem(addr){         // embedded pdf..
 
         /*
+
         addr : folder + pdf name..
+
         */
 
         var htm = '<br><object width="900" height="1000" type="application/pdf"\
@@ -204,6 +280,7 @@ socket.on('make_elems', function(){
                 </object> <br><br>'.format(addr)
 
         return htm // /pdf/Phys/
+
     }
 
 }) // socket.on('make_elems')

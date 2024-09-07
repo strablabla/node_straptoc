@@ -5,24 +5,28 @@ function set_margin(){
     $('.epub-view').children().css({'margin': '0 0 0 0'})
 }
 
-$('.§§').click(function(){
-
-    var ul = $(this).parent().parent().next()
-    var obj = ul.find('object')
-    var addr = obj.attr('data')
-    if (addr.search(/\.epub/) != -1){
+function make_epub(li, addr){
 
         // alert('found addr as ' + addr)
         var block_epub = $('<div/>')
+        var epub_id = addr.split('/').at(-1).split('.epub')[0]
         block_epub.append($('<div/>').attr('id',addr))
-                  .append($('<span/>').text('prev').attr('id','prev_page'))
+                  .append($('<span/>').text('page 0 ').attr('id','first_page'+epub_id))
+                  .append($('<span/>').text('< prev').attr('id','prev_page'+epub_id))
                   .append($('<span/>').text('.    .'))
-                  .append($('<span/>').text('next').attr('id','next_page'))
+                  .append($('<span/>').text('next >').attr('id','next_page'+epub_id))
+                  .append($('<span/>').text('   '))
+                  .append($('<input/>').text('').attr('id','num_page'+epub_id))
+                  .append($('<button/>').text('go').attr('id','go_page'+epub_id))
+                  .append($('<span/>').text('   curr page: '))
+                  .append($('<span/>').text('').attr('id','curr_page'+epub_id))
 
 
-        ul.find('li').replaceWith(block_epub)
+        li.replaceWith(block_epub)
 
         var book = ePub(addr);
+        var currp = 0
+        // attaching to Id=addr
         var rendition = book.renderTo(addr, {
                                               flow: "scrolled-doc",
                                               width: 600,
@@ -31,24 +35,79 @@ $('.§§').click(function(){
 
         rendition.display();
 
+        function getCurrPageIndex() {
+            setTimeout( function(){
+                          var currLoc = rendition.currentLocation();
+                          var page_index = currLoc.start.index;
+                          //alert(page_index)
+                          $('#curr_page'+epub_id).text(page_index)
+                  }, 150)
+          }
 
-        // $('#' + addr).css({'overflow': 'auto'})
 
-        $('#next_page').click(function(){
+        $('#num_page'+epub_id).css({'width':'30px'})
+
+        $('#first_page'+epub_id).click(function(){
+            //alert('next')
+            rendition.display(0);
+            setTimeout(set_margin, 100);
+            // currp = 0
+            // $('#curr_page').text(currp)
+            getCurrPageIndex()
+        })
+
+        $('#next_page'+epub_id).click(function(){
             //alert('next')
             rendition.next();
             setTimeout(set_margin, 100);
+            // currp += 1
+            // $('#curr_page').text(currp)
+            getCurrPageIndex()
 
         })
-        $('#prev_page').click(function(){
+
+        $('#prev_page'+epub_id).click(function(){
             //alert('next')
             rendition.prev();
             setTimeout(set_margin, 100);
+            // currp -= 1
+            // $('#curr_page').text(currp)
+            getCurrPageIndex()
+        })
+
+        $('#go_page'+epub_id).click(function(){
+            //alert('next')
+            num = parseInt($('#num_page'+epub_id).val())
+            //alert(num)
+            rendition.display(num);
+            setTimeout(set_margin, 100);
+            // currp = num
+            // $('#curr_page').text(currp)
+            getCurrPageIndex()
         })
 
 
-    } // if
+
+}
+
+
+$('.§§').click(function(){
+
+    var ul = $(this).parent().parent().next()
+    var obj = ul.find('object')
+    var addr = obj.attr('data')
+    var li = ul.find('li')
+    if ( addr.search(/\.epub/ ) != -1){
+
+          make_epub(li, addr)
+
+    }
+
 })
+
+
+
+
 
 
 </script>

@@ -2,7 +2,8 @@
 
   "../../Téléchargements/Lemonde/2020",
   "../../../../../../media",
-  {"../../../../../../media/sdata":["Lemonde/2018","docs/test", "videos/Divers/nuren/scenes", "papers_to_keep/Physics"]},
+  {"../../../../../../media/sdata":["Lemonde/2018","docs/test", "docs/test1", 
+                        "videos/Divers/nuren/scenes", "papers_to_keep/Physics"]},
   "public",
   "scripts",
   "lib",
