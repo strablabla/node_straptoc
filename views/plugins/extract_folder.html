@@ -1,6 +1,12 @@
 
 <script>
 
+/*
+
+Deal with a given folder
+
+*/
+
 socket.on('make_elems', function(){
 
     //alert('Received make_elems !!!! ')
@@ -11,12 +17,31 @@ socket.on('make_elems', function(){
           });
         };
 
+    // ebook extension
+
+    function ebook_ext(name) {
+
+      return /\.(pdf|djvu|epub)$/i.test(name);
+    }
+
+    // image extension
+
+    function image_ext(name) {
+
+      return /\.(png|jpg)$/i.test(name);
+    }
+
     function sort_list_pattern(array, list){
+          /*
+
+          Sort a list with patterns..
+
+          */
           var arr = new Array(array.length);
           var supp_list = []
-          for (var i in array){
+          for ( var i in array ){
               var ind = index_in_list(array[i], list)
-              if (ind != null){
+              if ( ind != null ){
                   arr[ind] = array[i]
 
               }
@@ -26,8 +51,8 @@ socket.on('make_elems', function(){
 
           }
           new_arr = []
-          for (var i in arr){
-              if (arr[i].length >0){
+          for ( var i in arr ){
+              if ( arr[i].length >0 ){
 
                 new_arr.push(arr[i])
 
@@ -45,9 +70,9 @@ socket.on('make_elems', function(){
                       '_nov_', '_dec_']
 
 
-    function index_in_list(a,list){
+    function index_in_list(a, list){
 
-        for (var i in list){
+        for ( var i in list ){
               //console.log(i+'\n')
               var m = a.match(list[i])
               if (m != null){
@@ -66,12 +91,19 @@ socket.on('make_elems', function(){
     var count_pdf_insocket = 0;
     var current_li = {}
     var addr_relat = []
+    var addr_abs = []
     //var addr_short = []
     toggle_elem_ok = false
     var trig_epub = false
     var trig_djvu = false
 
     function open_epub(){
+
+          /*
+
+          Open the epub file
+
+          */
 
           $('.fold_epub').click(function(){
 
@@ -91,6 +123,12 @@ socket.on('make_elems', function(){
       }
 
     function open_djvu(){
+
+            /*
+
+            Open the djvu file
+
+            */
 
             $('.fold_djvu').click(function(){
 
@@ -128,55 +166,29 @@ socket.on('make_elems', function(){
             current_li[count_pdf] = $(this)
             var addr = txt.split('!fold')[1].trim()
             addr_short = addr.split('/').slice(1).join('/')
-            addr_relat[count_pdf] = relative_addr(addr,addr_short)
-            count_pdf += 1;
+            addr_relat[count_pdf] = relative_addr(addr, addr_short)
+            addr_abs[count_pdf] = absolute_addr(addr)
+            count_pdf += 1
             //alert("count_pdf " + count_pdf)
             var count = count_pdf-1
             //alert('count ' + count)
             addr_sent = addr + '§§' + count
             //alert('emitting from extract folder  ' + addr_sent)
             socket.emit('folder_extract', addr + '§§' + count)
-            socket.on('folder_extract',function(strap_addr){
+            socket.on('folder_extract', function( strap_addr ){
 
                         //alert("strap_addr before" + strap_addr)
-                        current_count = parseInt(strap_addr.split('§§')[0])
+                        current_count = parseInt( strap_addr.split('§§')[0] )
                         strap_addr = strap_addr.split('§§')[1]
                         //alert("current_count after parseInt " + current_count)
-                        var list_papers = $('<ul/>')
+                        var new_ul = $('<ul/>')
                         list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
 
                         // sorted list
 
-                        var sorted_pdf_list = sort_list_pattern(list_pdf, pdf_months)
+                        var sorted_list = sort_list_pattern(list_pdf, pdf_months)
 
-                        // change the code
-
-                        sorted_pdf_list.forEach( function(elem){
-                                        make_li_embed(addr_relat[current_count], elem, list_papers)
-                                   })
-                        //alert(sorted_pdf_list)
-                        list_papers.hide()
-                        // replace the tag with the list of li embed..
-                        current_li[current_count].parent().replaceWith(list_papers)
-                        if ( current_count == Object.keys(current_li).length-1 & !toggle_elem_ok){
-                            toggle_elem()            // when clicking on - or + open or close..
-                            toggle_elem_ok = true
-                        }
-
-                        setTimeout(function(){
-
-                            // djvu case
-                            if (!trig_djvu){
-                                    open_djvu()
-                                    trig_djvu = true
-                              }
-                            // epub case
-                            if (!trig_epub){
-                                    open_epub()
-                                    trig_epub = true
-                              }
-
-                        },2000)
+                        handle_docs(sorted_list, new_ul)
 
 
                 }) // socket on
@@ -187,11 +199,88 @@ socket.on('make_elems', function(){
       }) // li each
 
 
+    function handle_docs(sorted_list, new_ul){
+
+              /*
+
+              Deals with pdf, epub or djvu..
+
+              */
+
+              var first_elem = sorted_list[0]
+
+              // detect ebook
+
+              if ( ebook_ext(first_elem) ){
+
+                  sorted_list.forEach( function(elem){
+                                  make_li_embed(addr_relat[current_count], elem, new_ul)
+                             })
+                  }
+
+              // detect image
+
+              else if ( image_ext(first_elem) ){
+
+                  var divportf = $('<div/>').addClass("row")
+                  sorted_list.forEach( function(elem){
+                                  divportf = make_li_imgs(divportf, elem)
+                             })
+                   new_ul.append( divportf )
+
+              }
+              //alert(sorted_list)
+              new_ul.hide()
+              // replace the tag with the list of li embed..
+              current_li[current_count].parent().replaceWith(new_ul)
+              if ( current_count == Object.keys(current_li).length-1 & !toggle_elem_ok){
+                  toggle_elem()            // when clicking on - or + open or close..
+                  toggle_elem_ok = true
+              }
+
+              $('figure').click(function(){
+                  if ($(this).parent().hasClass('thumbnail')){
+                      //alert('figgg')
+                      var addr_pic = $(this).find('img').attr('src')
+                      if (one_img){
+
+                          reset_bigpic()
+
+                      }
+                      if ( pic_yet_open.indexOf(addr_pic) == -1 ){
+
+                          add_new_bigpic(addr_pic)
+                          hook_slider()
+                          save_pos_drag()
+
+                         }
+                  }
+              })
+
+
+              setTimeout(function(){
+
+                  // djvu case
+                  if (!trig_djvu){
+                          open_djvu()
+                          trig_djvu = true
+                    }
+                  // epub case
+                  if (!trig_epub){
+                          open_epub()
+                          trig_epub = true
+                    }
+
+              }, 2000)
+
+    }
 
     function relative_addr(addr, addr_short){
 
           /*
+
           Relative address, address used in the html code
+
           */
 
           try {
@@ -206,8 +295,22 @@ socket.on('make_elems', function(){
           return addr
     }
 
+    function absolute_addr(addr){
 
-    function make_li_embed(addr,elem,list_papers){
+          /*
+
+          Absolute address, address used in the html code
+
+          */
+
+          var reg = /sdata\/\w+.+/     // pattern /sdata/balblabla
+          var abs_addr = addr.match(reg)[0]
+
+          return abs_addr
+    }
+
+
+    function make_li_embed(addr, elem, new_ul){
 
           /*
 
@@ -237,7 +340,7 @@ socket.on('make_elems', function(){
           var divformat_plus = div_format.append(span_tog)
           var div_obj = $('<div/>').html(obj).hide()
           var curr_li = $('<li/>').addClass('fold_li')
-          list_papers.append( curr_li.append( divformat_plus.append( div_obj ) ) )
+          new_ul.append( curr_li.append( divformat_plus.append( div_obj ) ) )
 
 
     }
@@ -282,6 +385,37 @@ socket.on('make_elems', function(){
         return htm // /pdf/Phys/
 
     }
+
+
+    function make_li_imgs(divportf, elem){
+
+          /*
+
+          Portfolio
+
+          */
+          var $img = $("<img>", {
+                        src: addr_abs[current_count] + '/' + elem,
+                        alt: elem,
+                      });
+          var $caption = $("<figcaption>").text(elem);
+          var $fig = $("<figure>")
+          $fig.append($img).append($caption)
+
+          var classportf = "col-md-4"
+
+           var divportfinner = $('<div/>').addClass(classportf)
+               .append(
+                     $('<div/>').addClass("thumbnail")   // class thumbnail
+                       .append($fig) // add image
+                      ) // end append thumbnail
+            divportf.append(divportfinner)
+
+
+            return divportf
+          }
+
+
 
 }) // socket.on('make_elems')
 

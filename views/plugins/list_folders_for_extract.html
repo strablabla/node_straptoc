@@ -3,7 +3,7 @@
 
 /*
 
-What does this piece of code..
+Make the list of the folders before analysis. 
 
 */
 
@@ -29,7 +29,7 @@ var num_li = 0
 $('li').each(function(){
 
     /*
-    
+
     Make the list of pdfs..
     Replace !fold by the list in question..
 
@@ -43,19 +43,22 @@ $('li').each(function(){
     if ( txt.match(fullreg) ){
           //$(this).css({'color':'#ffb3d9'})
           current_li[count_pdf] = $(this)
+          // folder address
           var addr = txt.split('!fold')[1].split('!inside')[0].trim()
           addroot = addr
           addr_short = addr.split('/').slice(1).join('/')
+          // relative address
           addr_relat[count_pdf] = relative_addr(addr,addr_short)
-          root_addr[count_pdf] = addr.split(addr_relat[count_pdf])[0]
+          root_addr[count_pdf] = addr.split( addr_relat[count_pdf] )[0]
           count_pdf += 1;
           var count = count_pdf-1
           addr_sent = addr + '§§' + count
           socket.emit('list_folders', addr + '§§' + count)
-          socket.on('list_folders',function(strap_addr){
+          socket.on('list_folders', function(strap_addr){
                 var current_count = parseInt(strap_addr.split('§§')[0])
                 strap_addr = strap_addr.split('§§')[1]
                 var list_folders = strap_addr.split('\n').slice(0,-1) // list of the folders..
+                // code for a given folder
                 make_code_folder(strap_addr, addr_relat, list_folders, current_count)
                 if ( current_count == Object.keys(addr_relat).length-1 & !toggle_pdf_ok){
                     toggle_pdf()            // when clicking on - or + open or close..
@@ -67,34 +70,47 @@ $('li').each(function(){
                     })
                     //alert('make_elems !!!! ')
                     socket.emit('make_elems', '')
+                    // use extract_folder..
                 }
             })
         // if text.match
         } else {
-        num_li += 1
-        if (num_li == length_list_li){      // if no !fold inside found, emit make_elems
-            //alert('emit the signal !!!')
-            socket.emit('make_elems', '')
-        }
-      }
+            // no need to go inside folder..
+            num_li += 1
+            if (num_li == length_list_li){      // if no !fold inside found, emit make_elems
+                //alert('emit the signal !!!')
+                socket.emit('make_elems', '')
+                // use extract_folder..
+            }
+         }
 
   })
 
-function make_code_folder(strap_addr, addr_relat, list_folders, current_count, ul_folders){
+function make_code_folder(strap_addr,
+                          addr_relat,
+                          list_folders,
+                          current_count,
+                          ul_folders){
       /*
+
+      Deal with the folders
+
       */
       var ul_folders = $('<ul/>').text("\n")
-      for (i in list_folders){
+      for ( i in list_folders ){
             var titli = $('<li/>').html(list_folders[i] + '\n <a><span class="funf"> [-]</span></a>') // funf class fold unfold
             ul_folders.append(titli) //
-            var sentence = '!fold ' + root_addr[current_count] + addr_relat[current_count] + '/' + list_folders[i] +'\n' // +'\n' root[current_count]
+            var sentence = '!fold ' + root_addr[current_count]
+                                    + addr_relat[current_count]
+                                    + '/' + list_folders[i] +'\n' // +'\n' root[current_count]
             var curr_li = $('<li/>').text(sentence)
             var last_ul = $('<ul/>').toggle()
-            titli.append(last_ul.append(curr_li))
+            titli.append( last_ul.append(curr_li) )
           } // end for
+
       var currparpar = current_li[current_count].parent().parent()
-      currparpar.append($('<span/>').text('[-]').addClass('togpdf'))
-      currparpar.append(ul_folders.hide()).css({'color':'#ff9966'}) // #ff9966 #476b6b
+      currparpar.append( $('<span/>').text('[-]').addClass('togpdf') )
+      currparpar.append( ul_folders.hide()).css({'color':'#ff9966'} ) // #ff9966 #476b6b
       current_li[current_count].parent().remove()
       //toggle_pdf()
 
