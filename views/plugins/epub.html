@@ -5,6 +5,24 @@ function set_margin(){
     $('.epub-view').children().css({'margin': '0 0 0 0'})
 }
 
+let currentSize = 100;
+let step_font = 5
+
+// increase fonts
+function incrFont(rendition) {
+  currentSize += step_font;
+  rendition.themes.fontSize(`${currentSize}%`);
+  // rendition.themes.select("override");
+}
+
+// decrease fonts
+function decrFont(rendition) {
+  currentSize = Math.max(50, currentSize - step_font); // lower limit
+  rendition.themes.fontSize(`${currentSize}%`);
+  // rendition.themes.select("override");
+}
+
+
 function make_epub(li, addr){
 
         // alert('found addr as ' + addr)
@@ -20,6 +38,12 @@ function make_epub(li, addr){
                   .append($('<button/>').text('go').attr('id','go_page'+epub_id))
                   .append($('<span/>').text('   curr page: '))
                   .append($('<span/>').text('').attr('id','curr_page'+epub_id))
+                  // font size
+                  .append($('<div/>'))
+                  .append($('<span/>').text('< ').attr('id','font_down'+epub_id))
+                  .append($('<span/>').text('> ').attr('id','font_up'+epub_id))
+                  .append($('<span/>').text('font percent: '))
+                  .append($('<span/>').text('').attr('id','font_percent'+epub_id))
 
 
         li.replaceWith(block_epub)
@@ -44,11 +68,19 @@ function make_epub(li, addr){
                   }, 150)
           }
 
+          function getCurrFontPerc() {
+              setTimeout( function(){
+                            $('#font_percent'+epub_id).text(currentSize+' %')
+                    }, 150)
+            }
 
-        $('#num_page'+epub_id).css({'width':'30px'})
+        // init font percentage
+        getCurrFontPerc()
 
-        $('#first_page'+epub_id).click(function(){
-            //alert('next')
+        $('#num_page' + epub_id).css({'width':'30px'})
+
+        $('#first_page' + epub_id).click(function(){
+            //return to first page
             rendition.display(0);
             setTimeout(set_margin, 100);
             // currp = 0
@@ -56,7 +88,7 @@ function make_epub(li, addr){
             getCurrPageIndex()
         })
 
-        $('#next_page'+epub_id).click(function(){
+        $('#next_page' + epub_id).click(function(){
             //alert('next')
             rendition.next();
             setTimeout(set_margin, 100);
@@ -66,7 +98,7 @@ function make_epub(li, addr){
 
         })
 
-        $('#prev_page'+epub_id).click(function(){
+        $('#prev_page' + epub_id).click(function(){
             //alert('next')
             rendition.prev();
             setTimeout(set_margin, 100);
@@ -75,7 +107,7 @@ function make_epub(li, addr){
             getCurrPageIndex()
         })
 
-        $('#go_page'+epub_id).click(function(){
+        $('#go_page' + epub_id).click(function(){
             //alert('next')
             num = parseInt($('#num_page'+epub_id).val())
             //alert(num)
@@ -85,6 +117,23 @@ function make_epub(li, addr){
             // $('#curr_page').text(currp)
             getCurrPageIndex()
         })
+
+        $('#font_up' + epub_id).click(function(){
+            incrFont(rendition)
+            setTimeout(set_margin, 100);
+            getCurrPageIndex()
+            getCurrFontPerc()
+
+        })
+
+        $('#font_down' + epub_id).click(function(){
+            decrFont(rendition)
+            setTimeout(set_margin, 100);
+            getCurrPageIndex()
+            getCurrFontPerc()
+
+        })
+
 
 
 
