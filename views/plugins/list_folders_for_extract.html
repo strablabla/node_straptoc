@@ -3,7 +3,7 @@
 
 /*
 
-Make the list of the folders before analysis. 
+Make the list of the folders before analysis.
 
 */
 
@@ -25,6 +25,26 @@ var list_li = $('body').find('li');
 var length_list_li = list_li.length;
 //alert(length_list_li)
 var num_li = 0
+
+socket.on('list_folders', function(strap_addr){
+      var current_count = parseInt(strap_addr.split('§§')[0])
+      strap_addr = strap_addr.split('§§')[1]
+      var list_folders = strap_addr.split('\n').slice(0,-1) // list of the folders..
+      // code for a given folder
+      make_code_folder(strap_addr, addr_relat, list_folders, current_count)
+      if ( current_count == Object.keys(addr_relat).length-1 & !toggle_pdf_ok){
+          toggle_pdf()            // when clicking on - or + open or close..
+          toggle_pdf_ok = true
+          //css({'color':'#ffe6f2'})
+          //$('.funf').parent().parent().parent().css({'color':'#ffe6f2'})
+          $('.funf').off('click').on('click', function() {
+              $(this).parent().next().toggle()
+          })
+          //alert('make_elems !!!! ')
+          socket.emit('make_elems', '')
+          // use extract_folder..
+      }
+  })
 
 $('li').each(function(){
 
@@ -54,25 +74,7 @@ $('li').each(function(){
           var count = count_pdf-1
           addr_sent = addr + '§§' + count
           socket.emit('list_folders', addr + '§§' + count)
-          socket.on('list_folders', function(strap_addr){
-                var current_count = parseInt(strap_addr.split('§§')[0])
-                strap_addr = strap_addr.split('§§')[1]
-                var list_folders = strap_addr.split('\n').slice(0,-1) // list of the folders..
-                // code for a given folder
-                make_code_folder(strap_addr, addr_relat, list_folders, current_count)
-                if ( current_count == Object.keys(addr_relat).length-1 & !toggle_pdf_ok){
-                    toggle_pdf()            // when clicking on - or + open or close..
-                    toggle_pdf_ok = true
-                    //css({'color':'#ffe6f2'})
-                    //$('.funf').parent().parent().parent().css({'color':'#ffe6f2'})
-                    $('.funf').click(function(){
-                        $(this).parent().next().toggle()
-                    })
-                    //alert('make_elems !!!! ')
-                    socket.emit('make_elems', '')
-                    // use extract_folder..
-                }
-            })
+
         // if text.match
         } else {
             // no need to go inside folder..
@@ -125,7 +127,7 @@ function toggle_pdf(){
     */
 
     //alert('toggle !!!')
-    $('.togpdf').click(function(){
+    $('.togpdf').off('click').on('click', function() {
             var taga = $(this).find('a')
             if (taga.text() == ' [-]'){
                 taga.text(' [+]')

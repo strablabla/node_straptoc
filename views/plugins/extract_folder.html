@@ -28,7 +28,7 @@ socket.on('make_elems', function(){
 
     function image_ext(name) {
 
-      return /\.(png|jpg)$/i.test(name);
+      return /\.(png|jpg|webp)$/i.test(name);
     }
 
     function sort_list_pattern(array, list){
@@ -105,7 +105,7 @@ socket.on('make_elems', function(){
 
           */
 
-          $('.fold_epub').click(function(){
+          $('.fold_epub').off('click').on('click', function(){
 
               var disp = $(this).parent().next()
               var obj = disp.find('object')
@@ -130,7 +130,7 @@ socket.on('make_elems', function(){
 
             */
 
-            $('.fold_djvu').click(function(){
+            $('.fold_djvu').off('click').on('click', function(){
 
                 var disp = $(this).parent().next()
                 var obj = disp.find('object')
@@ -146,6 +146,27 @@ socket.on('make_elems', function(){
                 }) // click
 
     }
+
+    socket.on('folder_extract', function( strap_addr ){
+
+                //alert("strap_addr before" + strap_addr)
+                current_count = parseInt( strap_addr.split('§§')[0] )
+                strap_addr = strap_addr.split('§§')[1]
+                //alert("current_count after parseInt " + current_count)
+                var new_ul = $('<ul/>')
+
+                current_li[current_count].parent().find('ul, .tog_elem, .fold_epub, .fold_djvu').remove();
+                
+                list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
+
+                // sorted list
+
+                var sorted_list = sort_list_pattern(list_pdf, pdf_months)
+
+                handle_docs(sorted_list, new_ul)
+
+
+        }) // socket on
 
 
     $('li').each(function(){
@@ -175,23 +196,7 @@ socket.on('make_elems', function(){
             addr_sent = addr + '§§' + count
             //alert('emitting from extract folder  ' + addr_sent)
             socket.emit('folder_extract', addr + '§§' + count)
-            socket.on('folder_extract', function( strap_addr ){
 
-                        //alert("strap_addr before" + strap_addr)
-                        current_count = parseInt( strap_addr.split('§§')[0] )
-                        strap_addr = strap_addr.split('§§')[1]
-                        //alert("current_count after parseInt " + current_count)
-                        var new_ul = $('<ul/>')
-                        list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
-
-                        // sorted list
-
-                        var sorted_list = sort_list_pattern(list_pdf, pdf_months)
-
-                        handle_docs(sorted_list, new_ul)
-
-
-                }) // socket on
 
             } // if text.match
             //var size = Object.keys(myObj).length;
@@ -238,7 +243,7 @@ socket.on('make_elems', function(){
                   toggle_elem_ok = true
               }
 
-              $('figure').click(function(){
+              $('figure').off('click').on('click', function(){
                   if ($(this).parent().hasClass('thumbnail')){
                       //alert('figgg')
                       var addr_pic = $(this).find('img').attr('src')
