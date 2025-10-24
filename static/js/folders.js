@@ -19,6 +19,7 @@ function deals_with_folder(socket, name_folder){
       var name_folder = name_folder.split('§§')[0]
 
       var strap_addr = ''
+      console.log('folder is : ' + name_folder);
       fs.readdir(name_folder, (err, files) => {
           strap_addr +=  count_pdf + '§§'
           files.forEach(file => {
@@ -46,13 +47,19 @@ function deals_with_list_folders(socket, name_folder){
       var name_folder = name_folder.split('§§')[0]
       console.log('######################################')
       var strap_addr = ''
+      console.log('current folder is : ' + name_folder)
       fs.readdir(name_folder, (err, files) => {
           strap_addr +=  count_pdf + '§§'
-          if(err) return console.error(err);
-          files.forEach(file => {
-             console.log(file);
-             strap_addr += file + '\n'
-        });
+          //if(err) return console.error(err);
+          try {
+              files.forEach(file => {
+                  console.log(file);
+                  strap_addr += file + '\n';
+              });
+          } catch (error) {
+              console.error("Une erreur est survenue lors du traitement des fichiers :", error);
+          }
+
 
         console.log('######### before sending for list ' + strap_addr)
         socket.emit('list_folders', strap_addr)

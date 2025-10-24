@@ -33,7 +33,8 @@ var server =  https.createServer(options, app)
 nunjucks.configure('views', {
     autoescape: true,
     express: app,
-    watch:true
+    watch:false,
+    noCache: true
 
 });
 
@@ -48,13 +49,21 @@ init.static_addr(app, express)
 
 //------------- store
 
-store.walkDir('../../../../../../media/sdata/docs/test', function(filePath) {
-  //const fileContents = fs.readFileSync(filePath, 'utf8');
-  console.log('############### WalkDir')
-  //console.log(filePath, fileContents);
-  console.log(filePath)
-
-});
+// try{
+//
+//
+// store.walkDir('../../../../../../media/sdata/docs/test', function(filePath) {
+//   //const fileContents = fs.readFileSync(filePath, 'utf8');
+//   console.log('############### WalkDir')
+//   //console.log(filePath, fileContents);
+//   console.log(filePath)
+//
+// });
+//
+// }
+// catch(err){
+//
+// }
 
 //--------------  websocket
 
@@ -79,6 +88,7 @@ subtit.make_sub() // make the subtitles..
 var users = {}
 num_user = 0
 
+util.save_regularly_all()                                                // save the regularly the text..
 io.sockets.on('connection', function (socket) {
       socket.on('new_user', function(name_user){
           users[socket.id] =  name_user        // parseInt((num_user-1)/2)
@@ -91,7 +101,7 @@ io.sockets.on('connection', function (socket) {
 
       console.log('A client is connected!');
       re.emit_from_read(socket, patt, html_pos)
-      util.save_regularly_all()                                                // save the regularly the text..
+
       socket.on('join', function(data) { socket.emit('scroll', patt) });       // end socket.on join
 
       new_obj.create(socket, app, io)
@@ -115,6 +125,12 @@ io.sockets.on('connection', function (socket) {
       socket.on('ask_color_tags',function(){
           init.color_tags(io)
       })
+
+      socket.on('disconnect', () => {
+        console.log('Client disconnected');
+        delete users[socket.id];
+        socket.removeAllListeners(); //
+      });
 
 
 }); // io.sockets.on connection

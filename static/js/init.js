@@ -4,7 +4,8 @@ Initialization
 
 */
 
-var fs = require('fs');
+const fs = require('fs');
+const yaml = require('js-yaml');
 
 exports.comm_voc = function(io){
 
@@ -83,20 +84,27 @@ exports.static_addr = function(app, express){
 
       }
 
-      fs.readFile('static/addr.json', 'utf8', function (err,text) {
-              if (err) { return console.log(err); }
-              flat_dic = flattenObject(JSON.parse(text))
-              console.log("mytests")
-              for (const [key, val] of Object.entries(flat_dic)) {
-                      stat_addr = make_stat_addr(key,val)
-                      console.log('final expr is ' + stat_addr)
-                      app.use(express.static(stat_addr))       // add the address
+      fs.readFile('static/addr.yaml', 'utf8', function (err, text) {
+          if (err) {
+            return console.error(err);
+          }
 
-                   } // for
+          try {
+            const data = yaml.load(text); // yaml to js
+            const flat_dic = flattenObject(data);
+            console.log("mytests");
 
-          }); // end fs.readFile
+            for (const [key, val] of Object.entries(flat_dic)) {
+              const stat_addr = make_stat_addr(key, val);
+              console.log('final expr is ' + stat_addr);
+              app.use(express.static(stat_addr)); // add the address
+            }
+          } catch (e) {
+            console.error("Erreur YAML :", e);
+          }
+        });
 
-    }
+  } // end exports.static_addr
 
 function make_html_around_md(file){
 
