@@ -6,6 +6,7 @@ Initialization
 
 const fs = require('fs');
 const yaml = require('js-yaml');
+const sqlite3 = require('sqlite3').verbose();
 
 exports.comm_voc = function(io){
 
@@ -41,7 +42,7 @@ exports.static_addr = function(app, express){
       /*
 
       Static addresses
-      Load them and create the routing with express..
+      Load them and create the routes with express..
 
       */
 
@@ -286,4 +287,45 @@ exports.config_state = function(io){
           io.sockets.emit('config_state', text)
 
       }); // end fs.readFile
+}
+
+exports.data_base = function(){
+
+  const dbPath = path.resolve(__dirname, 'strap_database.db');
+
+  // open the connexion to database
+  let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+    if (err) {
+      console.error('connexion error:', err.message);
+    } else {
+      console.log('Connected to Sqlite databse.');
+    }
+  });
+
+  function setupDatabase() {
+    db.serialize(() => {
+          // Ceate a table if it does not exist..
+          db.run(`
+            CREATE TABLE IF NOT EXISTS utilisateurs (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              nom TEXT NOT NULL,
+              email TEXT UNIQUE,
+              date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+          `, (err) => {
+            if (err) {
+              console.error('Error when creating the table:', err.message);
+            } else {
+              console.log('Users table checked and created.');
+            }
+          });
+        });
+      }
+
+  // setup the databse
+  setupDatabase();
+
+  return db
+
+
 }

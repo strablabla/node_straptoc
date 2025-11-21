@@ -1,10 +1,10 @@
 const https = require('https')
 const http = require('http')
-var express = require('express')
-var path = require("path");
-var open = require('open');
-var fs = require('fs');
-var nunjucks  = require('nunjucks');      // templating tool..
+const express = require('express')
+const path = require("path");
+const open = require('open');
+const fs = require('fs');
+const nunjucks  = require('nunjucks');      // templating tool..
 
 //-----------------
 
@@ -46,24 +46,28 @@ app.get('/text', function(req, res){ res.render('struct/text.html'); });
 //--------------  static addresses
 
 init.static_addr(app, express)
+db = init.data_base()
 
-//------------- store
+db.run(
+  `INSERT INTO utilisateurs (nom, email) VALUES (?, ?)`,
+  ['Alice', 'alice@example.com'], // Email existant
+  function(err) {
+    if (err) {
+      if (err.message.includes('UNIQUE constraint failed')) {
+        console.log('this email is yet registered.');
+        //
+      } else {
+        console.error('Erreur unexpected SQL :', err.message);
+      }
+    } else {
+      console.log(`user inserted with ID: ${this.lastID}`);
+    }
+  }
+);
 
-// try{
-//
-//
-// store.walkDir('../../../../../../media/sdata/docs/test', function(filePath) {
-//   //const fileContents = fs.readFileSync(filePath, 'utf8');
-//   console.log('############### WalkDir')
-//   //console.log(filePath, fileContents);
-//   console.log(filePath)
-//
-// });
-//
-// }
-// catch(err){
-//
-// }
+db.all(`SELECT * FROM utilisateurs`, (err, rows) => {
+  console.log(rows)
+});
 
 //--------------  websocket
 
