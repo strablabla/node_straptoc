@@ -10,10 +10,10 @@
   "license": "MIT",
   "main": [
     "css/devicons.css",
-    "fonts/devicons.eot",
-    "fonts/devicons.svg",
-    "fonts/devicons.ttf",
-    "fonts/devicons.woff"
+    "fonts/KateX/devicons.eot",
+    "fonts/KateX/devicons.svg",
+    "fonts/KateX/devicons.ttf",
+    "fonts/KateX/devicons.woff"
   ],
   "ignore": [
     "*/.*",

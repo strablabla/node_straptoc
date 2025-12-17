@@ -1,3 +1,3 @@
-var dchandir = {"_Personnages":"Personnages","_catchou":"catchou","_chansons":"chansons","_curiosity":"curiosity","_fait":"fait","_grim":"grim","_horus":"horus","_infos":"infos","_job":"job","_main":"/","_pipa":"pipa","_pocus":"pocus","_repolino":"repolino","_tests":"tests","_todo":"todo","_zblurb":"zblurb","_ziggurat":"ziggurat"}
-var list_pages = ["Personnages","catchou","chansons","curiosity","fait","grim","horus","infos","job","main","pipa","pocus","repolino","tests","todo","zblurb","ziggurat"]
-var dic_text_id = {"Personnages":"text-#Personnages","":"text-#main","catchou":"text-#catchou","chansons":"text-#chansons","curiosity":"text-#curiosity","fait":"text-#fait","grim":"text-#grim","horus":"text-#horus","infos":"text-#infos","job":"text-#job","main":"text-#main","pipa":"text-#pipa","pocus":"text-#pocus","repolino":"text-#repolino","tests":"text-#tests","todo":"text-#todo","zblurb":"text-#zblurb","ziggurat":"text-#ziggurat"}
+var dchandir = {"_chansons":"chansons","_exemples":"exemples","_fait":"fait","_main":"/","_tests":"tests","_todo":"todo"}
+var list_pages = ["chansons","exemples","fait","main","tests","todo"]
+var dic_text_id = {"chansons":"text-#chansons","":"text-#main","exemples":"text-#exemples","fait":"text-#fait","main":"text-#main","tests":"text-#tests","todo":"text-#todo"}
