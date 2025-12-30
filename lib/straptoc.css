@@ -364,6 +364,7 @@ img .thumbnail
     height: 100%;
     top: 0%;
     opacity: 0.8;
+    z-index: 9998;
     }
 
 .view_image
@@ -373,6 +374,7 @@ img .thumbnail
     top: 0;
     position: fixed;
     cursor: zoom-out;
+    z-index: 9999;
 /*    overflow: scroll;
     resize: both;*/
     }
