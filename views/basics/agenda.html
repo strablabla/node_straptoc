@@ -140,7 +140,24 @@ var css_single_note = {
     'padding': '10px',
     'margin-bottom': '10px',
     'font-family': 'apple_garamond',
-    'font-size': '14px'
+    'font-size': '14px',
+    'position': 'relative'
+}
+
+var css_delete_note = {
+    'position': 'absolute',
+    'top': '5px',
+    'right': '5px',
+    'width': '16px',
+    'height': '16px',
+    'cursor': 'pointer',
+    'opacity': '0',
+    'transition': 'opacity 0.2s',
+    'font-size': '18px',
+    'color': '#000000',
+    'font-weight': 'bold',
+    'line-height': '16px',
+    'text-align': 'center'
 }
 
 var css_note_timestamp = {
@@ -151,7 +168,7 @@ var css_note_timestamp = {
 
 var css_textarea = {
     'width': '90%',
-    'height': '80px',
+    'height': '160px',
     'padding': '10px',
     'font-family': 'apple_garamond',
     'font-size': '14px',
@@ -209,8 +226,8 @@ var dic_css_panel_day = {
             'position':'fixed',
             'left': '50%',
             'top': '70px',
-            'width': '600px',
-            'margin-left':'-300px',
+            'width': '400px',
+            'margin-left':'-200px',
             'height': '500px',
             'text-align' : 'center',
             'font-size': '20px',
@@ -309,7 +326,7 @@ function fill_cell(i,j){
           $('#pan_day_title').text(index_cell)
 
           // Add a temporary loading message
-          $('#pan_day').append($('<div/>').text('Chargement...').css({'margin-top': '50px'}))
+          $('#pan_day').append($('<div/>').text('Loading...').css({'margin-top': '50px'}))
 
           $('#pan_day').show()
 
@@ -342,7 +359,32 @@ var pan_day = $('<div/>').attr('id','pan_day')
                          .css(dic_css_panel_day)
                          .hide()
 
-icon_close_pan_day.click(function(){
+// Close panel with single click on close icon (using event delegation)
+$(document).on('click', '#icon_close_pan_day', function(){
+      $('#pan_day').hide()
+})
+
+// Delete note with click on delete button
+$(document).on('click', '.delete-note-btn', function(e){
+      e.stopPropagation() // Prevent triggering other click events
+
+      var timestamp = $(this).attr('data-timestamp')
+      var fullYear = new Date().getFullYear()
+      var dayNum = $('#pan_day_title').text()
+      var dateKey = fullYear + '_' + selected_month + '_' + dayNum
+
+      console.log('Deleting note with timestamp:', timestamp, 'for date:', dateKey)
+
+      var data = JSON.stringify({
+          dateKey: dateKey,
+          timestamp: timestamp
+      })
+
+      socket.emit('delete_note', data)
+})
+
+// Close panel with double click anywhere on the panel
+pan_day.dblclick(function(){
       $('#pan_day').hide()
 })
 
@@ -367,7 +409,23 @@ function displayNotesInPanel(notesJson){
       if (notes && notes.length > 0) {
           for (var i = 0; i < notes.length; i++) {
               var note = notes[i]
-              var noteDiv = $('<div/>').css(css_single_note)
+              var noteDiv = $('<div/>').css(css_single_note).attr('data-timestamp', note.timestamp)
+
+              // If it's an alert, change the border color to blue
+              if (note.alert) {
+                  noteDiv.css('border-left', '3px solid #0066ff')
+              }
+
+              // Add delete button
+              var deleteBtn = $('<div/>').addClass('delete-note-btn').text('×').css(css_delete_note)
+              deleteBtn.attr('data-timestamp', note.timestamp)
+              noteDiv.append(deleteBtn)
+
+              // Show delete button on hover
+              noteDiv.hover(
+                  function() { $(this).find('.delete-note-btn').css('opacity', '1') },
+                  function() { $(this).find('.delete-note-btn').css('opacity', '0') }
+              )
 
               // Format timestamp
               var date = new Date(note.timestamp)
@@ -376,22 +434,27 @@ function displayNotesInPanel(notesJson){
 
               var textDiv = $('<div/>').text(note.text)
 
+              // If it's an alert, make the text blue
+              if (note.alert) {
+                  textDiv.css('color', '#0066ff')
+              }
+
               noteDiv.append(timestampDiv).append(textDiv)
               notesList.append(noteDiv)
           }
-      } else {
+      } else{
           notesList.append($('<div/>').css({'color': '#999', 'text-align': 'center', 'padding': '20px'})
-                                       .text('Aucune note pour ce jour'))
+                                       .text('No notes for this day'))
       }
 
       // Add textarea for new note
       var textarea = $('<textarea/>').attr('id', 'new_note_textarea')
-                                      .attr('placeholder', 'Entrez une nouvelle note...')
+                                      .attr('placeholder', 'Enter a new note...')
                                       .css(css_textarea)
 
       // Add save button
       var saveBtn = $('<button/>').attr('id', 'save_note_btn')
-                                   .text('Enregistrer')
+                                   .text('Save')
                                    .css(css_save_button)
 
       saveBtn.click(function(){
@@ -426,9 +489,67 @@ function displayNotesInPanel(notesJson){
 // Handle receiving notes for a day
 socket.on('day_notes', function(notesJson){
       displayNotesInPanel(notesJson)
+      // Update the all agenda data and indicators
+      var notes = JSON.parse(notesJson)
+      var fullYear = new Date().getFullYear()
+      var dayNum = $('#pan_day_title').text()
+      if (dayNum) {
+          var dateKey = fullYear + '_' + selected_month + '_' + dayNum
+          allAgendaData[dateKey] = notes
+          updateAlertIndicators()
+      }
 })
 
+// Request all agenda data to check for alerts
+socket.emit('ask_all_agenda')
+
+// Global variable to store all agenda data
+var allAgendaData = {}
+
+// Handle receiving all agenda data
+socket.on('all_agenda_data', function(dataJson){
+      allAgendaData = JSON.parse(dataJson)
+      updateAlertIndicators()
+})
+
+// Function to check if a date has alerts
+function hasAlerts(dateKey) {
+      if (!allAgendaData[dateKey]) return false
+      var notes = allAgendaData[dateKey]
+      for (var i = 0; i < notes.length; i++) {
+          if (notes[i].alert) return true
+      }
+      return false
+}
+
+// Function to add blue dots to dates with alerts
+function updateAlertIndicators() {
+      var fullYear = new Date().getFullYear()
+      for (var i = 1; i <= 31; i++) {
+          var dateKey = fullYear + '_' + selected_month + '_' + i
+          var cellId = '#cell_' + i
+          if (hasAlerts(dateKey)) {
+              // Add blue dot indicator
+              if ($(cellId).find('.alert-dot').length === 0) {
+                  var dot = $('<div/>').addClass('alert-dot').css({
+                      'position': 'absolute',
+                      'top': '1px',
+                      'right': '1px',
+                      'width': '6px',
+                      'height': '6px',
+                      'background-color': '#0066ff',
+                      'border-radius': '50%'
+                  })
+                  $(cellId).append(dot)
+              }
+          }
+      }
+}
+
 $('#content').append(pan_day)
+
+// Make panel draggable after it's added to the DOM
+$('#pan_day').draggable()
 
 //---------------------- Make day cells for a month..
 
