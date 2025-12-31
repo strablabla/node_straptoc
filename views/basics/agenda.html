@@ -8,7 +8,7 @@ Agenda
 
 */
 
-selected_year = '20'
+selected_year = new Date().getFullYear().toString().slice(2)  // Get current year (2 digits)
 //selected_month = 4
 
 function date_day(){
@@ -284,7 +284,12 @@ function fill_cell(i,j){
       if ( index_cell == curr_day ){
           //curr_cell.css({ 'box-shadow': '0.2em 0.2em 0.7em' })
           if ((curr_month == selected_month) & (curr_year == selected_year)){
-               curr_cell.css({ 'box-shadow': '0.2em 0.2em 0.7em' })
+               curr_cell.css({
+                    'border': '2px solid #28a745',
+                    'border-radius': '50%',
+                    'box-shadow': '0 0 5px rgba(40, 167, 69, 0.5)',
+                    'font-weight': 'bold'
+               })
           }
 
       }
@@ -313,7 +318,7 @@ selected_month = curr_month         // beginning with current month..
 lmonths = Object.keys(dic_months)
 var month_title = $('<div/>').text(lmonths[selected_month - 1]).css(dic_css_month_title)  // dic_months[curr_month]
 $('#agenda_panel').append(month_title)
-var year_title = $('<div/>').text( '20' + selected_year).css(dic_css_year_title)
+var year_title = $('<div/>').text( new Date().getFullYear()).css(dic_css_year_title)
 $('#agenda_panel').append(year_title)
 
 //----- Panel day
