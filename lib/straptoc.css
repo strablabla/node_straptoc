@@ -306,34 +306,72 @@ div.onside {
  * ===============================================*/
 
 .scrollToTop {
-    width:40px;
-    height: 40px;
+    width:33px;
+    height: 33px;
     position:fixed;
     right:30px;
     bottom:30px;
     display:none;
+    z-index:9999;
+    background-color: #28a745;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 33px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    opacity: 0.5;
   }
 
-  #gotop.glyphicon.glyphicon-chevron-up {
-    font-size: 25px;
-}
+  .scrollToTop:hover {
+    background-color: #218838;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    opacity: 0.8;
+  }
+
+  #gotop.fa-chevron-up,
+  #gotop {
+    font-size: 14px;
+    color: #ffffff;
+    font-style: normal;
+    display: inline-block;
+    width: 100%;
+    margin-left: -10px;
+  }
 
 /*==================================================
 *  Scroll bottom
 * ===============================================*/
 
 .scrollToBottom {
-  width:40px;
-  height: 40px;
+  width:33px;
+  height: 33px;
   position:fixed;
   right:30px;
   top:50px;
   display:none;
+  z-index:9999;
+  background-color: #28a745;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 33px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  opacity: 0.5;
 }
 
-#gobottom.glyphicon.glyphicon-chevron-down {
-    font-size: 25px;
+.scrollToBottom:hover {
+  background-color: #218838;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  opacity: 0.8;
 }
+
+#gobottom.fa-chevron-down,
+#gobottom {
+    font-size: 14px;
+    color: #ffffff;
+    font-style: normal;
+    display: inline-block;
+    width: 100%;
+    margin-left: -10px;
+  }
 
 /*==================================================
  * Portfolio
