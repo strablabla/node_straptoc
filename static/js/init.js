@@ -13,13 +13,19 @@ exports.comm_voc = function(io){
       /*
 
       Dictionary for vocal commands..
-      Load and send it..
+      Load and send it from centralized config.yaml
 
       */
 
-      fs.readFile('static/comm_voc.json', 'utf8', function (err,text) {
+      fs.readFile('static/config.yaml', 'utf8', function (err,text) {
               if (err) { return console.log(err); }
-               io.sockets.emit('dic_voc', text)
+              try {
+                const config = yaml.load(text);
+                const vocJson = JSON.stringify(config.vocabulaire);
+                io.sockets.emit('dic_voc', vocJson);
+              } catch (e) {
+                console.error("Erreur lors du chargement du vocabulaire:", e);
+              }
           }); // end fs.readFile
   }
 
@@ -85,14 +91,14 @@ exports.static_addr = function(app, express){
 
       }
 
-      fs.readFile('static/addr.yaml', 'utf8', function (err, text) {
+      fs.readFile('static/config.yaml', 'utf8', function (err, text) {
           if (err) {
             return console.error(err);
           }
 
           try {
-            const data = yaml.load(text); // yaml to js
-            const flat_dic = flattenObject(data);
+            const config = yaml.load(text); // yaml to js
+            const flat_dic = flattenObject(config.addresses);
             console.log("mytests");
 
             for (const [key, val] of Object.entries(flat_dic)) {
@@ -258,12 +264,17 @@ function pages(){
 
 exports.color_tags = function(io){
 
-  fs.readFile('static/color_tags.json', 'utf8', function (err,text) {
+  fs.readFile('static/config.yaml', 'utf8', function (err,text) {
           if (err) { return console.log(err); }
-          console.log('pingpong...')
-          console.log(text)
-          io.sockets.emit('dic_color_tags', text)
-
+          try {
+            const config = yaml.load(text);
+            const colorTagsJson = JSON.stringify(config.color_tags);
+            console.log('pingpong...')
+            console.log(colorTagsJson)
+            io.sockets.emit('dic_color_tags', colorTagsJson)
+          } catch (e) {
+            console.error("Erreur lors du chargement des color_tags:", e);
+          }
       }); // end fs.readFile
 }
 
@@ -280,12 +291,17 @@ exports.drawing_state = function(io){
 
 exports.config_state = function(io){
 
-  fs.readFile('static/config.json', 'utf8', function (err,text) {
+  fs.readFile('static/config.yaml', 'utf8', function (err,text) {
           if (err) { return console.log(err); }
-          console.log('config_state...')
-          console.log(text)
-          io.sockets.emit('config_state', text)
-
+          try {
+            const config = yaml.load(text);
+            const configJson = JSON.stringify(config.config);
+            console.log('config_state...')
+            console.log(configJson)
+            io.sockets.emit('config_state', configJson)
+          } catch (e) {
+            console.error("Erreur lors du chargement de config:", e);
+          }
       }); // end fs.readFile
 }
 

@@ -1,5 +1,6 @@
 var init = require('./init');
-var fs = require('fs')
+var fs = require('fs');
+var yaml = require('js-yaml');
 
 exports.handle = function(io,socket){
 
@@ -15,12 +16,13 @@ exports.handle = function(io,socket){
 
             dic_config_change = JSON.parse(new_dic_config)
 
-            fs.readFile('static/config.json', 'utf8', function (err, text) {
+            fs.readFile('static/config.yaml', 'utf8', function (err, text) {
 
                 if (err) { return console.log(err); }
                 console.log('######### savingggg config !!! ')
                 try{
-                    var dic_config = JSON.parse(text)
+                    var fullConfig = yaml.load(text)
+                    var dic_config = fullConfig.config
                     console.log('dic_config before ' + dic_config )
                     for (var [page, dic_tag] of Object.entries(dic_config)) {
                         console.log('page ' + page )
@@ -37,8 +39,10 @@ exports.handle = function(io,socket){
                       }
                     }
                     console.log(dic_config[page][tag])
-                    var newdic = JSON.stringify(dic_config)
-                    fs.writeFile("static/config.json", newdic, function(err) {
+                    // Update the full config and save to YAML
+                    fullConfig.config = dic_config
+                    var newYaml = yaml.dump(fullConfig)
+                    fs.writeFile("static/config.yaml", newYaml, function(err) {
                             if(err) { return console.log(err); }
                             console.log('saved config')
                         }); // end write file
