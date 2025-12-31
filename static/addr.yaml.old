@@ -1,0 +1,13 @@
+- "../../Téléchargements/Lemonde/2020"
+- "../../../../../../media"
+- "../../../../../../media/sdata":
+    - "Lemonde/2018"
+    - "docs/test"
+    - "docs/test1"
+    - "papers_to_keep/Physics"
+- "public"
+- "scripts"
+- "lib"
+- "icons"
+- "fonts"
+
