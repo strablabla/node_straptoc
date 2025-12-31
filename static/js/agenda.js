@@ -5,87 +5,71 @@ Agenda
 */
 
 var fs = require('fs')
-
-function date_day(){
-
-      /*
-
-      Build the text date
-
-      */
-
-      var date = new Date()
-      var day = date.getDate();
-      var month = date.getMonth() + 1;
-      var year = date.getFullYear();
-      var txt_date = [year, month, day].join('_').slice(2)
-
-      return txt_date
-
-}
-
-function modify_agenda(dic_agenda, text){
-
-      var year = text.split('_')[0]
-      var month = text.split('_')[1]
-      var day = text.split('_')[2]
-      var info_day = text.split('_')[3]
-      var new_agenda_infos = JSON.parse(info_day)
-
-      //-----
-
-      if(dic_agenda[year] == undefined){ dic_agenda[year] = {} }
-      else{ console.log('dic_agenda[year] is ' + dic_agenda[year]) }
-      if(dic_agenda[year][month] == undefined){ dic_agenda[year][month] = {} }
-      if(dic_agenda[year][month][day] == undefined){ dic_agenda[year][month][day] = {} }
-      dic_agenda[year][month][day] = new_agenda_infos
-
-      return dic_agenda
-
-}
+var yaml = require('js-yaml')
 
 exports.handle = function(socket){
 
-    socket.on('ask_agenda', function(){
+    socket.on('ask_agenda', function(dateKey){
+        // dateKey format: "2025_12_31"
+        fs.readFile('static/agenda.yaml', 'utf8', function (err, data) {
+            if (err) {
+                // File doesn't exist yet, return empty array
+                socket.emit('day_notes', JSON.stringify([]))
+                return
+            }
+            try {
+                var agenda = yaml.load(data) || {}
+                var notes = agenda[dateKey] || []
+                socket.emit('day_notes', JSON.stringify(notes))
+            } catch(e) {
+                console.log('Error loading agenda:', e)
+                socket.emit('day_notes', JSON.stringify([]))
+            }
+        })
+    })
 
-        fs.readFile('static/agenda.json', 'utf8', function (err,agenda) {
-              if (err) { return console.log(err); }
-               socket.emit('all_agenda', agenda)
+    socket.on('save_note', function(data){
+        // data format: { dateKey: "2025_12_31", note: "text of note" }
+        var noteData = JSON.parse(data)
+        var dateKey = noteData.dateKey
+        var noteText = noteData.note
 
+        fs.readFile('static/agenda.yaml', 'utf8', function (err, yamlData) {
+            var agenda = {}
+
+            if (!err && yamlData) {
+                try {
+                    agenda = yaml.load(yamlData) || {}
+                } catch(e) {
+                    console.log('Error parsing agenda.yaml:', e)
+                    agenda = {}
+                }
+            }
+
+            // Initialize array for this date if it doesn't exist
+            if (!agenda[dateKey]) {
+                agenda[dateKey] = []
+            }
+
+            // Add new note with timestamp
+            var timestamp = new Date().toISOString()
+            agenda[dateKey].push({
+                timestamp: timestamp,
+                text: noteText
             })
-          })
 
-    // socket.on('new_note', function(){               //----- note triggered by voice..
-    //     console.log('creating a new note from voice command.. ')
-    //     socket.emit('create_new_note','')
-    // })
-
-    socket.on('save_agenda', function(text){               //----- note
-        fs.readFile('static/agenda.json', 'utf8', function (err, agenda) {
-                if (err) { return console.log(err); }
-            try{
-                var dic_agenda = JSON.parse(agenda)
-
-                dic_agenda = modify_agenda(dic_agenda, text)
-
-                var dicstring = JSON.stringify(dic_agenda) // return to string..
-
-
-                console.log(dic_agenda)
-                console.log(dicstring)
-
-
-                fs.writeFile("static/agenda.json", dicstring, function(err) {
-                        if(err) { return console.log(err); }
-                        console.log('saved agenda')
-                    }); // end write file
-                socket.emit('all_agenda', dicstring) // reemit no
-
-            }catch(err){}
-
-
-        }); // end fs.readFile
-
+            // Save back to YAML
+            var yamlString = yaml.dump(agenda)
+            fs.writeFile("static/agenda.yaml", yamlString, function(err) {
+                if(err) {
+                    console.log('Error saving agenda:', err)
+                    return
+                }
+                console.log('saved agenda note')
+                // Send back updated notes for this day
+                socket.emit('day_notes', JSON.stringify(agenda[dateKey]))
+            })
+        })
     })
 
 }

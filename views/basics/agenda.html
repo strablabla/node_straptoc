@@ -99,8 +99,7 @@ var dic_css_year_title = {
             'z-index': '4',
             'text-align' : 'center',
             'font-size':'20px',
-            'font-family': "apple_garamond",
-            'opacity':'0.6'
+            'font-family': "apple_garamond"
 
         }
 
@@ -126,50 +125,55 @@ var dic_css_month_title = {
 
 //--------- Panel day
 
-agenda_note_css =  {
-    'border': '1px solid #000',
-    'width': '200px',
-    'height': '100px'
+var css_notes_list = {
+    'margin-top': '10px',
+    'margin-bottom': '20px',
+    'padding': '10px',
+    'max-height': '250px',
+    'overflow-y': 'auto',
+    'text-align': 'left'
 }
 
-var css_agenda_note_name  = {
-            'position':'absolute',
-            'background-color': 'white', //
-            //'box-shadow': '0.1em 0.1em 0.7em',
-            'padding-bottom': '3px',
-            'padding-top': '3px',
-            'padding-left': '5px',
-            'padding-right': '5px',
-            //'left': '50%',   // hidden
-            'margin-left': '50px',
-            //'top': '10px',
-            'width': '200px',
-            'height': '30px',
-            'z-index': '5',
-            'text-align' : 'center',
-            'font-size':'18px',
-            'font-family': 'apple_garamond'
-        }
+var css_single_note = {
+    'background-color': '#f9f9f9',
+    'border-left': '3px solid #28a745',
+    'padding': '10px',
+    'margin-bottom': '10px',
+    'font-family': 'apple_garamond',
+    'font-size': '14px'
+}
 
-var final_note_size = 15
-var css_agenda_note  = {
-            'position':'absolute',
-            'background-color': 'white', //
-            //'box-shadow': '0.1em 0.1em 0.2em',
-            'padding-bottom': '2px',
-            'padding-top': '3px',
-            'padding-left': '10px',
-            'padding-right': '10px',
-            //'left': '50%',   // hidden
-            'margin-left': '20px',
-            //'top': '10px',
-            'width': '250px',
-            'height': '30px',
-            'z-index': '5',
-            'text-align' : 'left',
-            'font-size': final_note_size + 'px',
-            'font-family': 'apple_garamond'
-        }
+var css_note_timestamp = {
+    'font-size': '11px',
+    'color': '#888',
+    'margin-bottom': '5px'
+}
+
+var css_textarea = {
+    'width': '90%',
+    'height': '80px',
+    'padding': '10px',
+    'font-family': 'apple_garamond',
+    'font-size': '14px',
+    'border': '1px solid #ccc',
+    'border-radius': '4px',
+    'resize': 'vertical',
+    'display': 'block',
+    'margin': '10px auto'
+}
+
+var css_save_button = {
+    'margin': '10px auto',
+    'padding': '8px 20px',
+    'background-color': '#28a745',
+    'color': 'white',
+    'border': 'none',
+    'border-radius': '4px',
+    'cursor': 'pointer',
+    'font-family': 'apple_garamond',
+    'font-size': '14px',
+    'display': 'block'
+}
 
 var icon_close_pan_day = $('<img/>').attr('src',"capicon/svg/057.svg")  // icon to close day panel
 icon_close_pan_day.attr('id','icon_close_pan_day')
@@ -184,19 +188,16 @@ icon_close_pan_day.attr('id','icon_close_pan_day')
                       })
 
 var dic_css_pan_day_title = {
-            'position':'absolute',
+            'position':'relative',
             'background-color': 'rgb(255, 238, 204)', //
             //'box-shadow': '0.1em 0.1em 0.7em',
             'padding-bottom': '3px',
             'padding-top': '6px',
             'padding-left': '5px',
             'padding-right': '5px',
-            'left': '50%',   // hidden
-            'margin-left': '-15px',
-            'top': '10px',
+            'margin': '0 auto 20px auto',
             'width': '30px',
             'height': '30px',
-            'z-index': '5',
             'text-align' : 'center',
             'font-size':'17px',
             'font-family': 'apple_garamond'
@@ -206,15 +207,17 @@ var dic_css_panel_day = {
             'background-color':'white',
             'box-shadow': '0.1em 0.1em 0.7em',
             'position':'fixed',
-            'left': '50%',   // hidden
+            'left': '50%',
             'top': '70px',
-            'width': '900px',
-            'margin-left':'-450px',
-            'height': '380px',
+            'width': '600px',
+            'margin-left':'-300px',
+            'height': '500px',
             'text-align' : 'center',
             'font-size': '20px',
             'font-family': "apple_garamond",
-            'z-index': '4'
+            'z-index': '9999',
+            'padding': '20px',
+            'overflow-y': 'auto'
         }
 
 var dic_css_cell_day = {
@@ -286,22 +289,32 @@ function fill_cell(i,j){
           if ((curr_month == selected_month) & (curr_year == selected_year)){
                curr_cell.css({
                     'border': '2px solid #28a745',
-                    'border-radius': '50%',
                     'box-shadow': '0 0 5px rgba(40, 167, 69, 0.5)',
-                    'font-weight': 'bold'
+                    'font-weight': 'bold',
+                    'padding-top': '1px',
+                    'padding-bottom': '1px',
+                    'padding-left': '3px',
+                    'padding-right': '3px'
                })
           }
 
       }
       curr_cell.click(function(){
-          $('#pan_day').show()
+          var fullYear = new Date().getFullYear()
+          var dateKey = fullYear + '_' + selected_month + '_' + index_cell
+
+          $('#pan_day').empty()
+          $('#pan_day').append(icon_close_pan_day)
+          $('#pan_day').append(pan_day_title)
           $('#pan_day_title').text(index_cell)
 
-          socket.emit('ask_agenda','')
-          socket.on('all_agenda', function(text){
-              make_notes_areas(text, index_cell)
-              note_interact()
-          })
+          // Add a temporary loading message
+          $('#pan_day').append($('<div/>').text('Chargement...').css({'margin-top': '50px'}))
+
+          $('#pan_day').show()
+
+          // Request notes for this day
+          socket.emit('ask_agenda', dateKey)
       })
       return curr_cell
 
@@ -324,113 +337,98 @@ $('#agenda_panel').append(year_title)
 //----- Panel day
 
 var pan_day_title = $('<div/>').attr('id','pan_day_title')
-                               .css(dic_css_pan_day_title) // text('eraeaea').
+                               .css(dic_css_pan_day_title)
 var pan_day = $('<div/>').attr('id','pan_day')
                          .css(dic_css_panel_day)
-                         .append(pan_day_title)
-                         .append(icon_close_pan_day)
                          .hide()
-function close_and_save_day(){
 
-      $('#pan_day').toggle()
-      var dic_day_infos = {}
-      var num_day = $('#pan_day_title').text()    // selected day
-      dic_day_infos[num_day] = {}
-      var dic_curr_day =  dic_day_infos[num_day]
-      $('.agenda_note').each(function(){
-
-              var txt = $(this).text()
-              var hour = txt.match(/\d{1,2}h\d{0,2}/)
-              if (hour != undefined) {
-                         dic_curr_day[hour] = txt.split(hour)[1]
-                    }
-            })
-
-      var str_year_month_day = selected_year + '_' + selected_month + '_' + num_day + '_'
-      var infos_agenda_sent = str_year_month_day + JSON.stringify(dic_day_infos[num_day])
-      socket.emit('save_agenda', infos_agenda_sent);
-
-}
 icon_close_pan_day.click(function(){
-      close_and_save_day()
+      $('#pan_day').hide()
 })
 
-function make_notes_areas(text, index_cell){
+// Function to display notes in the panel
+function displayNotesInPanel(notesJson){
+      var notes = JSON.parse(notesJson)
 
-      var dic_agenda = JSON.parse(text)                 // dict with complete information..
-      try{ var infos_day = dic_agenda[selected_year][selected_month][index_cell] }
-      catch{ infos_day = undefined }
-
-      step_h = 30 //
-      step_mom_day = 300 //
-      top_mom = 70
-
-      // The 3 periods
-
-      var morning = $('<div/>').text('Matin')
-      morning.css(css_agenda_note_name)
-      morning.css({'top': top_mom + 'px', 'left': '-70px'})
-      $('#pan_day').append(morning)
-      //-------------
-      var afternoon = $('<div/>').text('Après-midi')
-      afternoon.css(css_agenda_note_name)
-      afternoon.css({'top': top_mom + 'px', 'left': '250px'})
-       //------------
-      $('#pan_day').append(afternoon)
-      var evening = $('<div/>').text('Soir')
-      evening.css(css_agenda_note_name)
-      evening.css({'top': top_mom + 'px', 'right': '120px'})
-      //------------
-      $('#pan_day').append(evening)
-
-      for (j = 0; j < 3; j++){                // morning, afternoon, evening..
-            for (i = 0; i < 6; i++){          // hours
-
-                numh = 6*j + 8 + i          // number hour..
-                if (numh < 23){
-
-                      var pos_top = (i+1)*step_h + 100
-                      var pos_left = j*step_mom_day + 30
-                      var note = $('<div/>').addClass('agenda_note')
-                                            .css(css_agenda_note)
-                      if (infos_day == undefined){
-                            note.text( numh + 'h ... ')  // by default
-                          }
-                      else{
-                          note.text( numh + 'h' + infos_day[numh + 'h'] )  // from dic
-                      }
-                      note.css({'top': pos_top + 'px', 'left' : pos_left + 'px'})  // note element for hour "numh"
-                      $('#pan_day').append(note)
-                }
-
-            }
-        }
-}
-
-var hour_note_size = 14
-function note_interact(){             // text <---> input
-
-        $('div.agenda_note').click(function(){
-          if(!$(this).children("input").length) {
-              $(this).html(function(){
-                    return "<input id=txtnote value='" + $(this).html() +  "'style='width: 230px; height: 23px;'>"
-              });
-              $('#txtnote').css({'font-size': hour_note_size + 'px'})
-              $('#txtnote').show()
-              $(this).children("input").focus();
+      // Clear loading message and old content - keep only title and close icon
+      $('#pan_day > div').each(function(){
+          if ($(this).attr('id') !== 'pan_day_title' && $(this).attr('id') !== 'icon_close_pan_day') {
+              $(this).remove()
           }
-        });
+      })
+      $('#notes_list').remove()
+      $('#new_note_textarea').remove()
+      $('#save_note_btn').remove()
 
-        $('div.agenda_note').focusout(null,function(){
-             //alert('ouuuutt')
-              $(this).html(function(){
-                 return $(this).children('input').val();
-          });
-        });
+      // Create notes list container
+      var notesList = $('<div/>').attr('id', 'notes_list').css(css_notes_list)
+
+      // Display existing notes in chronological order
+      if (notes && notes.length > 0) {
+          for (var i = 0; i < notes.length; i++) {
+              var note = notes[i]
+              var noteDiv = $('<div/>').css(css_single_note)
+
+              // Format timestamp
+              var date = new Date(note.timestamp)
+              var timeStr = date.toLocaleString()
+              var timestampDiv = $('<div/>').css(css_note_timestamp).text(timeStr)
+
+              var textDiv = $('<div/>').text(note.text)
+
+              noteDiv.append(timestampDiv).append(textDiv)
+              notesList.append(noteDiv)
+          }
+      } else {
+          notesList.append($('<div/>').css({'color': '#999', 'text-align': 'center', 'padding': '20px'})
+                                       .text('Aucune note pour ce jour'))
+      }
+
+      // Add textarea for new note
+      var textarea = $('<textarea/>').attr('id', 'new_note_textarea')
+                                      .attr('placeholder', 'Entrez une nouvelle note...')
+                                      .css(css_textarea)
+
+      // Add save button
+      var saveBtn = $('<button/>').attr('id', 'save_note_btn')
+                                   .text('Enregistrer')
+                                   .css(css_save_button)
+
+      saveBtn.click(function(){
+          var noteText = $('#new_note_textarea').val().trim()
+          if (noteText) {
+              var fullYear = new Date().getFullYear()
+              var dayNum = $('#pan_day_title').text()
+              var dateKey = fullYear + '_' + selected_month + '_' + dayNum
+
+              var data = JSON.stringify({
+                  dateKey: dateKey,
+                  note: noteText
+              })
+
+              socket.emit('save_note', data)
+              $('#new_note_textarea').val('')  // Clear textarea
+          }
+      })
+
+      saveBtn.hover(
+          function(){ $(this).css('background-color', '#218838') },
+          function(){ $(this).css('background-color', '#28a745') }
+      )
+
+      // Add everything to the panel
+      $('#pan_day').append(notesList)
+      $('#pan_day').append(textarea)
+      $('#pan_day').append(saveBtn)
 
 }
 
-$('#content').append(pan_day) // .text('aeaekahehaohea')
+// Handle receiving notes for a day
+socket.on('day_notes', function(notesJson){
+      displayNotesInPanel(notesJson)
+})
+
+$('#content').append(pan_day)
 
 //---------------------- Make day cells for a month..
 
