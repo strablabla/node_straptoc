@@ -110,9 +110,9 @@ color_tags:
       color: '#4dc3ff'
   tests:
     inside:
-      color: '#ff6666'
+      color: '#f5f82a'
     title:
-      color: '#ff8080'
+      color: '#c4c621'
   écologie:
     inside:
       color: '#00e600'
@@ -188,6 +188,11 @@ color_tags:
       color: '#ffcc33'
     title:
       color: '#ffd24d'
+  voyage:
+    inside:
+      color: '#fbd85b'
+    title:
+      color: '#c8ac48'
 vocabulaire:
   '#Science_':
     - Physique

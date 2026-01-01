@@ -217,7 +217,7 @@
             <span class="close_color_tags_modal">&times;</span>
         </div>
 
-        <p class="shortcut_hint">💡 Shortcut: Press <strong>Ctrl+C</strong> to open/close | <strong>Esc</strong> to close</p>
+        <p class="shortcut_hint">💡 Shortcut: Press <strong>Ctrl+C</strong> to open/close | <strong>Esc</strong> to close | Auto-saves on close</p>
 
         <div id="color_tags_list">
             <!-- Color tags will be inserted here dynamically -->
@@ -228,7 +228,8 @@
             <button id="add_tag_button">Add tag</button>
         </div>
 
-        <button id="save_color_tags_button">💾 Save changes</button>
+        <!-- Auto-save on close - no manual save button needed -->
+        <!-- <button id="save_color_tags_button">💾 Save changes</button> -->
     </div>
 </div>
 
@@ -486,10 +487,10 @@ function setupEventHandlers() {
         }
     });
 
-    // Sauvegarder les modifications
-    $('#save_color_tags_button').click(function() {
-        saveColorTags();
-    });
+    // Auto-save on close - manual save button removed
+    // $('#save_color_tags_button').click(function() {
+    //     saveColorTags();
+    // });
 }
 
 // Darken a color by a percentage
@@ -587,6 +588,9 @@ function openModal() {
 }
 
 function closeModal() {
+    // Auto-save before closing
+    saveColorTags();
+
     $('#color_tags_modal').fadeOut(300);
     modalOpen = false;
 }
