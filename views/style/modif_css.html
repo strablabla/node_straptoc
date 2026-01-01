@@ -298,8 +298,7 @@ function change_tag_colors(elem, dic_style){ // , col_fist_level, col_sec_level
 function make_border(elem, dic_style){
 
       elem.children('ul').css({                          // vertical line on the left..
-                      'border-color': dic_style['inside']['color'], // 99dfff, e6f7ff
-                      'border-left': '2px solid', // solid, dashed
+                      'border-left': '2px solid ' + dic_style['inside']['color'], // solid with color
                       'border-spacing': '-10px',
                       'padding-left' : '20px'
                     })

@@ -55,9 +55,9 @@ color_tags:
       color: '#ff0000'
   drôle:
     inside:
-      color: '#ffff7d'
+      color: '#f7f7c0'
     title:
-      color: '#cccc64'
+      color: '#c5c599'
   histoire:
     inside:
       color: '#77b300'
@@ -75,9 +75,9 @@ color_tags:
       color: '#ffe680'
   boulot:
     inside:
-      color: '#cccc00'
+      color: '#f3f381'
     title:
-      color: '#e6e600'
+      color: '#c2c267'
   perso:
     inside:
       color: '#c6538c'
@@ -155,9 +155,9 @@ color_tags:
       color: '#b8b894'
   santé:
     inside:
-      color: '#99cc00'
+      color: '#ff80ca'
     title:
-      color: '#ace600'
+      color: '#cc66a1'
   phrases:
     inside:
       color: '#00aaff'

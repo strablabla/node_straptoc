@@ -5,7 +5,7 @@ New page
 */
 
 var fs = require('fs');
-var init = require('./init');
+var init = require('../../lib/init');
 
 exports.create_new_page = function(app, name_page, io){
 
