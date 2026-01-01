@@ -9,6 +9,71 @@ exports.handle = function(io,socket){
           init.config_state(io)
       })
 
+      // Get color_tags for the editor
+      socket.on('get_color_tags', function() {
+          fs.readFile('static/config.yaml', 'utf8', function (err, text) {
+              if (err) {
+                  console.log('Error reading config.yaml:', err);
+                  socket.emit('color_tags_data', JSON.stringify({}));
+                  return;
+              }
+
+              try {
+                  var fullConfig = yaml.load(text);
+                  var colorTags = fullConfig.color_tags || {};
+                  socket.emit('color_tags_data', JSON.stringify(colorTags));
+                  console.log('Sent color_tags to client');
+              } catch(err) {
+                  console.log('Error parsing config.yaml:', err);
+                  socket.emit('color_tags_data', JSON.stringify({}));
+              }
+          });
+      });
+
+      // Update color_tags
+      socket.on('update_color_tags', function(newColorTagsJson) {
+          console.log('Updating color_tags...');
+
+          fs.readFile('static/config.yaml', 'utf8', function (err, text) {
+              if (err) {
+                  console.log('Error reading config.yaml:', err);
+                  socket.emit('color_tags_updated', false);
+                  return;
+              }
+
+              try {
+                  var fullConfig = yaml.load(text);
+                  var newColorTags = JSON.parse(newColorTagsJson);
+
+                  // Update the color_tags section
+                  fullConfig.color_tags = newColorTags;
+
+                  // Save back to YAML
+                  var newYaml = yaml.dump(fullConfig, {
+                      indent: 2,
+                      lineWidth: -1,
+                      noRefs: true
+                  });
+
+                  fs.writeFile("static/config.yaml", newYaml, function(err) {
+                      if(err) {
+                          console.log('Error saving config.yaml:', err);
+                          socket.emit('color_tags_updated', false);
+                          return;
+                      }
+                      console.log('Color tags saved successfully');
+                      socket.emit('color_tags_updated', true);
+
+                      // Notify all clients to reload color tags
+                      init.color_tags(io);
+                  });
+              } catch(err) {
+                  console.log('Error updating color_tags:', err);
+                  socket.emit('color_tags_updated', false);
+              }
+          });
+      });
+
 
       socket.on('save_config', function(new_dic_config){               //-----
 

@@ -1,0 +1,595 @@
+<script src="my_color_picker.js"></script>
+<script src="lib/keymaster.js"></script>
+
+<style>
+/* Modal pour l'éditeur de color_tags */
+#color_tags_modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+#color_tags_modal_content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 8px;
+    width: 40%;
+    max-width: 450px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    font-size: 13px;
+}
+
+#color_tags_modal_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #4CAF50;
+}
+
+#color_tags_modal_header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.close_color_tags_modal {
+    color: #aaa;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close_color_tags_modal:hover,
+.close_color_tags_modal:focus {
+    color: #000;
+}
+
+.color_tag_item {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.color_tag_item:hover {
+    background-color: #f0f0f0;
+}
+
+.color_tag_name {
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c3e50;
+    min-width: 80px;
+    margin-right: 10px;
+}
+
+.color_tag_delete {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    transition: color 0.2s;
+}
+
+.color_tag_item:hover .color_tag_delete {
+    color: #e74c3c;
+}
+
+.color_tag_delete:hover {
+    color: #c0392b !important;
+}
+
+.color_input_text {
+    width: 80px;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+    margin-left: 10px;
+    margin-right: 30px;
+    margin-top: 10px;
+}
+
+.color_picker_input {
+    visibility: hidden;
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    border: 0;
+    top: 30px;
+}
+
+.color_preview_square {
+    width: 21px;
+    height: 21px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-right: 10px;
+    flex-shrink: 0;
+    transition: transform 0.1s;
+}
+
+.color_preview_square:hover {
+    transform: scale(1.1);
+}
+
+.color_preview_square:active {
+    transform: scale(0.95);
+}
+
+#add_color_tag_section {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #e8f5e9;
+    border-radius: 5px;
+    border: 2px dashed #4CAF50;
+}
+
+#add_color_tag_section h3 {
+    margin-top: 0;
+    color: #2e7d32;
+    font-size: 14px;
+}
+
+#new_tag_name {
+    width: 50%;
+    padding: 9px;
+    margin-bottom: 8px;
+    border: 1px solid #4CAF50;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+#add_tag_button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#add_tag_button:hover {
+    background-color: #45a049;
+}
+
+#save_color_tags_button {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+#save_color_tags_button:hover {
+    background-color: #0b7dda;
+}
+
+.shortcut_hint {
+    font-size: 10px;
+    color: #777;
+    margin-top: 5px;
+}
+</style>
+
+<!-- Modal Structure -->
+<div id="color_tags_modal">
+    <div id="color_tags_modal_content">
+        <div id="color_tags_modal_header">
+            <h2>Color Tags Editor</h2>
+            <span class="close_color_tags_modal">&times;</span>
+        </div>
+
+        <p class="shortcut_hint">💡 Shortcut: Press <strong>Ctrl+C</strong> to open/close | <strong>Esc</strong> to close</p>
+
+        <div id="color_tags_list">
+            <!-- Color tags will be inserted here dynamically -->
+        </div>
+
+        <div id="add_color_tag_section">
+            <input type="text" id="new_tag_name" placeholder="Tag name (eg: science, travel, etc.)">
+            <button id="add_tag_button">Add tag</button>
+        </div>
+
+        <button id="save_color_tags_button">💾 Save changes</button>
+    </div>
+</div>
+
+<script>
+/*
+ * Color Tags Editor - Édition des tags de couleur depuis config.yaml
+ * Raccourci: Ctrl+C
+ */
+
+// Variables globales
+var colorTagsData = {};
+var modalOpen = false;
+
+// Initialisation
+$(document).ready(function() {
+    loadColorTags();
+    setupEventHandlers();
+    setupKeyboardShortcuts();
+});
+
+// Charger les color_tags depuis le serveur
+function loadColorTags() {
+    socket.emit('get_color_tags');
+}
+
+// Recevoir les color_tags du serveur
+socket.on('color_tags_data', function(data) {
+    colorTagsData = JSON.parse(data);
+    renderColorTags();
+});
+
+// Afficher les color_tags dans la modal
+function renderColorTags() {
+    var container = $('#color_tags_list');
+    container.empty();
+
+    // Get tag names and sort alphabetically
+    var tagNames = Object.keys(colorTagsData).sort();
+
+    // Display tags in alphabetical order
+    for (var i = 0; i < tagNames.length; i++) {
+        var tagName = tagNames[i];
+        var tag = colorTagsData[tagName];
+        var tagElement = createColorTagElement(tagName, tag);
+        container.append(tagElement);
+    }
+}
+
+// Create HTML element for a color tag
+function createColorTagElement(tagName, tagData) {
+    var insideColor = tagData.inside ? tagData.inside.color : '#ffffff';
+    var titleColor = tagData.title ? tagData.title.color : '#000000';
+
+    var item = $('<div>').addClass('color_tag_item').attr('data-tag', tagName);
+
+    // Tag name
+    var nameSpan = $('<span>').addClass('color_tag_name').text(tagName);
+
+    // Visual preview square (clickable)
+    var previewSquare = $('<div>').addClass('color_preview_square')
+                                   .css('background-color', insideColor)
+                                   .attr('data-tag', tagName);
+
+    // Native color picker input (hidden)
+    var colorPicker = $('<input>').attr('type', 'color')
+                                   .addClass('color_picker_input')
+                                   .val(insideColor)
+                                   .attr('data-tag', tagName);
+
+    // Hex text input
+    var hexInput = $('<input>').attr('type', 'text')
+                               .addClass('color_input_text')
+                               .val(insideColor)
+                               .attr('data-tag', tagName)
+                               .attr('data-type', 'inside');
+
+    // Delete button
+    var deleteBtn = $('<button>').addClass('color_tag_delete')
+                                  .text('✕')
+                                  .attr('data-tag', tagName);
+
+    // Assemble: name - preview square - hidden picker - hex - delete
+    item.append(nameSpan)
+        .append(previewSquare)
+        .append(colorPicker)
+        .append(hexInput)
+        .append(deleteBtn);
+
+    return item;
+}
+
+// Gestion des événements
+function setupEventHandlers() {
+    // Fermer la modal
+    $('.close_color_tags_modal').click(function() {
+        closeModal();
+    });
+
+    // Fermer si clic en dehors de la modal
+    $('#color_tags_modal').click(function(event) {
+        if (event.target.id === 'color_tags_modal') {
+            closeModal();
+        }
+    });
+
+    // Click on preview square opens hidden color picker
+    $(document).on('click', '.color_preview_square', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var tagName = $(this).attr('data-tag');
+        var picker = $('.color_picker_input[data-tag="' + tagName + '"]')[0];
+        if (picker) {
+            picker.click();
+        }
+    });
+
+    // Native color picker change event
+    $(document).on('input', '.color_picker_input', function() {
+        var tagName = $(this).attr('data-tag');
+        var color = $(this).val();
+
+        // Update preview square
+        $('.color_preview_square[data-tag="' + tagName + '"]').css('background-color', color);
+
+        // Update hex text input
+        $('.color_input_text[data-tag="' + tagName + '"]').val(color);
+
+        // Calculate darker title color automatically
+        var titleColor = darkenColor(color, 20);
+
+        // Update data
+        updateColorTagData(tagName, 'inside', color);
+        updateColorTagData(tagName, 'title', titleColor);
+    });
+
+    // Sync text input changes
+    $(document).on('input', '.color_input_text', function() {
+        var tagName = $(this).attr('data-tag');
+        var color = $(this).val();
+
+        // Validate hexadecimal format
+        if (/^#[0-9A-F]{6}$/i.test(color)) {
+            // Update preview square
+            $('.color_preview_square[data-tag="' + tagName + '"]').css('background-color', color);
+
+            // Update native color picker
+            $('.color_picker_input[data-tag="' + tagName + '"]').val(color);
+
+            // Calculate darker title color automatically
+            var titleColor = darkenColor(color, 20);
+
+            // Update data
+            updateColorTagData(tagName, 'inside', color);
+            updateColorTagData(tagName, 'title', titleColor);
+        }
+    });
+
+    // Double-click on tag name to rename
+    $(document).on('dblclick', '.color_tag_name', function() {
+        var $nameSpan = $(this);
+        var oldTagName = $nameSpan.closest('.color_tag_item').attr('data-tag');
+        var currentText = $nameSpan.text();
+
+        // Create an input field to edit the name
+        var $input = $('<input>')
+            .attr('type', 'text')
+            .val(currentText)
+            .addClass('color_tag_name_edit')
+            .css({
+                'font-weight': 'bold',
+                'font-size': '14px',
+                'border': '1px solid #4CAF50',
+                'border-radius': '3px',
+                'padding': '2px 4px',
+                'min-width': '80px',
+                'margin-right': '10px'
+            });
+
+        // Replace span with input
+        $nameSpan.replaceWith($input);
+        $input.focus().select();
+
+        // Handle rename on blur or enter
+        var finishRename = function() {
+            var newTagName = $input.val().trim();
+
+            // If empty or unchanged, revert
+            if (newTagName === '' || newTagName === oldTagName) {
+                $input.replaceWith($nameSpan);
+                return;
+            }
+
+            // Check if new name already exists
+            if (colorTagsData.hasOwnProperty(newTagName)) {
+                alert('Tag "' + newTagName + '" already exists');
+                $input.replaceWith($nameSpan);
+                return;
+            }
+
+            // Rename the tag in data
+            colorTagsData[newTagName] = colorTagsData[oldTagName];
+            delete colorTagsData[oldTagName];
+
+            // Re-render the list (will be sorted alphabetically)
+            renderColorTags();
+        };
+
+        $input.on('blur', finishRename);
+        $input.on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                finishRename();
+            }
+        });
+    });
+
+    // Delete a tag
+    $(document).on('click', '.color_tag_delete', function() {
+        var tagName = $(this).attr('data-tag');
+        if (confirm('Are you sure you want to delete tag "' + tagName + '"?')) {
+            delete colorTagsData[tagName];
+            renderColorTags();
+        }
+    });
+
+    // Add a new tag
+    $('#add_tag_button').click(function() {
+        var newTagName = $('#new_tag_name').val().trim();
+        if (newTagName === '') {
+            alert('Please enter a tag name');
+            return;
+        }
+
+        if (colorTagsData.hasOwnProperty(newTagName)) {
+            alert('This tag already exists');
+            return;
+        }
+
+        // Create a new tag with default colors
+        colorTagsData[newTagName] = {
+            inside: { color: '#ffffff' },
+            title: { color: '#e6e6e6' }
+        };
+
+        renderColorTags();
+        $('#new_tag_name').val('');
+
+        // Scroller vers le nouveau tag
+        var newTagElement = $('.color_tag_item[data-tag="' + newTagName + '"]');
+        if (newTagElement.length) {
+            newTagElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            newTagElement.css('background-color', '#fffacd');
+            setTimeout(function() {
+                newTagElement.css('background-color', '');
+            }, 2000);
+        }
+    });
+
+    // Sauvegarder les modifications
+    $('#save_color_tags_button').click(function() {
+        saveColorTags();
+    });
+}
+
+// Darken a color by a percentage
+function darkenColor(hex, percent) {
+    // Convert hex to RGB
+    var r = parseInt(hex.substring(1, 3), 16);
+    var g = parseInt(hex.substring(3, 5), 16);
+    var b = parseInt(hex.substring(5, 7), 16);
+
+    // Darken by reducing each component
+    r = Math.max(0, Math.floor(r * (1 - percent / 100)));
+    g = Math.max(0, Math.floor(g * (1 - percent / 100)));
+    b = Math.max(0, Math.floor(b * (1 - percent / 100)));
+
+    // Convert back to hex
+    var rr = r.toString(16).padStart(2, '0');
+    var gg = g.toString(16).padStart(2, '0');
+    var bb = b.toString(16).padStart(2, '0');
+
+    return '#' + rr + gg + bb;
+}
+
+// Update tag data
+function updateColorTagData(tagName, type, color) {
+    if (!colorTagsData[tagName]) {
+        colorTagsData[tagName] = {
+            inside: { color: '#ffffff' },
+            title: { color: '#e6e6e6' }
+        };
+    }
+
+    if (type === 'inside') {
+        colorTagsData[tagName].inside = { color: color };
+    } else if (type === 'title') {
+        colorTagsData[tagName].title = { color: color };
+    }
+}
+
+// Save color_tags to server
+function saveColorTags() {
+    socket.emit('update_color_tags', JSON.stringify(colorTagsData));
+
+    // Visual feedback
+    var btn = $('#save_color_tags_button');
+    var originalText = btn.text();
+    btn.text('✅ Saved!').prop('disabled', true);
+
+    setTimeout(function() {
+        btn.text(originalText).prop('disabled', false);
+    }, 2000);
+}
+
+// Save confirmation from server
+socket.on('color_tags_updated', function(success) {
+    if (success) {
+        console.log('Color tags updated successfully');
+        // Reload to get latest data
+        loadColorTags();
+    } else {
+        alert('Error saving color tags');
+    }
+});
+
+// Configuration des raccourcis clavier
+function setupKeyboardShortcuts() {
+    // Ctrl+C pour ouvrir/fermer la modal
+    key('ctrl+c', function(e) {
+        e.preventDefault();
+        toggleModal();
+        return false;
+    });
+
+    // Échap pour fermer la modal
+    key('esc', function() {
+        if (modalOpen) {
+            closeModal();
+            return false;
+        }
+    });
+}
+
+// Ouvrir/Fermer la modal
+function toggleModal() {
+    if (modalOpen) {
+        closeModal();
+    } else {
+        openModal();
+    }
+}
+
+function openModal() {
+    $('#color_tags_modal').fadeIn(300);
+    modalOpen = true;
+    loadColorTags(); // Recharger les données à l'ouverture
+}
+
+function closeModal() {
+    $('#color_tags_modal').fadeOut(300);
+    modalOpen = false;
+}
+
+console.log('Color Tags Editor loaded - Press Ctrl+C to open');
+</script>
