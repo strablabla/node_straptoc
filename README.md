@@ -63,7 +63,7 @@ Node Straptoc is a sophisticated personal information management system that com
 - Node.js (v12 or higher)
 - npm or yarn
 
-### Setup
+### Quick Start
 
 1. Clone the repository:
 ```bash
@@ -76,47 +76,76 @@ cd node_straptoc
 npm install
 ```
 
-3. Generate SSL certificates for HTTPS (or use existing ones):
+3. **Create your configuration files** (copy from templates):
 ```bash
-# Place your SSL certificate files in the project root:
-# - key.pem (private key)
-# - server.crt (certificate)
+cd static/
+cp config.yaml.example config.yaml
+cp agenda.yaml.example agenda.yaml
+cp notes.json.example notes.json
+cp pages.json.example pages.json
+cp drawing_state.json.example drawing_state.json
+cd ..
 ```
 
-4. Configure the application:
-   - Edit [static/config.yaml](static/config.yaml) to customize:
-     - File paths and directories
+4. **Edit your configuration**:
+   - Open [static/config.yaml](static/config.yaml) and customize:
+     - File paths and directories (addresses section)
+     - Server port and host (server section)
      - Color tags
      - Voice command vocabulary
      - UI settings
 
-5. Start the server:
+5. **Generate SSL certificates** for HTTPS:
+```bash
+openssl genrsa -out key.pem 2048
+openssl req -new -key key.pem -out csr.pem
+openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out server.crt
+```
+
+6. **Start the server**:
 ```bash
 node html_app.js
 ```
 
-6. Access the application:
-   - Open your browser and navigate to `https://localhost:3001`
+7. **Access the application**:
+   - Open your browser and navigate to `https://localhost:3001` (or your configured port)
    - Accept the self-signed certificate warning (for development)
+
+> **Note**: Your personal configuration files (`config.yaml`, `agenda.yaml`, etc.) are ignored by git and won't be overwritten by `git pull`. See [SETUP.md](SETUP.md) for detailed setup instructions.
 
 ## Configuration
 
 The application uses a centralized YAML configuration file: [static/config.yaml](static/config.yaml)
 
-### Configuration Sections:
+### Main Configuration Sections:
+- **server**: Server settings (port, host, SSL certificates) - **NEW**
 - **addresses**: Static file paths and directories
 - **color_tags**: Category definitions for content organization
 - **vocabulaire**: Hierarchical voice command vocabulary
 - **subtitles_path**: Path to subtitle files
 - **config**: UI styling and page properties
 
-### Additional Configuration Files:
+### Server Configuration Example:
+```yaml
+server:
+  port: 3001           # HTTPS port (default: 3001)
+  host: "0.0.0.0"      # Listen on all interfaces (use "127.0.0.1" for localhost only)
+  ssl:
+    key: "key.pem"     # SSL private key path
+    cert: "server.crt" # SSL certificate path
+```
+
+### User-Specific Files (ignored by git):
+- `config.yaml` - Main configuration (created from `config.yaml.example`)
 - `agenda.yaml` - Calendar events and tasks
 - `notes.json` - User notes
 - `pages.json` - Available pages
 - `drawing_state.json` - Canvas drawing state
 - `latex_voc.json` - LaTeX voice commands
 - `strap_database.db` - SQLite user database
+- `*.pem`, `*.crt` - SSL certificates (never commit these!)
+
+> **Important**: These files are protected by `.gitignore` and won't be overwritten by `git pull`. Template files (`.example`) are provided as references.
 
 ## Project Structure
 

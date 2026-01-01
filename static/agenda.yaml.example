@@ -1,0 +1,20 @@
+# Fichier exemple pour l'agenda
+# Copiez ce fichier vers agenda.yaml: cp agenda.yaml.example agenda.yaml
+# Le fichier agenda.yaml est ignoré par git et contiendra vos événements personnels
+
+# Format des entrées:
+# 'YYYY_MM_DD':
+#   - timestamp: 'ISO 8601 timestamp'
+#     text: 'Votre texte'
+#     alert: true  # (optionnel) pour les alertes avec horaire
+
+# Exemple avec horaire et alerte (format: HH:MM texte):
+'2026_01_15':
+  - timestamp: '2026-01-15T10:00:00.000Z'
+    text: '14h30 Réunion importante'
+    alert: true
+
+# Exemple sans horaire:
+'2026_01_20':
+  - timestamp: '2026-01-20T09:00:00.000Z'
+    text: 'Note pour cette journée'

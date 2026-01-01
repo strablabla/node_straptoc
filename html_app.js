@@ -4,6 +4,7 @@ const express = require('express')
 const path = require("path");
 const open = require('open');
 const fs = require('fs');
+const yaml = require('js-yaml');
 const nunjucks  = require('nunjucks');      // templating tool..
 
 //-----------------
@@ -20,11 +21,43 @@ var store = require('./static/js/store');
 var agenda = require('./static/js/agenda');
 var config = require('./static/js/config');
 
+//--------------  Load configuration
+
+// Load server configuration from config.yaml
+const configPath = './static/config.yaml';
+let serverConfig = {
+  port: 3001,
+  host: '0.0.0.0',
+  ssl: {
+    key: 'key.pem',
+    cert: 'server.crt'
+  }
+};
+
+try {
+  const configFile = fs.readFileSync(configPath, 'utf8');
+  const fullConfig = yaml.load(configFile);
+  if (fullConfig.server) {
+    serverConfig = {
+      port: fullConfig.server.port || 3001,
+      host: fullConfig.server.host || '0.0.0.0',
+      ssl: {
+        key: (fullConfig.server.ssl && fullConfig.server.ssl.key) || 'key.pem',
+        cert: (fullConfig.server.ssl && fullConfig.server.ssl.cert) || 'server.crt'
+      }
+    };
+  }
+  console.log('Server configuration loaded from config.yaml');
+} catch (err) {
+  console.warn('Warning: Could not load server config from config.yaml, using defaults');
+  console.warn('Error:', err.message);
+}
+
 //--------------  Server
 
 const options = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('server.crt')
+  key: fs.readFileSync(serverConfig.ssl.key),
+  cert: fs.readFileSync(serverConfig.ssl.cert)
 };
 
 var app = express()
@@ -139,9 +172,11 @@ io.sockets.on('connection', function (socket) {
 
 }); // io.sockets.on connection
 
-var port = 3001
-var host = '0.0.0.0' // 127.0.0.1
+// Use configuration from config.yaml
+var port = serverConfig.port;
+var host = serverConfig.host;
 server.listen(port, host);
 var addr = 'https://{}'.format(host) + ':{}/'.format(port) // access through 192.168.0.13..
 console.log('Server running at {}'.format(addr));
+console.log('Port: {} | Host: {}'.format(port, host));
 open(addr,"node-strap");

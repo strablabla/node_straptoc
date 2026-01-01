@@ -1,18 +1,23 @@
 # Configuration centralisée pour node_straptoc
 # Ce fichier regroupe addr.yaml, color_tags.json, comm_voc.json, subtit.json et config.json
+#
+# INSTRUCTIONS:
+# 1. Copiez ce fichier vers config.yaml: cp config.yaml.example config.yaml
+# 2. Modifiez config.yaml avec vos propres chemins et préférences
+# 3. Le fichier config.yaml est ignoré par git et ne sera pas écrasé par git pull
 
 # ============================================================================
 # Adresses et chemins (anciennement addr.yaml)
 # ============================================================================
 addresses:
-  - "../../Téléchargements/Lemonde/2020"
-  - "../../../../../../media"
-  - path: "../../../../../../media/sdata"
+  # Remplacez ces chemins par vos propres répertoires
+  - "path/to/your/downloads/folder"
+  - "path/to/your/media/folder"
+  - path: "path/to/your/media/data"
     subdirs:
-      - "Lemonde/2018"
-      - "docs/test"
-      - "docs/test1"
-      - "papers_to_keep/Physics"
+      - "subfolder1"
+      - "subfolder2"
+      - "subfolder3"
   - "public"
   - "scripts"
   - "lib"
@@ -201,6 +206,7 @@ color_tags:
 
 # ============================================================================
 # Vocabulaire commun (anciennement comm_voc.json)
+# Ajoutez ou modifiez les catégories selon vos besoins
 # ============================================================================
 vocabulaire:
   "#Science_":
@@ -347,7 +353,7 @@ vocabulaire:
 # ============================================================================
 # Sous-titres (anciennement subtit.json)
 # ============================================================================
-subtitles_path: "../../../../../../media/sdata/Films/Very_Good"
+subtitles_path: "path/to/your/subtitles/folder"
 
 # ============================================================================
 # Configuration serveur

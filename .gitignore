@@ -20,5 +20,24 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# User-specific configuration files (use .example templates instead)
+static/config.yaml
+static/agenda.yaml
+static/notes.json
+static/pages.json
+static/drawing_state.json
+static/latex_voc.json
+static/addr_saved.json
 
-views/saved
+# User database
+static/js/strap_database.db
+*.db
+
+# SSL certificates and private keys (SECURITY: never commit these!)
+*.pem
+*.crt
+*.key
+
+# Saved content
+views/saved/
+views/saved/*
