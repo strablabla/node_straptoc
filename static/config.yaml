@@ -8,9 +8,9 @@ addresses:
       - docs/test1
       - papers_to_keep/Physics
   - public
-  - scripts
-  - static
   - lib
+  - static
+  - scripts
   - icons
   - fonts
 color_tags:
