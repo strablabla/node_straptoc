@@ -207,25 +207,192 @@
     color: #777;
     margin-top: 5px;
 }
+
+/* Tabs */
+.tab-buttons {
+    display: flex;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #555;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+    color: #000;
+    background-color: #f0f0f0;
+}
+
+.tab-button.active {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Paths tab specific styles */
+#add_path_section_new {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#new_path_input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+#new_path_input:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+#add_path_button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+#add_path_button:hover {
+    background-color: #45a049;
+}
+
+#paths_list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: #fff;
+}
+
+.path-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.path-item:hover {
+    background-color: #e9e9e9;
+}
+
+.path-item .path-text {
+    flex: 1;
+    font-family: monospace;
+    font-size: 12px;
+    color: #333;
+}
+
+.path-item .remove-path {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 8px;
+}
+
+.path-item .remove-path:hover {
+    color: #a02a37;
+}
+
+/* Notification toast */
+#notification_toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background-color: #333;
+    color: white;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    z-index: 10000;
+    display: none;
+    font-size: 14px;
+    max-width: 400px;
+}
+
+#notification_toast.success {
+    background-color: #4CAF50;
+}
+
+#notification_toast.error {
+    background-color: #dc3545;
+}
+
+#notification_toast.warning {
+    background-color: #ff9800;
+}
 </style>
 
 <!-- Modal Structure -->
 <div id="color_tags_modal">
     <div id="color_tags_modal_content">
         <div id="color_tags_modal_header">
-            <h2>Color Tags Editor</h2>
+            <h2>Parameters Editor</h2>
             <span class="close_color_tags_modal">&times;</span>
         </div>
 
         <p class="shortcut_hint">💡 Shortcut: Press <strong>Ctrl+C</strong> to open/close | <strong>Esc</strong> to close | Auto-saves on close</p>
 
-        <div id="color_tags_list">
-            <!-- Color tags will be inserted here dynamically -->
+        <!-- Tab buttons -->
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="color-tags">Color Tags</button>
+            <button class="tab-button" data-tab="paths">Paths</button>
         </div>
 
-        <div id="add_color_tag_section">
-            <input type="text" id="new_tag_name" placeholder="Tag name (eg: science, travel, etc.)">
-            <button id="add_tag_button">Add tag</button>
+        <!-- Tab: Color Tags -->
+        <div id="tab-color-tags" class="tab-content active">
+            <div id="color_tags_list">
+                <!-- Color tags will be inserted here dynamically -->
+            </div>
+
+            <div id="add_color_tag_section">
+                <input type="text" id="new_tag_name" placeholder="Tag name (eg: science, travel, etc.)">
+                <button id="add_tag_button">Add tag</button>
+            </div>
+        </div>
+
+        <!-- Tab: Paths -->
+        <div id="tab-paths" class="tab-content">
+            <div id="add_path_section_new">
+                <input type="text" id="new_path_input" placeholder="Paste full path here (eg: /home/user/project/folder)">
+                <button id="add_path_button">Add path</button>
+            </div>
+
+            <div id="paths_list">
+                <!-- Paths will be inserted here dynamically -->
+            </div>
         </div>
 
         <!-- Auto-save on close - no manual save button needed -->
@@ -233,15 +400,33 @@
     </div>
 </div>
 
+<!-- Notification Toast -->
+<div id="notification_toast"></div>
+
 <script>
 /*
- * Color Tags Editor - Édition des tags de couleur depuis config.yaml
+ * Parameters Editor - Color tags and paths configuration
  * Raccourci: Ctrl+C
  */
 
 // Variables globales
 var colorTagsData = {};
 var modalOpen = false;
+
+// Notification system
+function showNotification(message, type) {
+    var toast = $('#notification_toast');
+    toast.removeClass('success error warning');
+    if (type) {
+        toast.addClass(type);
+    }
+    toast.text(message);
+    toast.fadeIn(300);
+
+    setTimeout(function() {
+        toast.fadeOut(300);
+    }, 2000);
+}
 
 // Initialisation
 $(document).ready(function() {
@@ -424,7 +609,7 @@ function setupEventHandlers() {
 
             // Check if new name already exists
             if (colorTagsData.hasOwnProperty(newTagName)) {
-                alert('Tag "' + newTagName + '" already exists');
+                showNotification('Tag "' + newTagName + '" already exists', 'warning');
                 $input.replaceWith($nameSpan);
                 return;
             }
@@ -458,12 +643,12 @@ function setupEventHandlers() {
     $('#add_tag_button').click(function() {
         var newTagName = $('#new_tag_name').val().trim();
         if (newTagName === '') {
-            alert('Please enter a tag name');
+            showNotification('Please enter a tag name', 'warning');
             return;
         }
 
         if (colorTagsData.hasOwnProperty(newTagName)) {
-            alert('This tag already exists');
+            showNotification('This tag already exists', 'warning');
             return;
         }
 
@@ -491,6 +676,49 @@ function setupEventHandlers() {
     // $('#save_color_tags_button').click(function() {
     //     saveColorTags();
     // });
+
+    // Tab switching
+    $('.tab-button').click(function() {
+        var targetTab = $(this).attr('data-tab');
+
+        // Update button states
+        $('.tab-button').removeClass('active');
+        $(this).addClass('active');
+
+        // Update tab content visibility
+        $('.tab-content').removeClass('active');
+        $('#tab-' + targetTab).addClass('active');
+
+        // Load paths when switching to paths tab
+        if (targetTab === 'paths') {
+            loadPaths();
+        }
+    });
+
+    // Add path button
+    $('#add_path_button').click(function() {
+        var fullPath = $('#new_path_input').val().trim();
+        if (fullPath === '') {
+            showNotification('Please enter a path', 'warning');
+            return;
+        }
+        addNewPath(fullPath);
+    });
+
+    // Add path on Enter key
+    $('#new_path_input').keypress(function(e) {
+        if (e.which === 13) { // Enter key
+            $('#add_path_button').click();
+        }
+    });
+
+    // Remove path button
+    $(document).on('click', '.remove-path', function() {
+        var pathToRemove = $(this).closest('.path-item').attr('data-path');
+        if (confirm('Remove path "' + pathToRemove + '"?')) {
+            removePath(pathToRemove);
+        }
+    });
 }
 
 // Darken a color by a percentage
@@ -550,7 +778,95 @@ socket.on('color_tags_updated', function(success) {
         // Reload to get latest data
         loadColorTags();
     } else {
-        alert('Error saving color tags');
+        showNotification('Error saving color tags', 'error');
+    }
+});
+
+// ========== PATHS TAB FUNCTIONS ==========
+
+var pathsData = [];
+
+// Load paths from server
+function loadPaths() {
+    socket.emit('get_paths');
+}
+
+// Receive paths from server
+socket.on('paths_data', function(data) {
+    pathsData = JSON.parse(data);
+    renderPaths();
+});
+
+// Render paths list
+function renderPaths() {
+    var container = $('#paths_list');
+    container.empty();
+
+    if (pathsData.length === 0) {
+        container.html('<p style="color: #999; text-align: center; padding: 20px;">No paths added yet. Drag and drop files or folders above.</p>');
+        return;
+    }
+
+    // Sort paths alphabetically
+    var sortedPaths = pathsData.slice().sort();
+
+    for (var i = 0; i < sortedPaths.length; i++) {
+        var pathItem = createPathElement(sortedPaths[i]);
+        container.append(pathItem);
+    }
+}
+
+// Create HTML element for a path item
+function createPathElement(pathStr) {
+    var item = $('<div>').addClass('path-item').attr('data-path', pathStr);
+
+    var pathText = $('<span>').addClass('path-text').text(pathStr);
+
+    var removeBtn = $('<button>').addClass('remove-path')
+                                  .html('&times;')
+                                  .attr('title', 'Remove this path');
+
+    item.append(pathText).append(removeBtn);
+
+    return item;
+}
+
+// Add a new path
+function addNewPath(fullPath) {
+    // Send to server to calculate relative path
+    socket.emit('add_path_from_input', fullPath);
+}
+
+// Add path response from server
+socket.on('path_added', function(data) {
+    var result = JSON.parse(data);
+
+    if (result.success) {
+        pathsData = result.paths;
+        renderPaths();
+        // Clear input field on success
+        $('#new_path_input').val('');
+        showNotification('Path added successfully', 'success');
+    } else {
+        showNotification('Error: ' + result.error, 'error');
+    }
+});
+
+// Remove a path
+function removePath(pathToRemove) {
+    socket.emit('remove_path', pathToRemove);
+}
+
+// Remove path confirmation from server
+socket.on('path_removed', function(data) {
+    var result = JSON.parse(data);
+
+    if (result.success) {
+        pathsData = result.paths;
+        renderPaths();
+        showNotification('Path removed successfully', 'success');
+    } else {
+        showNotification('Error: ' + result.error, 'error');
     }
 });
 

@@ -9,17 +9,17 @@ const nunjucks  = require('nunjucks');      // templating tool..
 
 //-----------------
 
-var util = require('./scripts/util');
+var util = require('./lib/util');
 var re = require('./static/js/read_emit');
 var modify = require('./static/js/modify_html');
 var folders = require('./static/js/folders');
-var init = require('./scripts/init');
-var notes = require('./scripts/notes');
+var init = require('./lib/init');
+var notes = require('./lib/notes');
 var subtit = require('./static/js/make_subtit');
 var new_obj = require('./static/js/new_obj');
 var store = require('./static/js/store');
 var agenda = require('./static/js/agenda');
-var config = require('./scripts/config');
+var config = require('./lib/config');
 
 //--------------  Load configuration
 
@@ -73,8 +73,8 @@ nunjucks.configure('views', {
 
 //--------------  static addresses (MUST be before routes)
 
-// Mount scripts directory (third-party libraries) at /lib path
-app.use('/lib', express.static('scripts'))
+// Mount lib directory specifically at /lib path
+app.use('/lib', express.static('lib'))
 
 init.static_addr(app, express)
 
