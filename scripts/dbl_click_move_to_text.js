@@ -37,10 +37,23 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
     // ------------ find the pattern
 
     if (elem.is('li')){ var patt = elem.text().split('\n')[0]
-                            patt = patt.replace('?','\\?').replace('+','\\+')
+                            // Escape regex special characters
+                            patt = patt.replace(/[?+()[\]{}|.*^$\\]/g, '\\$&')
+                            // If the line contains deleted text (%%%), add %%% to pattern
+                            if (elem.find('del').length > 0) {
+                                patt = patt + '%%%'
+                                console.log('Found deleted text, pattern with %%%: ' + patt)
+                            } else {
+                                console.log('No deleted text, pattern: ' + patt)
+                            }
                            }
     else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }
     else if (elem.is('.tag_a_to_text')){ patt = elem.parent().text() }
+    else if (elem.is('h2') || elem.is('h3') || elem.is('h4') || elem.is('h5') || elem.is('h6')){
+        var patt = elem.text().trim()
+        // Escape regex special characters
+        patt = patt.replace(/[?+()[\]{}|.*^$\\]/g, '\\$&')
+    }
 
     // ------------ flip to text
 
