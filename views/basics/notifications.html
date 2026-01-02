@@ -1,0 +1,332 @@
+<style>
+/* Global notification system */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.notification {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease-out;
+    border-left: 4px solid #2196F3;
+}
+
+.notification.success {
+    border-left-color: #4CAF50;
+}
+
+.notification.error {
+    border-left-color: #f44336;
+}
+
+.notification.warning {
+    border-left-color: #ff9800;
+}
+
+.notification.info {
+    border-left-color: #2196F3;
+}
+
+.notification-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.notification.success .notification-icon {
+    color: #4CAF50;
+}
+
+.notification.error .notification-icon {
+    color: #f44336;
+}
+
+.notification.warning .notification-icon {
+    color: #ff9800;
+}
+
+.notification.info .notification-icon {
+    color: #2196F3;
+}
+
+.notification-message {
+    flex: 1;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notification-close:hover {
+    color: #333;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification.fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+}
+
+/* Confirm dialog */
+#confirm-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    z-index: 10001;
+}
+
+#confirm-dialog-overlay.show {
+    display: block;
+}
+
+.confirm-dialog {
+    position: absolute;
+    background: white;
+    border: 2px solid #333;
+    padding: 12px;
+    min-width: 200px;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+    animation: popIn 0.15s ease-out;
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.confirm-dialog-message {
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 12px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.confirm-dialog-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.confirm-dialog-button {
+    padding: 6px 16px;
+    border: 1px solid #333;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.1s;
+    font-weight: 500;
+    background: white;
+    color: #333;
+}
+
+.confirm-dialog-button:hover {
+    background: #333;
+    color: white;
+}
+
+.confirm-dialog-button.confirm {
+    background: #333;
+    color: white;
+}
+
+.confirm-dialog-button.confirm:hover {
+    background: #555;
+}
+</style>
+
+<div id="notification-container"></div>
+
+<div id="confirm-dialog-overlay">
+    <div class="confirm-dialog">
+        <div class="confirm-dialog-message" id="confirm-dialog-message"></div>
+        <div class="confirm-dialog-buttons">
+            <button class="confirm-dialog-button cancel" id="confirm-dialog-cancel">Cancel</button>
+            <button class="confirm-dialog-button confirm" id="confirm-dialog-ok">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global notification system
+(function() {
+    window.showNotification = function(message, type, duration) {
+        type = type || 'info';
+        duration = duration || 3000;
+
+        var container = document.getElementById('notification-container');
+
+        var notification = document.createElement('div');
+        notification.className = 'notification ' + type;
+
+        var icons = {
+            success: '✓',
+            error: '✕',
+            warning: '⚠',
+            info: 'ℹ'
+        };
+
+        notification.innerHTML = `
+            <span class="notification-icon">${icons[type] || icons.info}</span>
+            <span class="notification-message">${message}</span>
+            <button class="notification-close">×</button>
+        `;
+
+        container.appendChild(notification);
+
+        var closeBtn = notification.querySelector('.notification-close');
+        closeBtn.addEventListener('click', function() {
+            removeNotification(notification);
+        });
+
+        if (duration > 0) {
+            setTimeout(function() {
+                removeNotification(notification);
+            }, duration);
+        }
+
+        return notification;
+    };
+
+    function removeNotification(notification) {
+        notification.classList.add('fade-out');
+        setTimeout(function() {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }
+
+    // Replace native alert
+    window.alert = function(message) {
+        showNotification(message, 'info', 4000);
+    };
+
+    // Store the last clicked element for positioning
+    var lastClickedElement = null;
+    document.addEventListener('click', function(e) {
+        lastClickedElement = e.target;
+    }, true);
+
+    // Replace native confirm
+    window.confirm = function(message, callback) {
+        var overlay = document.getElementById('confirm-dialog-overlay');
+        var dialog = overlay.querySelector('.confirm-dialog');
+        var messageEl = document.getElementById('confirm-dialog-message');
+        var okBtn = document.getElementById('confirm-dialog-ok');
+        var cancelBtn = document.getElementById('confirm-dialog-cancel');
+
+        messageEl.textContent = message;
+        overlay.classList.add('show');
+
+        // Position dialog near the clicked element
+        if (lastClickedElement) {
+            var rect = lastClickedElement.getBoundingClientRect();
+            var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+            // Position to the right and slightly below the clicked element
+            var top = rect.bottom + scrollTop + 5;
+            var left = rect.left + scrollLeft;
+
+            // Adjust if it would go off-screen
+            var dialogWidth = 250; // Approximate width
+            var dialogHeight = 80; // Approximate height
+
+            if (left + dialogWidth > window.innerWidth + scrollLeft) {
+                left = rect.right + scrollLeft - dialogWidth;
+            }
+
+            if (top + dialogHeight > window.innerHeight + scrollTop) {
+                top = rect.top + scrollTop - dialogHeight - 5;
+            }
+
+            dialog.style.top = top + 'px';
+            dialog.style.left = left + 'px';
+        }
+
+        // Return a promise for modern usage
+        return new Promise(function(resolve) {
+            function cleanup() {
+                overlay.classList.remove('show');
+                okBtn.removeEventListener('click', handleOk);
+                cancelBtn.removeEventListener('click', handleCancel);
+                overlay.removeEventListener('click', handleOverlayClick);
+            }
+
+            function handleOk() {
+                cleanup();
+                if (callback) callback(true);
+                resolve(true);
+            }
+
+            function handleCancel() {
+                cleanup();
+                if (callback) callback(false);
+                resolve(false);
+            }
+
+            function handleOverlayClick(e) {
+                if (e.target === overlay) {
+                    handleCancel();
+                }
+            }
+
+            okBtn.addEventListener('click', handleOk);
+            cancelBtn.addEventListener('click', handleCancel);
+            overlay.addEventListener('click', handleOverlayClick);
+        });
+    };
+})();
+</script>

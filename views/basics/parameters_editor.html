@@ -326,6 +326,108 @@
     color: #a02a37;
 }
 
+/* Tree structure for paths */
+.path-tree {
+    margin-left: 0;
+}
+
+.path-tree-item {
+    margin-bottom: 4px;
+}
+
+.path-row {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.path-row:hover {
+    background-color: #f0f0f0;
+}
+
+.path-row:hover .path-actions {
+    opacity: 1;
+}
+
+.path-indent {
+    display: inline-block;
+    width: 20px;
+}
+
+.path-label {
+    font-family: monospace;
+    font-size: 12px;
+    color: #333;
+    flex: 1;
+}
+
+.path-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.path-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.path-action-btn:hover {
+    color: #0d6efd;
+}
+
+.path-action-btn.delete-btn:hover {
+    color: #dc3545;
+}
+
+.subdir-input {
+    margin-left: 20px;
+    margin-top: 4px;
+    display: flex;
+    gap: 4px;
+}
+
+.subdir-input input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #0d6efd;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.subdir-input button {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.subdir-input .save-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.subdir-input .cancel-btn {
+    background-color: #ddd;
+    color: #333;
+}
+
+.path-children {
+    margin-left: 20px;
+    border-left: 2px solid #e0e0e0;
+    padding-left: 8px;
+}
+
 /* Notification toast */
 #notification_toast {
     position: fixed;
@@ -363,7 +465,7 @@
             <span class="close_color_tags_modal">&times;</span>
         </div>
 
-        <p class="shortcut_hint">💡 Shortcut: Press <strong>Ctrl+C</strong> to open/close | <strong>Esc</strong> to close | Auto-saves on close</p>
+        <p class="shortcut_hint">💡 Shortcut: Press <strong>Ctrl+Shift+C</strong> to open/close | <strong>Esc</strong> to close | Auto-saves on close</p>
 
         <!-- Tab buttons -->
         <div class="tab-buttons">
@@ -633,10 +735,12 @@ function setupEventHandlers() {
     // Delete a tag
     $(document).on('click', '.color_tag_delete', function() {
         var tagName = $(this).attr('data-tag');
-        if (confirm('Are you sure you want to delete tag "' + tagName + '"?')) {
-            delete colorTagsData[tagName];
-            renderColorTags();
-        }
+        confirm('Are you sure you want to delete tag "' + tagName + '"?', function(result) {
+            if (result) {
+                delete colorTagsData[tagName];
+                renderColorTags();
+            }
+        });
     });
 
     // Add a new tag
@@ -718,6 +822,99 @@ function setupEventHandlers() {
         if (confirm('Remove path "' + pathToRemove + '"?')) {
             removePath(pathToRemove);
         }
+    });
+
+    // Add child subdirectory button (arrow right)
+    $(document).on('click', '.add-child-btn', function(e) {
+        e.stopPropagation();
+        var parentPath = $(this).attr('data-path');
+        var row = $(this).closest('.path-row');
+
+        // Remove any existing input
+        row.next('.subdir-input').remove();
+
+        // Create input field
+        var inputContainer = $('<div>').addClass('subdir-input');
+        var input = $('<input>').attr('type', 'text').attr('placeholder', 'Subdirectory name');
+        var saveBtn = $('<button>').addClass('save-btn').text('Save');
+        var cancelBtn = $('<button>').addClass('cancel-btn').text('Cancel');
+
+        inputContainer.append(input).append(saveBtn).append(cancelBtn);
+        row.after(inputContainer);
+        input.focus();
+
+        // Save subdirectory
+        saveBtn.click(function() {
+            var subdirName = input.val().trim();
+            if (subdirName) {
+                addSubdirectory(parentPath, subdirName, 'child');
+                inputContainer.remove();
+            }
+        });
+
+        // Enter key to save
+        input.keypress(function(e) {
+            if (e.which === 13) {
+                saveBtn.click();
+            }
+        });
+
+        // Cancel
+        cancelBtn.click(function() {
+            inputContainer.remove();
+        });
+    });
+
+    // Add sibling subdirectory button (arrow down)
+    $(document).on('click', '.add-sibling-btn', function(e) {
+        e.stopPropagation();
+        var parentPath = $(this).attr('data-path');
+        var row = $(this).closest('.path-row');
+
+        // Remove any existing input
+        row.next('.subdir-input').remove();
+
+        // Create input field
+        var inputContainer = $('<div>').addClass('subdir-input');
+        var input = $('<input>').attr('type', 'text').attr('placeholder', 'Sibling directory name');
+        var saveBtn = $('<button>').addClass('save-btn').text('Save');
+        var cancelBtn = $('<button>').addClass('cancel-btn').text('Cancel');
+
+        inputContainer.append(input).append(saveBtn).append(cancelBtn);
+        row.after(inputContainer);
+        input.focus();
+
+        // Save subdirectory
+        saveBtn.click(function() {
+            var subdirName = input.val().trim();
+            if (subdirName) {
+                addSubdirectory(parentPath, subdirName, 'sibling');
+                inputContainer.remove();
+            }
+        });
+
+        // Enter key to save
+        input.keypress(function(e) {
+            if (e.which === 13) {
+                saveBtn.click();
+            }
+        });
+
+        // Cancel
+        cancelBtn.click(function() {
+            inputContainer.remove();
+        });
+    });
+
+    // Delete path/subdirectory button
+    $(document).on('click', '.delete-btn', function(e) {
+        e.stopPropagation();
+        var pathToRemove = $(this).attr('data-path');
+        confirm('Remove "' + pathToRemove + '"?', function(result) {
+            if (result) {
+                removePath(pathToRemove);
+            }
+        });
     });
 }
 
@@ -803,32 +1000,94 @@ function renderPaths() {
     container.empty();
 
     if (pathsData.length === 0) {
-        container.html('<p style="color: #999; text-align: center; padding: 20px;">No paths added yet. Drag and drop files or folders above.</p>');
+        container.html('<p style="color: #999; text-align: center; padding: 20px;">No paths added yet.</p>');
         return;
     }
 
-    // Sort paths alphabetically
-    var sortedPaths = pathsData.slice().sort();
+    var tree = $('<div>').addClass('path-tree');
 
-    for (var i = 0; i < sortedPaths.length; i++) {
-        var pathItem = createPathElement(sortedPaths[i]);
-        container.append(pathItem);
+    for (var i = 0; i < pathsData.length; i++) {
+        var pathElement = renderPathItem(pathsData[i], 0);
+        tree.append(pathElement);
     }
+
+    container.append(tree);
 }
 
-// Create HTML element for a path item
-function createPathElement(pathStr) {
-    var item = $('<div>').addClass('path-item').attr('data-path', pathStr);
+// Render a single path item (recursive for nested structures)
+function renderPathItem(item, depth) {
+    var container = $('<div>').addClass('path-tree-item');
 
-    var pathText = $('<span>').addClass('path-text').text(pathStr);
+    if (typeof item === 'string') {
+        // Simple string path
+        container.append(createPathRow(item, depth, false));
+    } else if (typeof item === 'object') {
+        // Object with subdirectories
+        for (var key in item) {
+            if (item.hasOwnProperty(key)) {
+                container.append(createPathRow(key, depth, true));
 
-    var removeBtn = $('<button>').addClass('remove-path')
-                                  .html('&times;')
-                                  .attr('title', 'Remove this path');
+                // Render children
+                var children = item[key];
+                if (Array.isArray(children) && children.length > 0) {
+                    var childrenContainer = $('<div>').addClass('path-children');
+                    for (var i = 0; i < children.length; i++) {
+                        childrenContainer.append(renderPathItem(children[i], depth + 1));
+                    }
+                    container.append(childrenContainer);
+                }
+            }
+        }
+    }
 
-    item.append(pathText).append(removeBtn);
+    return container;
+}
 
-    return item;
+// Create a path row with actions
+function createPathRow(pathName, depth, hasChildren) {
+    var row = $('<div>').addClass('path-row').attr('data-path', pathName).attr('data-depth', depth);
+
+    // Indentation
+    for (var i = 0; i < depth; i++) {
+        row.append($('<span>').addClass('path-indent'));
+    }
+
+    // Path label
+    var label = $('<span>').addClass('path-label').text(pathName);
+    row.append(label);
+
+    // Actions (shown on hover)
+    var actions = $('<div>').addClass('path-actions');
+
+    // Add child button (arrow right →)
+    var addChildBtn = $('<button>')
+        .addClass('path-action-btn add-child-btn')
+        .attr('title', 'Add subdirectory')
+        .attr('data-path', pathName)
+        .html('↳');
+    actions.append(addChildBtn);
+
+    // Add sibling button (arrow down ↓) - only if depth > 0
+    if (depth > 0 || hasChildren) {
+        var addSiblingBtn = $('<button>')
+            .addClass('path-action-btn add-sibling-btn')
+            .attr('title', 'Add sibling directory')
+            .attr('data-path', pathName)
+            .html('↓');
+        actions.append(addSiblingBtn);
+    }
+
+    // Delete button
+    var deleteBtn = $('<button>')
+        .addClass('path-action-btn delete-btn')
+        .attr('title', 'Delete')
+        .attr('data-path', pathName)
+        .html('✕');
+    actions.append(deleteBtn);
+
+    row.append(actions);
+
+    return row;
 }
 
 // Add a new path
@@ -854,7 +1113,7 @@ socket.on('path_added', function(data) {
 
 // Remove a path
 function removePath(pathToRemove) {
-    socket.emit('remove_path', pathToRemove);
+    socket.emit('remove_subdir', pathToRemove);
 }
 
 // Remove path confirmation from server
@@ -870,10 +1129,46 @@ socket.on('path_removed', function(data) {
     }
 });
 
+// Remove subdirectory confirmation from server
+socket.on('subdir_removed', function(data) {
+    var result = JSON.parse(data);
+
+    if (result.success) {
+        pathsData = result.paths;
+        renderPaths();
+        showNotification('Path removed successfully', 'success');
+    } else {
+        showNotification('Error: ' + result.error, 'error');
+    }
+});
+
+// Add subdirectory
+function addSubdirectory(parentPath, subdirName, type) {
+    var data = JSON.stringify({
+        parentPath: parentPath,
+        subdirName: subdirName,
+        type: type
+    });
+    socket.emit('add_subdir', data);
+}
+
+// Subdirectory added confirmation from server
+socket.on('subdir_added', function(data) {
+    var result = JSON.parse(data);
+
+    if (result.success) {
+        pathsData = result.paths;
+        renderPaths();
+        showNotification('Subdirectory added successfully', 'success');
+    } else {
+        showNotification('Error: ' + result.error, 'error');
+    }
+});
+
 // Configuration des raccourcis clavier
 function setupKeyboardShortcuts() {
-    // Ctrl+C pour ouvrir/fermer la modal
-    key('ctrl+c', function(e) {
+    // Ctrl+Shift+C pour ouvrir/fermer la modal
+    key('ctrl+shift+c', function(e) {
         e.preventDefault();
         toggleModal();
         return false;

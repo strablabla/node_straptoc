@@ -1,12 +1,15 @@
 addresses:
-  - path: ../../../../../../media/sdata
-    subdirs:
-      - Lemonde/2018
-      - docs/test
-      - docs/test1
-      - papers_to_keep/Physics
+  - ../../../../../../media/sdata:
+      - Alire
+      - papers_to_keep:
+          - Litt
+          - Physics
+      - Lemonde:
+          - '2018'
+          - '2019'
+          - '2020'
+      - zic
   - ../../../../../../media
-  - ../../Téléchargements/Lemonde/2020
   - fonts
   - icons
   - lib
