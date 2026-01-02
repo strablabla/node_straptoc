@@ -24,6 +24,10 @@ Node Straptoc is a sophisticated personal information management system that com
 - **Audio Playback**: Integrated audio player
 
 ### Organizational Tools
+- **Configuration Editor**: Visual interface for managing application settings (Ctrl+Shift+C)
+  - Server settings (port, host, SSL certificates)
+  - File paths and directory hierarchies
+  - Color tags with visual color pickers
 - **Agenda**: Calendar-based task and event management with time-based alerts
 - **Notes**: Timestamped note-taking with real-time synchronization
 - **Chat**: Real-time messaging between connected users
@@ -117,9 +121,23 @@ node html_app.js
 
 The application uses a centralized YAML configuration file: [static/config.yaml](static/config.yaml)
 
+### Configuration Editor (New!)
+
+Press **Ctrl+Shift+C** to open the visual Configuration Editor, which provides a user-friendly interface for managing all application settings without manually editing YAML files.
+
+**Features:**
+- **Server Tab**: Configure port, host, and SSL certificate paths
+- **Paths Tab**: Manage file directories with hierarchical tree structure
+  - Use ↳ to add child subdirectories
+  - Use ↓ to add sibling directories
+  - Use ✕ to remove directories
+- **Color Tags Tab**: Customize category colors with visual color pickers
+- **Real-time Updates**: Changes are immediately saved to config.yaml
+- **Visual Notifications**: User-friendly feedback for all operations
+
 ### Main Configuration Sections:
-- **server**: Server settings (port, host, SSL certificates) - **NEW**
-- **addresses**: Static file paths and directories
+- **server**: Server settings (port, host, SSL certificates)
+- **addresses**: Static file paths and directories (hierarchical structure)
 - **color_tags**: Category definitions for content organization
 - **vocabulaire**: Hierarchical voice command vocabulary
 - **subtitles_path**: Path to subtitle files
@@ -171,6 +189,8 @@ node_straptoc/
 │   ├── page_struct/
 │   │   └── base.html        # Master page template
 │   ├── basics/              # Core UI components
+│   │   ├── config_editor.html  # Configuration editor (Ctrl+Shift+C)
+│   │   ├── notifications.html  # Global notification system
 │   │   ├── agenda.html
 │   │   ├── notes.html
 │   │   ├── tchat.html
@@ -182,6 +202,9 @@ node_straptoc/
 │       ├── pdf.html
 │       ├── djvu.html
 │       └── ...
+├── lib/
+│   ├── config.js            # Configuration management socket handlers
+│   └── keymaster.js         # Keyboard shortcuts
 └── strap_database.db        # SQLite database
 ```
 
@@ -214,6 +237,13 @@ Socket.io integration provides:
 
 ## Usage Examples
 
+### Managing Configuration
+Press **Ctrl+Shift+C** to open the Configuration Editor:
+- **Change server port**: Go to Server tab, modify the port field, click Save
+- **Add a directory path**: Go to Paths tab, enter path, click Add Path
+- **Create subdirectories**: Click ↳ next to a path to add a child, or ↓ to add a sibling
+- **Customize colors**: Go to Color Tags tab, click color swatches to change category colors
+
 ### Adding a Scheduled Event
 In the agenda, add an entry in the format:
 ```
@@ -233,6 +263,11 @@ Use the extended markdown syntax to embed:
 ## Development
 
 ### Recent Updates
+- **Visual Configuration Editor** with three tabs (Server, Paths, Color Tags)
+  - Real-time YAML editing with hierarchical path management
+  - Custom notification system replacing native browser alerts
+  - Context-aware confirm dialogs with dynamic positioning
+  - Keyboard shortcuts (Ctrl+Shift+C to open, Enter to save)
 - Calendar display improvements with full year view
 - Enhanced agenda functionality with time-based alerts
 - Centralized configuration in config.yaml
