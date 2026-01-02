@@ -245,11 +245,64 @@
     display: block;
 }
 
+/* Server tab specific styles */
+#server_config_section {
+    max-width: 500px;
+}
+
+.server-field {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.server-field label {
+    font-weight: 600;
+    color: #333;
+    font-size: 13px;
+    min-width: 120px;
+}
+
+.server-field input {
+    flex: 1;
+    max-width: 150px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.server-field input:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+#save_server_button {
+    padding: 10px 20px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+#save_server_button:hover {
+    background-color: #0b7dda;
+}
+
 /* Paths tab specific styles */
 #add_path_section_new {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+    align-items: center;
 }
 
 #new_path_input {
@@ -259,6 +312,8 @@
     border-radius: 4px;
     font-family: monospace;
     font-size: 13px;
+    line-height: 1.5;
+    margin-top: 15px;
 }
 
 #new_path_input:focus {
@@ -471,6 +526,7 @@
         <div class="tab-buttons">
             <button class="tab-button active" data-tab="color-tags">Color Tags</button>
             <button class="tab-button" data-tab="paths">Paths</button>
+            <button class="tab-button" data-tab="server">Server</button>
         </div>
 
         <!-- Tab: Color Tags -->
@@ -494,6 +550,33 @@
 
             <div id="paths_list">
                 <!-- Paths will be inserted here dynamically -->
+            </div>
+        </div>
+
+        <!-- Tab: Server -->
+        <div id="tab-server" class="tab-content">
+            <div id="server_config_section">
+                <div class="server-field">
+                    <label for="server_port">Port:</label>
+                    <input type="number" id="server_port" placeholder="3001">
+                </div>
+
+                <div class="server-field">
+                    <label for="server_host">Host:</label>
+                    <input type="text" id="server_host" placeholder="0.0.0.0">
+                </div>
+
+                <div class="server-field">
+                    <label for="server_ssl_key">SSL Key:</label>
+                    <input type="text" id="server_ssl_key" placeholder="key.pem">
+                </div>
+
+                <div class="server-field">
+                    <label for="server_ssl_cert">SSL Certificate:</label>
+                    <input type="text" id="server_ssl_cert" placeholder="server.crt">
+                </div>
+
+                <button id="save_server_button">Save Server Config</button>
             </div>
         </div>
 
@@ -796,6 +879,11 @@ function setupEventHandlers() {
         // Load paths when switching to paths tab
         if (targetTab === 'paths') {
             loadPaths();
+        }
+
+        // Load server config when switching to server tab
+        if (targetTab === 'server') {
+            loadServerConfig();
         }
     });
 
@@ -1205,6 +1293,84 @@ function closeModal() {
     $('#color_tags_modal').fadeOut(300);
     modalOpen = false;
 }
+
+// ========== SERVER TAB FUNCTIONS ==========
+
+var serverConfigData = {};
+
+// Load server config from server
+function loadServerConfig() {
+    socket.emit('get_server_config');
+}
+
+// Receive server config from server
+socket.on('server_config_data', function(data) {
+    serverConfigData = JSON.parse(data);
+    renderServerConfig();
+});
+
+// Render server config in the form
+function renderServerConfig() {
+    $('#server_port').val(serverConfigData.port || 3001);
+    $('#server_host').val(serverConfigData.host || '0.0.0.0');
+    $('#server_ssl_key').val(serverConfigData.ssl && serverConfigData.ssl.key ? serverConfigData.ssl.key : 'key.pem');
+    $('#server_ssl_cert').val(serverConfigData.ssl && serverConfigData.ssl.cert ? serverConfigData.ssl.cert : 'server.crt');
+}
+
+// Save server config
+function saveServerConfig() {
+    var config = {
+        port: parseInt($('#server_port').val()) || 3001,
+        host: $('#server_host').val().trim() || '0.0.0.0',
+        ssl: {
+            key: $('#server_ssl_key').val().trim() || 'key.pem',
+            cert: $('#server_ssl_cert').val().trim() || 'server.crt'
+        }
+    };
+
+    // Validate port number
+    if (config.port < 1 || config.port > 65535) {
+        showNotification('Port must be between 1 and 65535', 'error');
+        return;
+    }
+
+    socket.emit('update_server_config', JSON.stringify(config));
+
+    // Visual feedback
+    var btn = $('#save_server_button');
+    var originalText = btn.text();
+    btn.text('✅ Saved!').prop('disabled', true);
+
+    setTimeout(function() {
+        btn.text(originalText).prop('disabled', false);
+    }, 2000);
+}
+
+// Save confirmation from server
+socket.on('server_config_updated', function(success) {
+    if (success) {
+        console.log('Server config updated successfully');
+        showNotification('Server configuration saved successfully', 'success');
+        // Reload to get latest data
+        loadServerConfig();
+    } else {
+        showNotification('Error saving server configuration', 'error');
+    }
+});
+
+// Add event handler for save button in setupEventHandlers
+$(document).ready(function() {
+    $('#save_server_button').click(function() {
+        saveServerConfig();
+    });
+
+    // Enable Enter key for all server input fields
+    $('#server_port, #server_host, #server_ssl_key, #server_ssl_cert').keypress(function(e) {
+        if (e.which === 13) { // Enter key
+            saveServerConfig();
+        }
+    });
+});
 
 console.log('Color Tags Editor loaded - Press Ctrl+C to open');
 </script>
