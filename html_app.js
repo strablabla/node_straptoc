@@ -71,14 +71,18 @@ nunjucks.configure('views', {
 
 });
 
+//--------------  static addresses (MUST be before routes)
+
+// Mount lib directory specifically at /lib path
+app.use('/lib', express.static('lib'))
+
+init.static_addr(app, express)
+
 init.handle_pages(app)
 
 app.get('/', function(req, res){ res.render('main.html'); });
 app.get('/text', function(req, res){ res.render('struct/text.html'); });
 
-//--------------  static addresses
-
-init.static_addr(app, express)
 db = init.data_base()
 
 db.run(

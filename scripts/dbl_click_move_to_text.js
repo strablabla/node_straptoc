@@ -42,9 +42,6 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
                             // If the line contains deleted text (%%%), add %%% to pattern
                             if (elem.find('del').length > 0) {
                                 patt = patt + '%%%'
-                                console.log('Found deleted text, pattern with %%%: ' + patt)
-                            } else {
-                                console.log('No deleted text, pattern: ' + patt)
                             }
                            }
     else if (elem.is('.date')){ var patt = elem.attr('id').split('_')[take_elem] }

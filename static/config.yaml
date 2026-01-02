@@ -9,6 +9,7 @@ addresses:
       - papers_to_keep/Physics
   - public
   - scripts
+  - static
   - lib
   - icons
   - fonts
