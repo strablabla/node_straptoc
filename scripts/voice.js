@@ -147,7 +147,7 @@ function trigger_voice(){
       var dic_search =  {
               indexes: ['Rechercher'],
               action: function() {
-                  $('.todotheme').toggle()
+                  openSearchModal()
                   }
           }
 

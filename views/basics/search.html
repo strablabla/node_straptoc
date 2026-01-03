@@ -1,33 +1,292 @@
 
+<style>
+/* Search modal */
+#search_modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 2px solid #333;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    z-index: 10000;
+    min-width: 500px;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+#search_modal_overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+.search-header {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+#search_input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: monospace;
+}
+
+#search_button {
+    padding: 10px 20px;
+    background: white;
+    border: 1px solid #333;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+#search_button:hover {
+    background: #f0f0f0;
+}
+
+#search_close {
+    padding: 10px 15px;
+    background: white;
+    border: 1px solid #333;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+#search_close:hover {
+    background: #f0f0f0;
+}
+
+#search_results_container {
+    margin-top: 20px;
+}
+
+.search-page-group {
+    margin-bottom: 25px;
+}
+
+.search-page-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #333;
+}
+
+.search-result-item {
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: #f9f9f9;
+    border-left: 3px solid #666;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.search-result-item:hover {
+    background: #e6e6e6;
+}
+
+.search-no-results {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.search-loading {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+</style>
+
+<!-- Search Modal -->
+<div id="search_modal_overlay"></div>
+<div id="search_modal">
+    <div class="search-header">
+        <input type="text" id="search_input" placeholder="Enter search term..." />
+        <button id="search_button">Search</button>
+        <button id="search_close">Close</button>
+    </div>
+    <div id="search_results_container"></div>
+</div>
+
 <script>
 
 /*
 
-Search
+Global Search System
+Searches across all pages for list items containing the search term
 
 */
 
-// glasses 242, binoculars 333
-var search_state = $('<img/>').attr('src',"capicon/svg/333.svg")  // icon for play_list on/off
-search_state.attr('id','search_state')
-           .attr('val','false')
-           .css({
-                'position':'fixed',
-                'top':'140px',
-                'right':'20px',
-                'width':'17px'
-              })
-$('#content').append(search_state) // 266, 353, 354
+var searchModal = {
+    isOpen: false,
+    currentResults: []
+};
 
-$('#search_state').click(function(){
+// Open search modal
+function openSearchModal() {
+    $('#search_modal').show();
+    $('#search_modal_overlay').show();
+    searchModal.isOpen = true;
+    $('#search_input').focus();
+}
 
-      $('#id_view_image').hide()       // prevent the browser to open the svg..
-      $('#id_view_image_body').hide()   //
+// Close search modal
+function closeSearchModal() {
+    $('#search_modal').hide();
+    $('#search_modal_overlay').hide();
+    searchModal.isOpen = false;
+}
 
-      //-------
+// Perform search
+function performSearch() {
+    var searchTerm = $('#search_input').val().trim();
 
-      $('#todotheme').toggle()
+    if (searchTerm === '') {
+        showNotification('Please enter a search term', 'error');
+        return;
+    }
 
-})
+    // Show loading
+    $('#search_results_container').html('<div class="search-loading">Searching...</div>');
+
+    // Send search request to server
+    socket.emit('search_all_pages', searchTerm);
+}
+
+// Display search results
+socket.on('search_results', function(resultsJson) {
+    var results = JSON.parse(resultsJson);
+    searchModal.currentResults = results;
+
+    var container = $('#search_results_container');
+    container.empty();
+
+    if (results.length === 0) {
+        container.append('<div class="search-no-results">No results found</div>');
+        return;
+    }
+
+    // Group results by page
+    results.forEach(function(pageResult) {
+        var pageGroup = $('<div/>').addClass('search-page-group');
+
+        var pageTitle = $('<div/>').addClass('search-page-title')
+                                   .text('Page: ' + pageResult.page + ' (' + pageResult.matches.length + ' results)');
+        pageGroup.append(pageTitle);
+
+        // Add each match
+        pageResult.matches.forEach(function(match) {
+            var resultItem = $('<div/>').addClass('search-result-item')
+                                       .text(match.line)
+                                       .attr('data-page', pageResult.page)
+                                       .attr('data-line', match.lineNumber)
+                                       .attr('data-text', match.line);
+
+            resultItem.click(function() {
+                var page = $(this).attr('data-page');
+                var searchText = $(this).attr('data-text');
+
+                // Store search info in sessionStorage
+                sessionStorage.setItem('searchScrollTo', searchText);
+
+                // Navigate to the page
+                window.location.href = '/' + page;
+                closeSearchModal();
+            });
+
+            pageGroup.append(resultItem);
+        });
+
+        container.append(pageGroup);
+    });
+});
+
+// Event handlers
+$('#search_button').click(function() {
+    performSearch();
+});
+
+$('#search_input').keypress(function(e) {
+    if (e.which === 13) { // Enter key
+        performSearch();
+    }
+});
+
+$('#search_close').click(function() {
+    closeSearchModal();
+});
+
+$('#search_modal_overlay').click(function() {
+    closeSearchModal();
+});
+
+// Keyboard shortcuts
+$(document).keydown(function(e) {
+    // Shift+F to open search modal
+    if (e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        openSearchModal();
+        return false;
+    }
+
+    // Escape to close modal
+    if (e.key === 'Escape' && searchModal.isOpen) {
+        closeSearchModal();
+        return false;
+    }
+});
+
+// On page load, check if we need to scroll to a search result
+$(window).on('load', function() {
+    var searchText = sessionStorage.getItem('searchScrollTo');
+    if (searchText) {
+        // Clear the stored value
+        sessionStorage.removeItem('searchScrollTo');
+
+        // Wait a bit for the page to fully render
+        setTimeout(function() {
+            // Find the li element containing this text
+            var found = false;
+            $('li').each(function() {
+                var liText = $(this).text().trim();
+                // Check if this li contains the search text and doesn't have nested li (to avoid parent li)
+                if (liText.indexOf(searchText.replace(/^[*-]\s+/, '').trim()) !== -1 &&
+                    $(this).children('li').length === 0) {
+                    // Scroll to this element
+                    var offset = $(this).offset().top - 100; // 100px from top for visibility
+                    $('html, body').animate({scrollTop: offset}, 500);
+
+                    // Highlight the element temporarily
+                    $(this).css('background-color', '#ffff99');
+                    setTimeout(function() {
+                        $('li').css('background-color', '');
+                    }, 2000);
+
+                    found = true;
+                    return false; // break the loop
+                }
+            });
+        }, 500);
+    }
+});
 
 </script>
