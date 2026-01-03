@@ -24,6 +24,11 @@ Node Straptoc is a sophisticated personal information management system that com
 - **Audio Playback**: Integrated audio player
 
 ### Organizational Tools
+- **Global Search**: Cross-page search functionality (Shift+F)
+  - Searches across all pages in the application
+  - Real-time results grouped by page
+  - Click to navigate and auto-scroll to matched content
+  - Temporary highlighting of found elements
 - **Configuration Editor**: Visual interface for managing application settings (Ctrl+Shift+C)
   - Server settings (port, host, SSL certificates)
   - File paths and directory hierarchies
@@ -219,6 +224,16 @@ The core [lib/straptoc.js](lib/straptoc.js) library extends markdown with:
 - Image sizing and captions
 - Copy/paste list items
 
+### Global Search System
+The search functionality ([views/basics/search.html](views/basics/search.html), [lib/config.js](lib/config.js)) provides:
+- Server-side search across all markdown files
+- List item matching with case-insensitive search
+- Results grouped by page with match counts
+- Auto-navigation and scroll-to-result functionality
+- Temporary highlighting (2s) of matched elements
+- Keyboard shortcut: Shift+F to open, Enter to search, Escape to close
+- Voice command: "Rechercher"
+
 ### Auto-save and Version Control
 The application automatically saves your work every 15 minutes ([static/js/util.js](static/js/util.js)) and maintains version history with configurable limits.
 
@@ -236,6 +251,14 @@ Socket.io integration provides:
 - Real-time content changes
 
 ## Usage Examples
+
+### Searching Across Pages
+Press **Shift+F** to open the Global Search:
+- **Enter search term**: Type any word or phrase to search across all pages
+- **Click Search or press Enter**: View results grouped by page
+- **Click a result**: Navigate to the page and auto-scroll to the matched item
+- **Yellow highlight**: Found items are temporarily highlighted for 2 seconds
+- **Voice alternative**: Say "Rechercher" to open the search modal
 
 ### Managing Configuration
 Press **Ctrl+Shift+C** to open the Configuration Editor:
@@ -263,6 +286,11 @@ Use the extended markdown syntax to embed:
 ## Development
 
 ### Recent Updates
+- **Global Search System** across all pages (Shift+F)
+  - Server-side search in markdown files with auto-scroll to results
+  - Results grouped by page with temporary highlighting
+  - Session storage for navigation state persistence
+  - Voice command integration
 - **Visual Configuration Editor** with three tabs (Server, Paths, Color Tags)
   - Real-time YAML editing with hierarchical path management
   - Custom notification system replacing native browser alerts
