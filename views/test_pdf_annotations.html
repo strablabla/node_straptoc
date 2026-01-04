@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test PDF Annotations</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<h1>Test PDF.js Viewer with Annotations</h1>
+
+<p>
+    <button onclick="openTestPDF()">Open Test PDF in Modal</button>
+    <button onclick="toggleAnnotations()">Toggle Annotations (Alt+A)</button>
+</p>
+
+<div id="inline-viewer" style="margin-top: 20px;">
+    <!-- PDF will be loaded here inline -->
+</div>
+
+<script>
+function openTestPDF() {
+    if (window.openPDFViewer) {
+        openPDFViewer('web/compressed.tracemonkey-pldi-09.pdf');
+    } else {
+        alert('PDF viewer not loaded. Make sure this page is served through the Node.js server.');
+    }
+}
+
+function toggleAnnotations() {
+    if (window.toggleAnnotationMode) {
+        toggleAnnotationMode();
+    } else {
+        alert('Annotation system not loaded.');
+    }
+}
+
+// Auto-load PDF inline when page loads
+setTimeout(function() {
+    if (window.initPDFViewer) {
+        initPDFViewer('web/compressed.tracemonkey-pldi-09.pdf', 'inline-viewer');
+    }
+}, 500);
+</script>
+
+</body>
+</html>

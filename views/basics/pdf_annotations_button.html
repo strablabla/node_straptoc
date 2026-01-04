@@ -1,0 +1,113 @@
+<style>
+#open-pdf-annotations {
+    display: none; /* Hidden by default - not needed as annotation mode can be activated with Alt+A */
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    z-index: 9999;
+    background: #FF6B6B;
+    color: white;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+#open-pdf-annotations:hover {
+    background: #FF5252;
+    transform: scale(1.05);
+}
+</style>
+
+<button id="open-pdf-annotations">📝 PDF + Annotations</button>
+
+<script>
+$('#open-pdf-annotations').click(function() {
+
+    console.log('Opening PDF with annotations...');
+
+    // 1. Activate annotation mode
+    if (!window.annotationSystem.active) {
+        toggleAnnotationMode();
+    }
+
+    // 2. Open PDF in modal
+    var pdfPath = 'pdfs/Classical_and_Relativistic_Derivation_of_the_Sagnac_Effect.pdf';
+
+    // Set current file IMMEDIATELY before opening the PDF
+    // Reset annotationsLoaded flag if file changed
+    if (window.annotationSystem.currentFile !== pdfPath) {
+        window.annotationSystem.annotationsLoaded = false;
+    }
+    window.annotationSystem.currentFile = pdfPath;
+    window.annotationSystem.fileType = 'pdf';
+
+    openPDFViewer(pdfPath);
+
+    // 3. Wait for PDF to load, then attach handlers
+    setTimeout(function() {
+
+        console.log('Attaching annotation handlers to PDF.js viewer...');
+
+        // Attach double-click handler to PDF canvas, text layer AND annotation layer
+        // Use all selectors to catch clicks on canvas, text or existing annotations
+        $(document).off('dblclick', '.pdfjs-page-canvas, .pdfjs-text-layer, #pdfjs-annotation-layer');
+        $(document).on('dblclick', '.pdfjs-page-canvas, .pdfjs-text-layer, #pdfjs-annotation-layer', function(e) {
+
+            console.log('=== PDF canvas/layer double-clicked ===');
+            console.log('Target:', e.target);
+
+            // If there's a text selection, don't create annotation - user is selecting text
+            var selection = window.getSelection();
+            if (selection && selection.toString().length > 0) {
+                console.log('Text selected, not creating annotation');
+                return;
+            }
+
+            if (!window.annotationSystem.active) {
+                console.log('Annotations not active');
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Get the canvas container for position calculation
+            var $container = $(this).closest('.pdfjs-canvas-container');
+            if ($container.length === 0) {
+                console.error('Could not find canvas container');
+                return;
+            }
+
+            // Use getBoundingClientRect for accurate positioning relative to viewport
+            var rect = $container[0].getBoundingClientRect();
+
+            var location = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
+                width: 0,
+                height: 0,
+                page: window.PDFViewer ? window.PDFViewer.currentPage : 1,
+                scale: window.PDFViewer ? window.PDFViewer.scale : 1.5  // Save the scale at creation time
+            };
+
+            console.log('Creating annotation at:', location);
+            console.log('Page:', location.page, 'Scale:', location.scale);
+
+            createNewAnnotation(location);
+        });
+
+        console.log('Handlers attached! Double-click on PDF to create annotations.');
+
+        // Load existing annotations
+        if (window.PDFViewer && window.PDFViewer.currentPage) {
+            socket.emit('get_annotations', pdfPath);
+        }
+
+    }, 1500);
+
+});
+</script>

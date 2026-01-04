@@ -1,0 +1,1425 @@
+<style>
+
+/* Annotation System Styles */
+
+#annotation_toggle_navbar {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-left: 10px;
+    vertical-align: middle;
+    display: none;  /* Hidden by default */
+}
+
+#annotations-status-indicator {
+    position: fixed !important;
+    top: 10px !important;
+    left: 10px !important;
+    z-index: 999999 !important;
+    background: #4CAF50 !important;
+    color: white !important;
+    padding: 7px 12px !important;  /* Agrandi de 1.2x (6->7, 10->12) */
+    border-radius: 4px !important;  /* Agrandi de 1.2x (3->4) */
+    font-weight: bold !important;
+    font-size: 13px !important;  /* Agrandi de 1.2x (11->13) */
+    box-shadow: 0 2px 7px rgba(0,0,0,0.3) !important;  /* Agrandi de 1.2x */
+    border: 1px solid #2E7D32 !important;  /* 1px reste 1px */
+    display: none !important;
+    pointer-events: none !important;
+}
+
+#annotations-status-indicator.visible {
+    display: block !important;
+}
+
+/* Crosshair cursor for PDF in annotation mode */
+.annotation-mode-active .pdfjs-page-canvas,
+.annotation-mode-active .pdfjs-text-layer,
+.annotation-mode-active #pdfjs-annotation-layer,
+.annotation-mode-active #pdfjs-viewer-content {
+    cursor: crosshair !important;
+}
+
+#annotation_panel {
+    display: none;
+    position: fixed;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0.5em 0.5em 0.7em rgba(0, 0, 0, 0.3);
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    z-index: 10001;  /* Above PDF overlay */
+    min-width: 350px;
+    max-width: 450px;
+}
+
+#annotation_panel.reduced {
+    min-width: auto;
+    width: 40px;
+    height: 40px;
+    padding: 5px;
+    overflow: hidden;
+}
+
+#annotation_content {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.annotation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.annotation-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.annotation-btn {
+    cursor: pointer;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.annotation-btn:hover {
+    background: #f0f0f0;
+}
+
+#annotation_textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+    resize: vertical;
+    margin-bottom: 10px;
+    background-color: white;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 10002 !important;
+    pointer-events: auto !important;
+}
+
+.annotation-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.annotation-save-btn {
+    padding: 8px 16px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.annotation-save-btn:hover {
+    background: #45a049;
+}
+
+.annotation-delete-btn {
+    padding: 8px 16px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.annotation-delete-btn:hover {
+    background: #da190b;
+}
+
+/* Annotation markers on content */
+.annotation-marker {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff6b6b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>') no-repeat center;
+    background-size: contain;
+    cursor: pointer;
+    z-index: 10002 !important;  /* Above annotation panel (10001) */
+    opacity: 0.9;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: auto !important;  /* Ensure clickable */
+}
+
+.annotation-marker:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* Canvas overlay for drawing annotations */
+.annotation-canvas-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 50;
+}
+
+</style>
+
+<!-- No icon here, will be added to navbar dynamically -->
+
+<!-- Status indicator for annotation mode -->
+<div id="annotations-status-indicator">mode annotation</div>
+
+<div id="annotation_panel">
+    <div class="annotation-header">
+        <span id="annotation_title">New Annotation</span>
+        <div class="annotation-controls">
+            <span class="annotation-btn" id="annotation_reduce">_</span>
+            <span class="annotation-btn" id="annotation_close">x</span>
+        </div>
+    </div>
+    <div id="annotation_content">
+        <textarea id="annotation_textarea" placeholder="Enter your annotation..."></textarea>
+        <div class="annotation-footer">
+            <button class="annotation-delete-btn" id="annotation_delete" style="display:none;">Delete</button>
+            <button class="annotation-save-btn" id="annotation_save">Save</button>
+        </div>
+    </div>
+</div>
+
+<script src="lib/keymaster.js"></script>
+
+<script>
+
+/*
+
+Unified Annotation System
+Works with PDFs, EPUBs, and other content
+Uses canvas overlay for format-independent annotations
+
+*/
+
+// Make annotationSystem globally accessible
+window.annotationSystem = {
+    active: false,
+    currentFile: null,
+    fileType: null,
+    annotations: [],
+    currentAnnotation: null,
+    panelReduced: false,
+    pdfReady: false,  // For PDF.js viewer
+    currentPdfPage: 1,  // Current page in PDF.js viewer
+    saving: false  // Flag to prevent double saves
+};
+
+// Alias for backward compatibility
+var annotationSystem = window.annotationSystem;
+
+// Initialize annotation system
+function initAnnotationSystem() {
+
+    // Set up toggle button in navbar (will be shown/hidden dynamically)
+    $(document).on('click', '#annotation_toggle_navbar', function() {
+        $('#id_view_image').hide();
+        $('#id_view_image_body').hide();
+        toggleAnnotationMode();
+    });
+
+    // Panel controls
+    $('#annotation_close').click(function() {
+        closeAnnotationPanel();
+    });
+
+    $('#annotation_reduce').click(function() {
+        toggleAnnotationPanel();
+    });
+
+    $('#annotation_save').click(function() {
+        saveCurrentAnnotation();
+    });
+
+    $('#annotation_delete').click(function() {
+        deleteCurrentAnnotation();
+    });
+
+    // Alt+A keyboard shortcut - Remove any existing handlers first to prevent duplicates
+    $(document).off('keydown.annotations');
+    $(document).off('keyup.annotations');
+
+    var altAPressed = false;
+    $(document).on('keydown.annotations', function(e) {
+        // Alt+A: Alt key + A key (65)
+        if (e.altKey && e.keyCode === 65 && !altAPressed) {
+            altAPressed = true;
+            e.preventDefault();
+            e.stopPropagation();
+            toggleAnnotationMode();
+        }
+    });
+
+    $(document).on('keyup.annotations', function(e) {
+        // Reset flag when A key is released
+        if (e.keyCode === 65) {
+            altAPressed = false;
+        }
+    });
+
+    // Detect current file context
+    detectCurrentFile();
+}
+
+// Detect what file/content is currently being viewed
+function detectCurrentFile() {
+
+    // Store previous file to detect changes
+    var previousFile = annotationSystem.currentFile;
+
+    // Check for PDF.js viewer modal (highest priority)
+    if (window.PDFViewer && window.PDFViewer.pdfDoc && annotationSystem.currentFile &&
+        annotationSystem.currentFile.includes('.pdf')) {
+        // Already set by PDF.js viewer, don't change it
+        annotationSystem.fileType = 'pdf';
+        return;
+    }
+
+    // Check for PDF embedded via markdown (with pdf-link class)
+    var pdfObject = $('object[type="application/pdf"]:visible').first();
+    if (pdfObject.length > 0) {
+        var pdfSrc = pdfObject.attr('data');
+        if (pdfSrc) {
+            // Reset annotations loaded flag if file changed
+            if (pdfSrc !== previousFile) {
+                annotationSystem.annotationsLoaded = false;
+            }
+            annotationSystem.currentFile = pdfSrc;
+            annotationSystem.fileType = 'pdf';
+            return;
+        }
+    }
+
+    // Check for PDF embed
+    var pdfEmbed = $('.embed_pdf:visible').first();
+    if (pdfEmbed.length > 0) {
+        var pdfText = pdfEmbed.text().trim();
+        if (pdfText) {
+            if (pdfText !== previousFile) {
+                annotationSystem.annotationsLoaded = false;
+            }
+            annotationSystem.currentFile = pdfText;
+            annotationSystem.fileType = 'pdf';
+            return;
+        }
+    }
+
+    // Check for EPUB
+    var epubContainer = $('#epub-viewer:visible, .epub-container:visible').first();
+    if (epubContainer.length > 0) {
+        var epubSrc = epubContainer.attr('data-epub-path') || epubContainer.attr('src');
+        if (epubSrc) {
+            if (epubSrc !== previousFile) {
+                annotationSystem.annotationsLoaded = false;
+            }
+            annotationSystem.currentFile = epubSrc;
+            annotationSystem.fileType = 'epub';
+            return;
+        }
+    }
+
+    // Check for YouTube
+    var youtube = $('.youtube:visible').first();
+    if (youtube.length > 0) {
+        var youtubeId = youtube.attr('id');
+        if (youtubeId) {
+            if (youtubeId !== previousFile) {
+                annotationSystem.annotationsLoaded = false;
+            }
+            annotationSystem.currentFile = youtubeId;
+            annotationSystem.fileType = 'youtube';
+            return;
+        }
+    }
+
+    // Check for any link
+    var link = $('a:hover').last();
+    if (link.length > 0) {
+        var href = link.attr('href');
+        if (href) {
+            if (href !== previousFile) {
+                annotationSystem.annotationsLoaded = false;
+            }
+            annotationSystem.currentFile = href;
+            annotationSystem.fileType = 'link';
+            return;
+        }
+    }
+
+    var currentPath = window.location.pathname;
+    if (currentPath !== previousFile) {
+        annotationSystem.annotationsLoaded = false;
+    }
+    annotationSystem.currentFile = currentPath;
+    annotationSystem.fileType = 'page';
+}
+
+// Toggle annotation mode on/off
+function toggleAnnotationMode() {
+
+    if (annotationSystem.active) {
+        // Deactivate
+        annotationSystem.active = false;
+        $('#annotation_toggle_navbar').attr('src', 'capicon/svg/353.svg').hide();
+
+        // Hide indicator using class
+        $('#annotations-status-indicator').removeClass('visible');
+        console.log('Indicator hidden, class removed');
+
+        hideAllAnnotationMarkers();
+        closeAnnotationPanel();
+        removePdfEpubClickHandlers();
+
+        // Remove crosshair cursor by removing class from modal and viewer
+        $('#pdf-viewer-modal, #pdf-viewer-modal-content').removeClass('annotation-mode-active');
+        console.log('Crosshair removed, annotation-mode-active class removed');
+
+        console.log('Annotation mode deactivated');
+    } else {
+        // Activate
+        detectCurrentFile();
+        socket.emit('get_annotations', annotationSystem.currentFile);
+        annotationSystem.active = true;
+
+        $('#annotation_toggle_navbar').attr('src', 'capicon/svg/354.svg').show();
+
+        // Show status indicator using class
+        var $indicator = $('#annotations-status-indicator');
+        if ($indicator.length === 0) {
+            $indicator = $('<div id="annotations-status-indicator">mode annotation</div>');
+            $('body').append($indicator);
+        }
+        $indicator.addClass('visible');
+        console.log('Indicator shown, class added');
+
+        // Add crosshair cursor by adding class to modal and viewer
+        $('#pdf-viewer-modal, #pdf-viewer-modal-content').addClass('annotation-mode-active');
+        console.log('Crosshair added, annotation-mode-active class added');
+
+        // Wait a bit for DOM to be ready, then attach handlers
+        setTimeout(function() {
+            attachPdfEpubClickHandlers();
+            // Reapply class in case modal was just created
+            $('#pdf-viewer-modal, #pdf-viewer-modal-content').addClass('annotation-mode-active');
+            console.log('Reapplied annotation-mode-active class');
+        }, 500);
+
+        console.log('Annotation mode activated for file:', annotationSystem.currentFile);
+    }
+}
+
+// Attach click handlers to PDF and EPUB elements
+function attachPdfEpubClickHandlers() {
+
+    console.log('Attaching PDF/EPUB click handlers...');
+
+    // Handle PDFs (object elements)
+    var pdfObjects = $('object[type="application/pdf"]');
+    console.log('Found ' + pdfObjects.length + ' PDF objects');
+
+    pdfObjects.each(function() {
+        var $obj = $(this);
+        var $parent = $obj.parent();
+
+        console.log('PDF object parent:', $parent[0]);
+
+        // Make parent position relative if not already
+        if ($parent.css('position') === 'static') {
+            $parent.css('position', 'relative');
+        }
+
+        // Add click overlay
+        var $overlay = $('<div/>')
+            .addClass('pdf-click-overlay')
+            .css({
+                'position': 'absolute',
+                'top': '0',
+                'left': '0',
+                'width': '100%',
+                'height': '100%',
+                'z-index': '1000',
+                'cursor': 'crosshair',
+                'background': 'rgba(255, 0, 0, 0.05)',  // Very subtle red for debugging
+                'pointer-events': 'auto'  // Allow all pointer events
+            });
+
+        // Single click to potentially click markers
+        $overlay.on('click', function(e) {
+            // Check if we clicked on a marker
+            if ($(e.target).hasClass('annotation-marker')) {
+                // Let the marker handle it
+                return;
+            }
+        });
+
+        // Double click to create annotation
+        $overlay.on('dblclick', function(e) {
+            console.log('PDF overlay double-clicked!');
+
+            // Check if we clicked on a marker
+            if ($(e.target).hasClass('annotation-marker')) {
+                return;  // Don't create new annotation
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            var offset = $(this).offset();
+            var location = {
+                x: e.pageX - offset.left,
+                y: e.pageY - offset.top,
+                width: 0,
+                height: 0
+            };
+
+            console.log('Creating annotation at:', location);
+            detectCurrentFile();
+            createNewAnnotation(location);
+        });
+
+        $parent.append($overlay);
+        console.log('Overlay added to parent');
+    });
+
+    // Handle embed PDFs
+    $('.embed_pdf').each(function() {
+        var $elem = $(this);
+
+        if ($elem.css('position') === 'static') {
+            $elem.css('position', 'relative');
+        }
+
+        var $overlay = $('<div/>')
+            .addClass('pdf-click-overlay')
+            .css({
+                'position': 'absolute',
+                'top': '0',
+                'left': '0',
+                'width': '100%',
+                'height': '100%',
+                'z-index': '10',
+                'cursor': 'crosshair',
+                'background': 'transparent'
+            });
+
+        $overlay.on('dblclick', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var offset = $(this).offset();
+            var location = {
+                x: e.pageX - offset.left,
+                y: e.pageY - offset.top,
+                width: 0,
+                height: 0
+            };
+
+            detectCurrentFile();
+            createNewAnnotation(location);
+        });
+
+        $elem.append($overlay);
+    });
+
+    // Handle EPUBs
+    $('#epub-viewer, .epub-container').each(function() {
+        var $elem = $(this);
+
+        if ($elem.css('position') === 'static') {
+            $elem.css('position', 'relative');
+        }
+
+        var $overlay = $('<div/>')
+            .addClass('epub-click-overlay')
+            .css({
+                'position': 'absolute',
+                'top': '0',
+                'left': '0',
+                'width': '100%',
+                'height': '100%',
+                'z-index': '10',
+                'cursor': 'crosshair',
+                'background': 'transparent'
+            });
+
+        $overlay.on('dblclick', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var offset = $(this).offset();
+            var location = {
+                x: e.pageX - offset.left,
+                y: e.pageY - offset.top,
+                width: 0,
+                height: 0
+            };
+
+            detectCurrentFile();
+            createNewAnnotation(location);
+        });
+
+        $elem.append($overlay);
+    });
+}
+
+// Remove click handlers from PDF and EPUB elements
+function removePdfEpubClickHandlers() {
+    $('.pdf-click-overlay, .epub-click-overlay').remove();
+}
+
+// Load annotations from server
+socket.on('annotations_loaded', function(data) {
+    var result = JSON.parse(data);
+    annotationSystem.annotations = result.annotations || [];
+
+    // Mark that annotations have been loaded for this file (even if empty)
+    annotationSystem.annotationsLoaded = true;
+
+    console.log('Annotations loaded from server:', annotationSystem.annotations.length);
+
+    if (annotationSystem.active) {
+        // Use PDF-specific reload if in PDF.js viewer
+        if (annotationSystem.fileType === 'pdf' && window.PDFViewer && window.PDFViewer.pdfDoc) {
+            reloadPDFAnnotations();
+        } else {
+            displayAnnotationMarkers();
+        }
+    }
+});
+
+// Display annotation markers on the page
+// Create a temporary marker for a new annotation (before it's saved)
+function createTemporaryMarker(annotation) {
+    console.log('Creating temporary marker for annotation:', annotation.id);
+
+    // Remove ONLY the previous temporary marker if it exists (not all temp markers)
+    // This way we don't remove saved annotations that still have temp- IDs
+    if (annotationSystem.previousTempId) {
+        $('.annotation-marker[data-annotation-id="' + annotationSystem.previousTempId + '"]').remove();
+    }
+    annotationSystem.previousTempId = annotation.id;
+
+    // For PDF.js viewer, append to annotation layer
+    if (window.PDFViewer && window.PDFViewer.pdfDoc && annotation.page === window.PDFViewer.currentPage) {
+        var $annotationLayer = $('#pdfjs-annotation-layer');
+
+        if ($annotationLayer.length > 0) {
+            var marker = $('<div/>').addClass('annotation-marker')
+                                    .attr('data-annotation-id', annotation.id)
+                                    .attr('title', 'New annotation')
+                                    .css({
+                                        'position': 'absolute',
+                                        'left': annotation.location.x + 'px',
+                                        'top': annotation.location.y + 'px'
+                                    });
+
+            $annotationLayer.append(marker);
+            console.log('Temporary marker created in PDF.js annotation layer');
+        }
+    }
+}
+
+function displayAnnotationMarkers() {
+
+    console.log('=== displayAnnotationMarkers called ===');
+    console.log('Current file:', annotationSystem.currentFile);
+    console.log('Annotations count:', annotationSystem.annotations.length);
+
+    // Clear existing markers EXCEPT the one currently being edited
+    if (annotationSystem.currentAnnotation && annotationSystem.currentAnnotation.id) {
+        $('.annotation-marker').not('[data-annotation-id="' + annotationSystem.currentAnnotation.id + '"]').remove();
+    } else {
+        $('.annotation-marker').remove();
+    }
+
+    if (!annotationSystem.currentFile || annotationSystem.annotations.length === 0) {
+        console.log('No annotations to display');
+        return;
+    }
+
+    // Find and prepare container
+    var container = findAnnotationContainer();
+    console.log('Container:', container ? container[0] : 'none');
+
+    if (container && container.length > 0) {
+        // Make sure container has relative positioning
+        if (container.css('position') === 'static') {
+            container.css('position', 'relative');
+        }
+    }
+
+    annotationSystem.annotations.forEach(function(annotation) {
+
+        console.log('Creating marker for annotation:', annotation.id, 'at', annotation.location);
+
+        var marker = $('<div/>').addClass('annotation-marker')
+                                .attr('data-annotation-id', annotation.id)
+                                .attr('title', annotation.content ? annotation.content.substring(0, 50) + '...' : 'Annotation');
+
+        // Position the marker
+        if (annotation.location) {
+            marker.css({
+                'position': 'absolute',
+                'left': annotation.location.x + 'px',
+                'top': annotation.location.y + 'px'
+            });
+        }
+
+        // Click to view/edit annotation
+        marker.on('click', function(e) {
+            console.log('Marker clicked:', annotation.id);
+            e.preventDefault();
+            e.stopPropagation();
+            $('.pdf-click-overlay').hide();  // Hide overlay when viewing annotation
+            editAnnotation(annotation, e);
+        });
+
+        // Append to appropriate container
+        if (container && container.length > 0) {
+            container.append(marker);
+            console.log('Marker appended to container');
+        } else {
+            $('body').append(marker);
+            console.log('Marker appended to body');
+        }
+    });
+
+    console.log('=== displayAnnotationMarkers done ===');
+}
+
+// Find the appropriate container for annotation markers
+function findAnnotationContainer() {
+
+    if (annotationSystem.fileType === 'pdf') {
+        // Try to find the PDF object
+        var pdfObject = $('object[type="application/pdf"]:visible').first();
+        if (pdfObject.length > 0) {
+            var parent = pdfObject.parent();
+
+            // Create or find a wrapper div for annotations if it doesn't exist
+            var wrapper = parent.find('.pdf-annotations-wrapper');
+            if (wrapper.length === 0) {
+                // Create wrapper that covers the PDF object
+                wrapper = $('<div/>')
+                    .addClass('pdf-annotations-wrapper')
+                    .css({
+                        'position': 'absolute',
+                        'top': '0',
+                        'left': '0',
+                        'width': pdfObject.width() + 'px',
+                        'height': pdfObject.height() + 'px',
+                        'pointer-events': 'none',  // Don't block PDF interaction
+                        'z-index': '1500'  // Above overlay
+                    });
+
+                // Make sure parent is positioned
+                if (parent.css('position') === 'static') {
+                    parent.css('position', 'relative');
+                }
+
+                parent.append(wrapper);
+                console.log('Created PDF annotations wrapper');
+            }
+
+            // Make markers inside wrapper clickable
+            wrapper.css('pointer-events', 'none');  // Wrapper transparent
+            wrapper.find('.annotation-marker').css('pointer-events', 'auto');  // But markers clickable
+
+            return wrapper;
+        }
+
+        // Fallback to embed_pdf
+        var pdfEmbed = $('.embed_pdf:visible').first();
+        if (pdfEmbed.length > 0) {
+            return pdfEmbed.parent();
+        }
+    }
+
+    if (annotationSystem.fileType === 'epub') {
+        var epubContainer = $('#epub-viewer:visible, .epub-container:visible').first();
+        if (epubContainer.length > 0) {
+            return epubContainer;
+        }
+    }
+
+    return $('#content');
+}
+
+// Hide all annotation markers
+function hideAllAnnotationMarkers() {
+    $('.annotation-marker').remove();
+}
+
+// Create new annotation at clicked position
+$(document).on('dblclick', function(e) {
+
+    if (!annotationSystem.active) {
+        return;
+    }
+
+    // Don't create annotation if clicking on existing marker or panel
+    if ($(e.target).hasClass('annotation-marker') ||
+        $(e.target).closest('#annotation_panel').length > 0) {
+        return;
+    }
+
+    // Only detect current file if we're not already in a PDF context
+    // PDF.js viewer sets currentFile explicitly, don't overwrite it
+    if (!annotationSystem.currentFile || !annotationSystem.currentFile.includes('.pdf')) {
+        detectCurrentFile();
+    }
+
+    var container = findAnnotationContainer();
+    var offset = container ? container.offset() : {top: 0, left: 0};
+
+    var location = {
+        x: e.pageX - offset.left,
+        y: e.pageY - offset.top,
+        width: 0,
+        height: 0
+    };
+
+    // If we're in PDF.js viewer, add page number and scale
+    if (window.PDFViewer && window.PDFViewer.pdfDoc) {
+        location.page = window.PDFViewer.currentPage;
+        location.scale = window.PDFViewer.scale;
+    }
+
+    createNewAnnotation(location);
+});
+
+// Create a new annotation
+function createNewAnnotation(location) {
+
+    console.log('=== createNewAnnotation called ===');
+    console.log('Location:', location);
+
+    // Generate a temporary ID for the marker
+    var tempId = 'temp-' + Date.now();
+
+    annotationSystem.currentAnnotation = {
+        id: tempId,
+        type: 'text',
+        location: location,
+        content: '',
+        color: '#ffff00'
+    };
+
+    console.log('Current annotation created:', annotationSystem.currentAnnotation);
+
+    if (annotationSystem.fileType === 'pdf') {
+        // For PDFs, use page number from location or default to 1
+        annotationSystem.currentAnnotation.page = location.page || 1;
+    }
+
+    if (annotationSystem.fileType === 'epub') {
+        // For EPUBs, try to get CFI
+        // This would need to be integrated with EPUB.js viewer
+        annotationSystem.currentAnnotation.cfi = '';
+        annotationSystem.currentAnnotation.chapter = '';
+    }
+
+    // Create a temporary marker immediately
+    createTemporaryMarker(annotationSystem.currentAnnotation);
+
+    // Temporarily remove PDF overlay so textarea is accessible
+    console.log('Hiding PDF overlays');
+    $('.pdf-click-overlay').hide();
+    console.log('PDF overlays hidden, count:', $('.pdf-click-overlay').length);
+
+    // Use viewport coords if available (from double-click), otherwise canvas-relative
+    if (location.viewportX !== undefined && location.viewportY !== undefined) {
+        showAnnotationPanel(location.viewportX, location.viewportY, 'New Annotation', true);
+    } else {
+        showAnnotationPanel(location.x, location.y, 'New Annotation', false);
+    }
+    $('#annotation_textarea').val('');
+    $('#annotation_delete').hide();
+    console.log('=== createNewAnnotation done ===');
+}
+
+// Edit an existing annotation
+function editAnnotation(annotation, clickEvent) {
+
+    annotationSystem.currentAnnotation = annotation;
+
+    var title = 'Annotation';
+    if (annotation.timestamp) {
+        var date = new Date(annotation.timestamp);
+        title += ' - ' + date.toLocaleString();
+    }
+
+    // If we have a click event, use the click position (viewport coords)
+    // Otherwise fall back to the annotation's stored position
+    if (clickEvent && clickEvent.clientX !== undefined && clickEvent.clientY !== undefined) {
+        console.log('Using click position for panel:', clickEvent.clientX, clickEvent.clientY);
+        showAnnotationPanel(
+            clickEvent.clientX,
+            clickEvent.clientY,
+            title,
+            true  // isViewportCoords = true
+        );
+    } else {
+        console.log('Using annotation stored position for panel');
+        showAnnotationPanel(
+            annotation.location.x,
+            annotation.location.y,
+            title,
+            false  // isViewportCoords = false (canvas-relative)
+        );
+    }
+
+    $('#annotation_textarea').val(annotation.content);
+    $('#annotation_delete').show();
+}
+
+// Show annotation panel
+function showAnnotationPanel(x, y, title, isViewportCoords) {
+
+    console.log('showAnnotationPanel called with x:', x, 'y:', y, 'title:', title, 'isViewportCoords:', isViewportCoords);
+
+    $('#annotation_title').text(title);
+
+    // Calculate absolute position
+    var leftPos, topPos;
+    var screenX, screenY;
+
+    // If coords are already viewport coordinates, use them directly
+    if (isViewportCoords) {
+        screenX = x;
+        screenY = y;
+
+        console.log('=== showAnnotationPanel positioning (direct viewport) ===');
+        console.log('Viewport coords:', {screenX: screenX, screenY: screenY});
+        console.log('Window scroll:', {scrollX: window.scrollX, scrollY: window.scrollY});
+        console.log('Document element scroll:', {scrollLeft: document.documentElement.scrollLeft, scrollTop: document.documentElement.scrollTop});
+    }
+    // If we're in PDF.js viewer modal, convert canvas-relative coords to screen coords
+    else if (window.PDFViewer && window.PDFViewer.pdfDoc) {
+
+        // Find the canvas for the current page
+        var currentPage = window.PDFViewer.currentPage;
+        var $canvas = $('.pdfjs-canvas-container').eq(currentPage - 1);
+
+        if ($canvas.length > 0) {
+            var rect = $canvas[0].getBoundingClientRect();
+
+            // Calculate screen position from canvas-relative coords
+            screenX = rect.left + x;
+            screenY = rect.top + y;
+
+            console.log('=== showAnnotationPanel positioning (canvas-relative) ===');
+            console.log('Current page:', currentPage);
+            console.log('Canvas rect:', {left: rect.left, top: rect.top, width: rect.width, height: rect.height});
+            console.log('Canvas-relative coords:', {x: x, y: y});
+            console.log('Calculated screen coords:', {screenX: screenX, screenY: screenY});
+        } else {
+            // Fallback if canvas not found
+            console.warn('Canvas not found for page', currentPage);
+            screenX = x + 50;
+            screenY = y;
+        }
+    } else {
+        // For non-PDF contexts, use the coords as-is (with small offset)
+        screenX = x + 50;
+        screenY = y;
+    }
+
+    // Now position the panel intelligently using the screen coords
+    // Position panel to the right of the click, but keep it on screen
+    var panelWidth = 300;  // Approximate panel width
+    var panelHeight = 200; // Approximate panel height
+    var windowWidth = $(window).width();
+    var windowHeight = $(window).height();
+
+    // Try to place it to the right of click, with 30px offset (20px more than before)
+    leftPos = screenX + 30;
+
+    console.log('BEFORE X adjustment: leftPos =', leftPos, 'screenX =', screenX, 'windowWidth =', windowWidth);
+
+    // If panel would go off right edge, place it to the left instead
+    if (leftPos + panelWidth > windowWidth) {
+        console.log('Panel would go off right edge, moving to left');
+        leftPos = screenX - panelWidth - 10;
+        // If still off screen, clamp to right edge with margin
+        if (leftPos < 10) {
+            console.log('Still off left edge, clamping to right edge');
+            leftPos = windowWidth - panelWidth - 10;
+        }
+    }
+
+    console.log('AFTER X adjustment: leftPos =', leftPos);
+
+    // Position vertically aligned with click
+    topPos = screenY;
+
+    console.log('BEFORE Y adjustment: topPos =', topPos, 'screenY =', screenY);
+
+    // If panel would go off bottom edge, shift it up
+    if (topPos + panelHeight > windowHeight) {
+        console.log('Panel would go off bottom, adjusting from', topPos, 'to', windowHeight - panelHeight - 10);
+        topPos = windowHeight - panelHeight - 10;
+    }
+
+    // Don't let it go above top edge
+    if (topPos < 10) {
+        console.log('Panel would go off top, adjusting from', topPos, 'to 10');
+        topPos = 10;
+    }
+
+    console.log('AFTER adjustment: topPos =', topPos);
+    console.log('Final panel position: left=', leftPos, 'top=', topPos);
+
+    $('#annotation_panel').css({
+        'left': leftPos + 'px',
+        'top': topPos + 'px',
+        'display': 'block',
+        'z-index': '10001',
+        'background-color': 'white',
+        'border': '1px solid #ccc'
+    }).show();
+
+    console.log('Panel position set to:', leftPos, topPos);
+    console.log('Panel display:', $('#annotation_panel').css('display'));
+    console.log('Panel visibility:', $('#annotation_panel').is(':visible'));
+
+    if (annotationSystem.panelReduced) {
+        $('#annotation_panel').addClass('reduced');
+        $('#annotation_content').hide();
+    } else {
+        $('#annotation_panel').removeClass('reduced');
+        $('#annotation_content').show();
+        console.log('Content shown');
+    }
+
+    // Make panel draggable
+    $('#annotation_panel').draggable();
+
+    // Focus textarea after a small delay to ensure panel is visible
+    setTimeout(function() {
+        console.log('Attempting to focus textarea');
+        var $textarea = $('#annotation_textarea');
+        console.log('Textarea exists:', $textarea.length);
+        console.log('Textarea visible:', $textarea.is(':visible'));
+        console.log('Textarea display:', $textarea.css('display'));
+        $textarea.focus();
+        console.log('Textarea focused');
+    }, 200);
+}
+
+// Close annotation panel
+function closeAnnotationPanel() {
+    // Only remove the marker if it's a temporary annotation (not yet saved)
+    // Check if the annotation is temporary by:
+    // 1. ID starts with "temp-" (newly created)
+    // 2. NOT in the annotations array (not saved yet)
+    if (annotationSystem.currentAnnotation &&
+        annotationSystem.currentAnnotation.id &&
+        annotationSystem.currentAnnotation.id.startsWith('temp-')) {
+
+        // Double-check it's not in the saved annotations
+        var isSaved = annotationSystem.annotations.some(function(ann) {
+            return ann.id === annotationSystem.currentAnnotation.id;
+        });
+
+        if (!isSaved) {
+            console.log('Removing temporary unsaved marker:', annotationSystem.currentAnnotation.id);
+            $('.annotation-marker[data-annotation-id="' + annotationSystem.currentAnnotation.id + '"]').remove();
+        } else {
+            console.log('Keeping marker for saved annotation:', annotationSystem.currentAnnotation.id);
+        }
+    }
+
+    $('#annotation_panel').hide();
+    annotationSystem.currentAnnotation = null;
+
+    // Restore PDF overlay
+    $('.pdf-click-overlay').show();
+
+    // Reload annotations to ensure all markers are visible
+    if (window.PDFViewer && window.PDFViewer.pdfDoc) {
+        reloadPDFAnnotations();
+    }
+}
+
+// Toggle annotation panel size
+function toggleAnnotationPanel() {
+    annotationSystem.panelReduced = !annotationSystem.panelReduced;
+
+    if (annotationSystem.panelReduced) {
+        $('#annotation_panel').addClass('reduced');
+        $('#annotation_content').hide();
+    } else {
+        $('#annotation_panel').removeClass('reduced');
+        $('#annotation_content').show();
+    }
+}
+
+// Save current annotation
+function saveCurrentAnnotation() {
+
+    console.log('=== saveCurrentAnnotation called ===');
+
+    if (!annotationSystem.currentAnnotation) {
+        console.log('No current annotation');
+        return;
+    }
+
+    // Prevent double saves
+    if (annotationSystem.saving) {
+        console.log('Already saving, ignoring duplicate call');
+        return;
+    }
+    annotationSystem.saving = true;
+
+    var content = $('#annotation_textarea').val().trim();
+
+    if (content === '') {
+        annotationSystem.saving = false;
+        showNotification('Annotation content cannot be empty', 'error');
+        return;
+    }
+
+    // Update annotation content
+    annotationSystem.currentAnnotation.content = content;
+
+    // Ensure timestamp is set
+    if (!annotationSystem.currentAnnotation.timestamp) {
+        annotationSystem.currentAnnotation.timestamp = new Date().toISOString();
+    }
+
+    // Ensure filePath is set on the annotation itself for reference
+    annotationSystem.currentAnnotation.filePath = annotationSystem.currentFile;
+    annotationSystem.currentAnnotation.fileType = annotationSystem.fileType;
+
+    console.log('Saving annotation:', annotationSystem.currentAnnotation);
+    console.log('For file:', annotationSystem.currentFile);
+
+    var annotationData = {
+        filePath: annotationSystem.currentFile,
+        annotation: annotationSystem.currentAnnotation
+    };
+
+    socket.emit('save_annotation', JSON.stringify(annotationData));
+}
+
+// Handle successful annotation save
+socket.on('annotation_saved', function(data) {
+    var result = JSON.parse(data);
+
+    // Reset saving flag
+    annotationSystem.saving = false;
+
+    if (result.success) {
+        showNotification('Annotation saved successfully', 'success');
+
+        // Remove temporary marker before adding the permanent one
+        $('.annotation-marker[data-annotation-id^="temp-"]').remove();
+
+        // Update local annotations array
+        var existingIndex = annotationSystem.annotations.findIndex(
+            ann => ann.id === result.annotation.id
+        );
+
+        if (existingIndex !== -1) {
+            annotationSystem.annotations[existingIndex] = result.annotation;
+        } else {
+            annotationSystem.annotations.push(result.annotation);
+        }
+
+        // Refresh markers - use PDF-specific reload if in PDF.js viewer
+        // Check if the annotation has a page property (indicates it's a PDF annotation)
+        if (result.annotation.page && window.PDFViewer && window.PDFViewer.pdfDoc) {
+            reloadPDFAnnotations();
+        } else {
+            displayAnnotationMarkers();
+        }
+        closeAnnotationPanel();
+    }
+});
+
+// Handle annotation updates from other clients
+socket.on('annotation_updated', function(data) {
+    var result = JSON.parse(data);
+
+    // Only reload if this is not our own save (avoid duplicates)
+    // We already handled our own saves in 'annotation_saved'
+    // This is only for updates from OTHER clients
+    // Skip it for now to avoid duplicates
+    console.log('annotation_updated received (from broadcast), ignoring to avoid duplicates');
+});
+
+// Delete current annotation
+function deleteCurrentAnnotation() {
+
+    if (!annotationSystem.currentAnnotation || !annotationSystem.currentAnnotation.id) {
+        return;
+    }
+
+    if (!confirm('Are you sure you want to delete this annotation?')) {
+        return;
+    }
+
+    var deleteData = {
+        filePath: annotationSystem.currentFile,
+        annotationId: annotationSystem.currentAnnotation.id
+    };
+
+    socket.emit('delete_annotation', JSON.stringify(deleteData));
+}
+
+// Handle successful annotation deletion
+socket.on('annotation_deleted', function(data) {
+    var result = JSON.parse(data);
+
+    if (result.success) {
+        showNotification('Annotation deleted successfully', 'success');
+
+        // Remove from local array
+        annotationSystem.annotations = annotationSystem.annotations.filter(
+            ann => ann.id !== result.annotationId
+        );
+
+        // Refresh markers
+        displayAnnotationMarkers();
+        closeAnnotationPanel();
+    }
+});
+
+// Handle annotation removal from other clients
+socket.on('annotation_removed', function(data) {
+    var result = JSON.parse(data);
+
+    if (result.filePath === annotationSystem.currentFile) {
+        // Reload annotations for this file
+        socket.emit('get_annotations', annotationSystem.currentFile);
+    }
+});
+
+// Handle annotation errors
+socket.on('annotation_error', function(errorMsg) {
+    showNotification('Error: ' + errorMsg, 'error');
+});
+
+// Voice command support for creating annotations
+socket.on('create_new_annotation', function() {
+    if (annotationSystem.active) {
+        var elem = $(':hover').last();
+        var offset = elem.offset() || {top: 100, left: 100};
+        createNewAnnotation({
+            x: offset.left,
+            y: offset.top,
+            width: 0,
+            height: 0
+        });
+    } else {
+        toggleAnnotationMode();
+    }
+});
+
+//===========================================
+// PDF.js Viewer Integration
+//===========================================
+
+// Setup double-click handler for PDF.js viewer annotations
+function setupPDFJSAnnotationHandlers() {
+
+    console.log('Setting up PDF.js annotation handlers');
+
+    // Remove old handlers to avoid duplicates
+    $(document).off('dblclick', '.pdfjs-page-canvas, .pdfjs-text-layer, #pdfjs-annotation-layer');
+
+    // Add double-click handler to PDF canvas, text layer AND annotation layer
+    $(document).on('dblclick', '.pdfjs-page-canvas, .pdfjs-text-layer, #pdfjs-annotation-layer', function(e) {
+
+        console.log('=== PDF.js double-clicked ===');
+        console.log('Target:', e.target.className);
+
+        // Always prevent default and stop propagation FIRST to prevent other handlers from firing
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!annotationSystem.active) {
+            console.log('Annotation system not active');
+            return;
+        }
+
+        // Clear any text selection that was created by the double-click itself
+        // We want to allow annotations even if double-clicking on text
+        if (window.getSelection) {
+            window.getSelection().removeAllRanges();
+        }
+
+        // Get the canvas container for position calculation
+        var $container = $(this).closest('.pdfjs-canvas-container');
+        if ($container.length === 0) {
+            console.error('Could not find canvas container');
+            return;
+        }
+
+        // Use getBoundingClientRect for accurate positioning relative to viewport
+        var rect = $container[0].getBoundingClientRect();
+
+        // Calculate canvas-relative coords for storing the annotation position
+        var canvasX = e.clientX - rect.left;
+        var canvasY = e.clientY - rect.top;
+
+        // For panel positioning, we need viewport coords that account for the modal position
+        // Get the modal container position
+        var $modal = $('#pdf-viewer-modal');
+        var modalRect = $modal.length > 0 ? $modal[0].getBoundingClientRect() : {left: 0, top: 0};
+
+        // Calculate position relative to modal
+        var modalRelativeX = e.clientX - modalRect.left;
+        var modalRelativeY = e.clientY - modalRect.top;
+
+        var location = {
+            x: canvasX - 20,  // Apply -20px offset for star positioning (to the left)
+            y: canvasY - 20,  // Apply -20px offset for star positioning (higher)
+            width: 0,
+            height: 0,
+            page: window.PDFViewer ? window.PDFViewer.currentPage : 1,
+            scale: window.PDFViewer ? window.PDFViewer.scale : 1.5,  // Save the scale at creation time
+            // Store ABSOLUTE viewport coords for panel positioning
+            viewportX: e.clientX,
+            viewportY: e.clientY
+        };
+
+        console.log('=== Double-click annotation creation ===');
+        console.log('Mouse viewport coords:', {clientX: e.clientX, clientY: e.clientY});
+        console.log('Canvas rect:', {left: rect.left, top: rect.top, width: rect.width, height: rect.height});
+        console.log('Modal rect:', {left: modalRect.left, top: modalRect.top});
+        console.log('Modal-relative coords:', {x: modalRelativeX, y: modalRelativeY});
+        console.log('Calculated canvas-relative location:', {x: location.x, y: location.y});
+        console.log('Page:', location.page, 'Scale:', location.scale);
+
+        detectCurrentFile();
+        createNewAnnotation(location);
+    });
+}
+
+// Export globally
+window.setupPDFJSAnnotationHandlers = setupPDFJSAnnotationHandlers;
+
+// Reload annotations for current PDF.js page
+function reloadPDFAnnotations() {
+
+    console.log('=== reloadPDFAnnotations ===');
+
+    // Only reload annotations if annotation mode is active
+    if (!annotationSystem.active) {
+        console.log('Annotation mode not active, skipping marker display');
+        return;
+    }
+
+    if (!window.PDFViewer || !annotationSystem.currentFile) {
+        console.log('PDF viewer or currentFile not ready');
+        return;
+    }
+
+    var currentPage = window.PDFViewer.currentPage;
+
+    console.log('Current page:', currentPage);
+    console.log('Total annotations:', annotationSystem.annotations.length);
+
+    // If annotations haven't been loaded yet for this file, request them from server
+    // Use a flag instead of checking array length to avoid infinite loops
+    if (!annotationSystem.annotationsLoaded && annotationSystem.currentFile) {
+        console.log('Annotations not loaded yet, requesting from server...');
+        socket.emit('get_annotations', annotationSystem.currentFile);
+        return; // Will be called again when annotations are loaded
+    }
+
+    // Clear existing markers EXCEPT the one currently being edited
+    if (annotationSystem.currentAnnotation && annotationSystem.currentAnnotation.id) {
+        $('#pdfjs-annotation-layer .annotation-marker').not('[data-annotation-id="' + annotationSystem.currentAnnotation.id + '"]').remove();
+    } else {
+        $('#pdfjs-annotation-layer .annotation-marker').remove();
+    }
+
+    // Filter annotations for current page
+    var pageAnnotations = annotationSystem.annotations.filter(function(ann) {
+        return ann.page === currentPage || !ann.page;  // Show annotations without page on all pages
+    });
+
+    console.log('Annotations for page', currentPage + ':', pageAnnotations.length);
+
+    // Get current scale
+    var currentScale = window.PDFViewer.scale;
+
+    // Display markers for this page
+    pageAnnotations.forEach(function(annotation) {
+
+        var marker = $('<div/>').addClass('annotation-marker')
+                                .attr('data-annotation-id', annotation.id)
+                                .attr('title', annotation.content ? annotation.content.substring(0, 50) + '...' : 'Annotation');
+
+        // Position the marker, adjusting for scale
+        if (annotation.location) {
+            // Get the scale at which the annotation was created (default to 1.5 for old annotations)
+            var annotationScale = annotation.location.scale || 1.5;
+
+            // Calculate scale ratio
+            var scaleRatio = currentScale / annotationScale;
+
+            // Adjust position based on scale ratio
+            var adjustedX = annotation.location.x * scaleRatio;
+            var adjustedY = annotation.location.y * scaleRatio;
+
+            console.log('Annotation', annotation.id, 'created at scale', annotationScale,
+                       'displayed at scale', currentScale, 'ratio', scaleRatio,
+                       'original pos:', annotation.location.x, annotation.location.y,
+                       'adjusted pos:', adjustedX, adjustedY);
+
+            marker.css({
+                'position': 'absolute',
+                'left': adjustedX + 'px',
+                'top': adjustedY + 'px',
+                'pointer-events': 'auto'
+            });
+        }
+
+        // Click to view/edit annotation
+        marker.on('click', function(e) {
+            console.log('Marker clicked:', annotation.id);
+            e.preventDefault();
+            e.stopPropagation();
+            editAnnotation(annotation, e);
+        });
+
+        $('#pdfjs-annotation-layer').append(marker);
+    });
+
+    console.log('=== reloadPDFAnnotations done ===');
+}
+
+// Make functions globally available
+window.reloadPDFAnnotations = reloadPDFAnnotations;
+window.closeAnnotationPanel = closeAnnotationPanel;
+window.toggleAnnotationMode = toggleAnnotationMode;
+
+// Initialize when document is ready
+$(document).ready(function() {
+    initAnnotationSystem();
+    setupPDFJSAnnotationHandlers();
+});
+
+</script>

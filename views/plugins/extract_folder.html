@@ -368,8 +368,25 @@ socket.on('make_elems', function(){
 
                 } else {
 
-                    taga.text(' [-]') }
-                    $(this).next().toggle()
+                    taga.text(' [-]')
+
+                    // Initialize PDF.js viewer when opening
+                    var $container = $(this).next();
+                    var $pdfViewer = $container.find('[id^="pdf-viewer-"]');
+
+                    if ($pdfViewer.length > 0 && !$pdfViewer.hasClass('pdfjs-initialized')) {
+                        var viewerId = $pdfViewer.attr('id');
+                        var pdfPath = $pdfViewer.data('pdf-path');
+
+                        if (pdfPath && window.initPDFViewer) {
+                            console.log('Initializing PDF.js viewer for:', pdfPath);
+                            window.initPDFViewer(pdfPath, viewerId);
+                            $pdfViewer.addClass('pdfjs-initialized');
+                        }
+                    }
+                }
+
+                $(this).next().toggle()
 
             })
     }
@@ -380,14 +397,18 @@ socket.on('make_elems', function(){
 
         addr : folder + pdf name..
 
+        Now uses PDF.js viewer instead of <object> tag for annotation support
+
         */
 
-        var htm = '<br><object width="900" height="1000" type="application/pdf"\
-                data="{}?\
-                #zoom=100&scrollbar=1&toolbar=1&navpanes=1">  \
-                </object> <br><br>'.format(addr)
+        // Create unique ID for this PDF viewer
+        var viewerId = 'pdf-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 
-        return htm // /pdf/Phys/
+        // Create container for PDF.js viewer with data-pdf-path attribute
+        // The viewer will be initialized when the user clicks to open the PDF
+        var htm = '<br><div id="{}" data-pdf-path="{}" style="width: 100%; min-height: 800px; margin: 10px 0;"></div><br>'.format(viewerId, addr);
+
+        return htm;
 
     }
 

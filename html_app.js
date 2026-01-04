@@ -20,6 +20,7 @@ var new_obj = require('./static/js/new_obj');
 var store = require('./static/js/store');
 var agenda = require('./static/js/agenda');
 var config = require('./lib/config');
+var annotations = require('./lib/annotations');
 
 //--------------  Load configuration
 
@@ -130,6 +131,10 @@ var users = {}
 num_user = 0
 
 util.save_regularly_all()                                                // save the regularly the text..
+
+// Setup annotation handlers ONCE (not per connection)
+annotations.setupAnnotationHandlers(io)                              //---- annotations
+
 io.sockets.on('connection', function (socket) {
       socket.on('new_user', function(name_user){
           users[socket.id] =  name_user        // parseInt((num_user-1)/2)

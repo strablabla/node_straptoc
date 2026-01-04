@@ -241,8 +241,8 @@ $('#search_modal_overlay').click(function() {
 
 // Keyboard shortcuts
 $(document).keydown(function(e) {
-    // Shift+F to open search modal
-    if (e.shiftKey && e.key === 'F') {
+    // Alt+F to open search modal
+    if (e.altKey && e.key === 'F') {
         e.preventDefault();
         openSearchModal();
         return false;

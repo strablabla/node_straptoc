@@ -1,0 +1,611 @@
+<style>
+
+/* PDF.js Custom Viewer Styles */
+
+#pdfjs-viewer-content {
+    padding-bottom: 100px !important;  /* Espace en bas pour voir le bord de la dernière page */
+}
+
+.pdfjs-viewer-container {
+    position: relative;
+    width: 100%;
+    background: #525252;
+    overflow: auto;
+    min-height: 600px;
+    padding-bottom: 100px;  /* Espace en bas pour voir le bord de la dernière page */
+}
+
+.pdfjs-viewer-controls {
+    position: sticky;
+    top: 0;
+    background: #323232;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.pdfjs-viewer-controls button {
+    background: #454545;
+    color: white;
+    border: 1px solid #666;
+    padding: 5px 12px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.pdfjs-viewer-controls button:hover {
+    background: #555;
+}
+
+.pdfjs-viewer-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pdfjs-viewer-controls input,
+.pdfjs-viewer-controls select {
+    background: #454545;
+    color: white;
+    border: 1px solid #666;
+    padding: 5px 8px;
+    border-radius: 3px;
+}
+
+.pdfjs-page-info {
+    color: white;
+    font-size: 14px;
+    margin: 0 10px;
+}
+
+.pdfjs-canvas-container {
+    position: relative;
+    margin: 20px auto;
+    margin-bottom: 60px;  /* Marge en bas pour voir le bas de page */
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.pdfjs-page-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.pdfjs-annotation-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 20;  /* Above text layer (15) so markers are hoverable */
+}
+
+.pdfjs-annotation-layer .annotation-marker {
+    pointer-events: auto !important;
+    position: absolute !important;
+    z-index: 100 !important;  /* High z-index within annotation layer */
+}
+
+.pdfjs-text-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    opacity: 1;
+    line-height: 1.0;
+    z-index: 15;  /* ABOVE annotations to allow text selection */
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    pointer-events: auto !important;
+    cursor: text !important;
+}
+
+.pdfjs-text-layer span,
+.pdfjs-text-layer br {
+    color: transparent !important;  /* Invisible text for selection */
+    position: absolute;
+    white-space: pre;
+    cursor: text !important;
+    transform-origin: 0% 0%;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    pointer-events: auto !important;
+    opacity: 0.2;  /* Nearly invisible - just enough to be selectable */
+}
+
+.pdfjs-text-layer ::selection {
+    background: rgba(0, 100, 255, 0.5) !important;  /* Blue highlight when selected */
+    color: transparent !important;  /* Keep text invisible even when selected */
+}
+
+/* Also target the inner elements that PDF.js creates */
+.pdfjs-text-layer > span,
+.pdfjs-text-layer > div,
+.pdfjs-text-layer br {
+    user-select: text !important;
+    pointer-events: auto !important;
+}
+
+.pdfjs-loading {
+    text-align: center;
+    color: white;
+    padding: 50px;
+    font-size: 18px;
+}
+
+.pdfjs-error {
+    text-align: center;
+    color: #ff6b6b;
+    padding: 50px;
+    font-size: 16px;
+}
+
+</style>
+
+<script type="module">
+
+/*
+
+PDF.js Custom Viewer with Annotation Support
+
+This viewer provides:
+- Full control over PDF rendering
+- Page-by-page navigation
+- Zoom controls
+- Annotation layer support
+- Integration with our annotation system
+
+*/
+
+import * as pdfjsLib from '/pdfjs/build/pdf.mjs';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdfjs/build/pdf.worker.mjs';
+
+// Global PDF viewer state
+window.PDFViewer = {
+    pdfDoc: null,
+    currentPage: 1,
+    totalPages: 0,
+    scale: 1.5,
+    rendering: false,
+    currentPdfPath: null
+};
+
+// Initialize PDF viewer
+async function initPDFViewer(pdfPath, containerId) {
+
+    console.log('=== Initializing PDF.js viewer ===');
+    console.log('PDF path:', pdfPath);
+    console.log('Container ID:', containerId);
+
+    try {
+        // Load the PDF document
+        const loadingTask = pdfjsLib.getDocument(pdfPath);
+
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error('Container not found:', containerId);
+            return;
+        }
+
+        container.innerHTML = '<div class="pdfjs-loading">Loading PDF...</div>';
+
+        const pdfDoc = await loadingTask.promise;
+
+        window.PDFViewer.pdfDoc = pdfDoc;
+        window.PDFViewer.totalPages = pdfDoc.numPages;
+        window.PDFViewer.currentPage = 1;
+        window.PDFViewer.currentPdfPath = pdfPath;
+
+        console.log('PDF loaded successfully. Pages:', pdfDoc.numPages);
+
+        // Build viewer UI
+        buildViewerUI(container);
+
+        // Render first page
+        await renderPage(1);
+
+        // Notify annotation system that PDF is ready
+        if (window.annotationSystem) {
+            window.annotationSystem.pdfReady = true;
+            window.annotationSystem.currentFile = pdfPath;
+            window.annotationSystem.fileType = 'pdf';
+        }
+
+    } catch (error) {
+        console.error('Error loading PDF:', error);
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = `<div class="pdfjs-error">Error loading PDF: ${error.message}</div>`;
+        }
+    }
+}
+
+// Build viewer UI
+function buildViewerUI(container) {
+
+    const html = `
+        <div class="pdfjs-viewer-container">
+            <div class="pdfjs-viewer-controls">
+                <button id="pdfjs-prev-page">◀ Previous</button>
+                <span class="pdfjs-page-info">
+                    Page <input type="number" id="pdfjs-page-num" min="1" max="${window.PDFViewer.totalPages}" value="1" style="width: 50px;">
+                    of <span id="pdfjs-page-count">${window.PDFViewer.totalPages}</span>
+                </span>
+                <button id="pdfjs-next-page">Next ▶</button>
+                <span style="margin-left: 20px;">Zoom:</span>
+                <button id="pdfjs-zoom-out">−</button>
+                <select id="pdfjs-scale">
+                    <option value="0.5">50%</option>
+                    <option value="0.75">75%</option>
+                    <option value="1.0">100%</option>
+                    <option value="1.5" selected>150%</option>
+                    <option value="2.0">200%</option>
+                    <option value="2.5">250%</option>
+                </select>
+                <button id="pdfjs-zoom-in">+</button>
+            </div>
+            <div id="pdfjs-viewer-content" style="position: relative; overflow: auto; height: 800px;">
+                <!-- Pages will be rendered here -->
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Attach event listeners
+    document.getElementById('pdfjs-prev-page').addEventListener('click', () => {
+        if (window.PDFViewer.currentPage > 1) {
+            renderPage(window.PDFViewer.currentPage - 1);
+        }
+    });
+
+    document.getElementById('pdfjs-next-page').addEventListener('click', () => {
+        if (window.PDFViewer.currentPage < window.PDFViewer.totalPages) {
+            renderPage(window.PDFViewer.currentPage + 1);
+        }
+    });
+
+    document.getElementById('pdfjs-page-num').addEventListener('change', (e) => {
+        const pageNum = parseInt(e.target.value);
+        if (pageNum >= 1 && pageNum <= window.PDFViewer.totalPages) {
+            renderPage(pageNum);
+        }
+    });
+
+    document.getElementById('pdfjs-scale').addEventListener('change', (e) => {
+        window.PDFViewer.scale = parseFloat(e.target.value);
+        renderPage(window.PDFViewer.currentPage);
+    });
+
+    document.getElementById('pdfjs-zoom-out').addEventListener('click', () => {
+        const select = document.getElementById('pdfjs-scale');
+        const currentIndex = select.selectedIndex;
+        if (currentIndex > 0) {
+            select.selectedIndex = currentIndex - 1;
+            select.dispatchEvent(new Event('change'));
+        }
+    });
+
+    document.getElementById('pdfjs-zoom-in').addEventListener('click', () => {
+        const select = document.getElementById('pdfjs-scale');
+        const currentIndex = select.selectedIndex;
+        if (currentIndex < select.options.length - 1) {
+            select.selectedIndex = currentIndex + 1;
+            select.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
+// Render a specific page
+async function renderPage(pageNum) {
+
+    if (window.PDFViewer.rendering) {
+        return;
+    }
+
+    window.PDFViewer.rendering = true;
+    window.PDFViewer.currentPage = pageNum;
+
+    console.log('Rendering page', pageNum);
+
+    // Close annotation panel when changing pages
+    if (window.closeAnnotationPanel) {
+        window.closeAnnotationPanel();
+    }
+
+    try {
+        const page = await window.PDFViewer.pdfDoc.getPage(pageNum);
+
+        const viewport = page.getViewport({ scale: window.PDFViewer.scale });
+
+        // Prepare canvas
+        const container = document.getElementById('pdfjs-viewer-content');
+        container.innerHTML = '';
+
+        const canvasContainer = document.createElement('div');
+        canvasContainer.className = 'pdfjs-canvas-container';
+        canvasContainer.style.width = viewport.width + 'px';
+        canvasContainer.style.height = viewport.height + 'px';
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdfjs-page-canvas';
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        canvasContainer.appendChild(canvas);
+
+        // Create text layer for text selection
+        const textLayer = document.createElement('div');
+        textLayer.className = 'pdfjs-text-layer';
+        textLayer.style.width = viewport.width + 'px';
+        textLayer.style.height = viewport.height + 'px';
+        canvasContainer.appendChild(textLayer);
+
+        // Create annotation layer
+        const annotationLayer = document.createElement('div');
+        annotationLayer.className = 'pdfjs-annotation-layer';
+        annotationLayer.id = 'pdfjs-annotation-layer';
+        canvasContainer.appendChild(annotationLayer);
+
+        container.appendChild(canvasContainer);
+
+        // Render PDF page
+        const context = canvas.getContext('2d');
+        const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+
+        await page.render(renderContext).promise;
+
+        console.log('Page rendered successfully');
+
+        // Render text layer manually
+        const textContent = await page.getTextContent();
+
+        console.log('=== TEXT LAYER DEBUG ===');
+        console.log('Text content items:', textContent.items.length);
+
+        // Log first 20 items to understand the structure
+        for (let i = 0; i < Math.min(20, textContent.items.length); i++) {
+            const str = textContent.items[i].str;
+            const charCodes = Array.from(str).map(c => c.charCodeAt(0).toString(16)).join(' ');
+            console.log(`Item ${i}: "${str}" (chars: ${charCodes})`);
+        }
+
+        // Build merged items by combining accents with previous characters
+        const accentChars = [
+            '´', '\u00B4',  // Acute accent (chars: b4)
+            '`', '\u0060',  // Grave accent
+            '^', '\u005E',  // Circumflex
+            '¨', '\u00A8',  // Diaeresis/Umlaut
+            '~', '\u007E',  // Tilde
+            '¸', '\u00B8',  // Cedilla
+            '\u0301', '\u0300', '\u0302', '\u0308', '\u0303', '\u0327'  // Combining diacritics
+        ];
+
+        // Map of accent combinations: base + accent -> combined character
+        const accentMap = {
+            // Acute accent (´ and \u00B4 which is char b4)
+            'A´': 'Á', 'E´': 'É', 'I´': 'Í', 'O´': 'Ó', 'U´': 'Ú',
+            'a´': 'á', 'e´': 'é', 'i´': 'í', 'o´': 'ó', 'u´': 'ú',
+            'A\u00B4': 'Á', 'E\u00B4': 'É', 'I\u00B4': 'Í', 'O\u00B4': 'Ó', 'U\u00B4': 'Ú',
+            'a\u00B4': 'á', 'e\u00B4': 'é', 'i\u00B4': 'í', 'o\u00B4': 'ó', 'u\u00B4': 'ú',
+            'R\u00B4': 'R´', 'r\u00B4': 'r´',  // Fallback for R (not standard but in this PDF)
+            // Grave accent
+            'A`': 'À', 'E`': 'È', 'I`': 'Ì', 'O`': 'Ò', 'U`': 'Ù',
+            'a`': 'à', 'e`': 'è', 'i`': 'ì', 'o`': 'ò', 'u`': 'ù',
+            // Circumflex
+            'A^': 'Â', 'E^': 'Ê', 'I^': 'Î', 'O^': 'Ô', 'U^': 'Û',
+            'a^': 'â', 'e^': 'ê', 'i^': 'î', 'o^': 'ô', 'u^': 'û',
+            // Umlaut/Diaeresis
+            'A¨': 'Ä', 'E¨': 'Ë', 'I¨': 'Ï', 'O¨': 'Ö', 'U¨': 'Ü',
+            'a¨': 'ä', 'e¨': 'ë', 'i¨': 'ï', 'o¨': 'ö', 'u¨': 'ü',
+            'A\u00A8': 'Ä', 'E\u00A8': 'Ë', 'I\u00A8': 'Ï', 'O\u00A8': 'Ö', 'U\u00A8': 'Ü',
+            'a\u00A8': 'ä', 'e\u00A8': 'ë', 'i\u00A8': 'ï', 'o\u00A8': 'ö', 'u\u00A8': 'ü',
+            // Tilde
+            'A~': 'Ã', 'N~': 'Ñ', 'O~': 'Õ',
+            'a~': 'ã', 'n~': 'ñ', 'o~': 'õ',
+            // Cedilla
+            'C¸': 'Ç', 'c¸': 'ç',
+            'C\u00B8': 'Ç', 'c\u00B8': 'ç'
+        };
+
+        function isAccent(str) {
+            return str.length === 1 && accentChars.includes(str);
+        }
+
+        function combineWithAccent(base, accent) {
+            const combo = base + accent;
+            return accentMap[combo] || (base + accent);
+        }
+
+        // Merge items: if next item is an accent, combine it with current
+        const mergedItems = [];
+        let i = 0;
+        while (i < textContent.items.length) {
+            const currentItem = textContent.items[i];
+            let mergedStr = currentItem.str;
+
+            // Look ahead to see if next item is an accent
+            if (i + 1 < textContent.items.length) {
+                const nextItem = textContent.items[i + 1];
+                if (isAccent(nextItem.str) && mergedStr.length > 0) {
+                    // Get last character of current string
+                    const lastChar = mergedStr[mergedStr.length - 1];
+                    const combined = combineWithAccent(lastChar, nextItem.str);
+                    // Replace last char with combined version
+                    mergedStr = mergedStr.substring(0, mergedStr.length - 1) + combined;
+                    i++; // Skip the accent item
+                }
+            }
+
+            mergedItems.push({
+                str: mergedStr.normalize('NFC'),
+                transform: currentItem.transform,
+                width: currentItem.width,
+                height: currentItem.height
+            });
+            i++;
+        }
+
+        console.log('Merged items count:', mergedItems.length);
+        console.log('First 5 merged items:');
+        for (let i = 0; i < Math.min(5, mergedItems.length); i++) {
+            console.log(`  "${mergedItems[i].str}"`);
+        }
+
+        // Manual text rendering with viewport-adjusted positioning
+        mergedItems.forEach(function(item, index) {
+            const span = document.createElement('span');
+            span.textContent = item.str;
+
+            // Get original transform from PDF
+            const tx = item.transform;
+
+            // Calculate scaled positions
+            const scale = viewport.scale;
+            const x = tx[4] * scale;
+            const y = tx[5] * scale;
+            const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]) * scale;
+
+            // Convert Y from bottom-origin to top-origin
+            // Adjust by subtracting a fraction of fontSize for better alignment
+            const topPosition = viewport.height - y - (fontSize * 0.85);
+
+            span.style.position = 'absolute';
+            span.style.left = x + 'px';
+            span.style.top = topPosition + 'px';
+            span.style.fontSize = fontSize + 'px';
+            span.style.fontFamily = 'sans-serif';
+
+            textLayer.appendChild(span);
+
+            if (index < 5) {
+                console.log(`Text ${index}: "${item.str}" PDF(${tx[4]}, ${tx[5]}) -> Screen(${x}, ${topPosition}), fontSize: ${fontSize}`);
+            }
+        });
+
+        console.log('Text layer rendered manually');
+        console.log('Text layer children count:', textLayer.children.length);
+        console.log('=== END TEXT LAYER DEBUG ===');
+
+        // Add copy event listener to fix accents when copying text
+        textLayer.addEventListener('copy', function(e) {
+            const selection = window.getSelection();
+            let selectedText = selection.toString();
+
+            console.log('=== COPY EVENT ===');
+            console.log('Original text:', selectedText);
+            console.log('Original char codes:', Array.from(selectedText).map(c => c.charCodeAt(0).toString(16)).join(' '));
+
+            // Fix separated accents in copied text
+            // Character-by-character reconstruction
+            const accentB4 = String.fromCharCode(0xB4);  // The ´ character (b4)
+
+            const accentCombos = {
+                'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú',
+                'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú'
+            };
+
+            let fixedText = '';
+
+            for (let i = 0; i < selectedText.length; i++) {
+                const currentChar = selectedText[i];
+                const currentCode = currentChar.charCodeAt(0);
+
+                // If current char is b4 accent, check what comes AFTER
+                if (currentCode === 0xB4) {
+                    // Check if next character can be combined with this accent
+                    if (i + 1 < selectedText.length) {
+                        const nextChar = selectedText[i + 1];
+                        if (accentCombos[nextChar]) {
+                            // Combine accent with next letter
+                            fixedText += accentCombos[nextChar];
+                            i++; // Skip the next letter (we've already added its accented version)
+                            continue;
+                        }
+                    }
+                    // If we can't combine, skip the accent (don't add it)
+                    continue;
+                }
+
+                // Otherwise, add the character as-is
+                fixedText += currentChar;
+            }
+
+            // Also handle other accents with simple replace
+            fixedText = fixedText.replace(/A`/g, 'À');
+            fixedText = fixedText.replace(/E`/g, 'È');
+            fixedText = fixedText.replace(/a`/g, 'à');
+            fixedText = fixedText.replace(/e`/g, 'è');
+
+            fixedText = fixedText.replace(/A\^/g, 'Â');
+            fixedText = fixedText.replace(/E\^/g, 'Ê');
+            fixedText = fixedText.replace(/I\^/g, 'Î');
+            fixedText = fixedText.replace(/O\^/g, 'Ô');
+            fixedText = fixedText.replace(/U\^/g, 'Û');
+            fixedText = fixedText.replace(/a\^/g, 'â');
+            fixedText = fixedText.replace(/e\^/g, 'ê');
+            fixedText = fixedText.replace(/i\^/g, 'î');
+            fixedText = fixedText.replace(/o\^/g, 'ô');
+            fixedText = fixedText.replace(/u\^/g, 'û');
+
+            fixedText = fixedText.normalize('NFC');
+
+            console.log('Fixed text:', fixedText);
+            console.log('Fixed char codes:', Array.from(fixedText).map(c => c.charCodeAt(0).toString(16)).join(' '));
+
+            // Set the clipboard data with fixed text
+            if (e.clipboardData) {
+                e.preventDefault();
+                e.clipboardData.setData('text/plain', fixedText);
+            }
+        });
+
+        // Update page number input
+        document.getElementById('pdfjs-page-num').value = pageNum;
+
+        // Update navigation buttons
+        document.getElementById('pdfjs-prev-page').disabled = (pageNum === 1);
+        document.getElementById('pdfjs-next-page').disabled = (pageNum === window.PDFViewer.totalPages);
+
+        // Reload annotations for this page
+        if (window.annotationSystem && window.annotationSystem.active) {
+            window.reloadPDFAnnotations();
+        }
+
+    } catch (error) {
+        console.error('Error rendering page:', error);
+    } finally {
+        window.PDFViewer.rendering = false;
+
+        // Reapply crosshair cursor if annotations are active
+        if (window.annotationSystem && window.annotationSystem.active) {
+            setTimeout(function() {
+                $('.pdfjs-page-canvas, .pdfjs-text-layer, #pdfjs-annotation-layer').css('cursor', 'crosshair');
+            }, 100);
+        }
+    }
+}
+
+// Make functions globally available
+window.initPDFViewer = initPDFViewer;
+window.renderPage = renderPage;
+
+console.log('PDF.js viewer module loaded');
+
+</script>

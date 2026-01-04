@@ -1,0 +1,165 @@
+<script>
+
+/*
+
+PDF Helper Functions
+Utilities for opening PDFs with the PDF.js viewer
+
+*/
+
+// Open a PDF in a modal with the PDF.js viewer
+function openPDFViewer(pdfPath, options) {
+
+    options = options || {};
+
+    var modalId = options.modalId || 'pdf-viewer-modal';
+    var width = options.width || '95%';
+    var height = options.height || '90%';
+
+    // Create modal if it doesn't exist
+    var $modal = $('#' + modalId);
+    if ($modal.length === 0) {
+        $modal = $('<div/>')
+            .attr('id', modalId)
+            .css({
+                'display': 'none',
+                'position': 'fixed',
+                'z-index': '9999',
+                'left': '50%',
+                'top': '50%',
+                'transform': 'translate(-50%, -50%)',
+                'width': width,
+                'height': height,
+                'background-color': 'white',
+                'box-shadow': '0 0 20px rgba(0,0,0,0.5)',
+                'border-radius': '8px',
+                'overflow': 'hidden'
+            });
+
+        // Function to clean up and close the modal
+        var closeModal = function() {
+            // Clean up PDF viewer before hiding
+            if (window.PDFViewer) {
+                window.PDFViewer.pdfDoc = null;
+                window.PDFViewer.currentPage = 1;
+                window.PDFViewer.rendering = false;
+            }
+            // Clear the viewer content
+            $('#' + modalId + '-content').empty();
+            // Deactivate annotation mode when closing modal
+            if (window.annotationSystem && window.annotationSystem.active && window.toggleAnnotationMode) {
+                window.toggleAnnotationMode();
+            }
+            // Reset annotation system
+            if (window.annotationSystem) {
+                window.annotationSystem.currentFile = null;
+                window.annotationSystem.annotationsLoaded = false;
+            }
+            $modal.hide();
+            $backdrop.hide();
+        };
+
+        // Create close button (hidden by default - user can close by clicking backdrop)
+        var $closeBtn = $('<button/>')
+            .text('✕')
+            .css({
+                'position': 'absolute',
+                'top': '10px',
+                'right': '10px',
+                'z-index': '10000',
+                'background': '#ff4444',
+                'color': 'white',
+                'border': 'none',
+                'border-radius': '50%',
+                'width': '30px',
+                'height': '30px',
+                'cursor': 'pointer',
+                'font-size': '18px',
+                'line-height': '1',
+                'display': 'none'  // Hidden - close by clicking outside instead
+            })
+            .on('click', closeModal);
+
+        // Create backdrop
+        var $backdrop = $('<div/>')
+            .attr('id', modalId + '-backdrop')
+            .css({
+                'display': 'none',
+                'position': 'fixed',
+                'z-index': '9998',
+                'left': '0',
+                'top': '0',
+                'width': '100%',
+                'height': '100%',
+                'background-color': 'rgba(0,0,0,0.7)'
+            })
+            .on('click', closeModal);
+
+        // Create viewer container
+        var $viewerContainer = $('<div/>')
+            .attr('id', modalId + '-content')
+            .css({
+                'width': '100%',
+                'height': '100%'
+            });
+
+        $modal.append($closeBtn).append($viewerContainer);
+        $('body').append($backdrop).append($modal);
+    } else {
+        var $backdrop = $('#' + modalId + '-backdrop');
+    }
+
+    // Show modal
+    $backdrop.show();
+    $modal.show();
+
+    // Initialize PDF viewer
+    if (window.initPDFViewer) {
+        window.initPDFViewer(pdfPath, modalId + '-content');
+    } else {
+        console.error('PDF.js viewer not loaded');
+        $('#' + modalId + '-content').html('<div style="padding: 50px; text-align: center;">PDF viewer not available. Please reload the page.</div>');
+    }
+}
+
+// Replace existing PDF object with PDF.js viewer
+function replacePDFObjectWithViewer(pdfPath, $objectOrContainer) {
+
+    if (!$objectOrContainer || $objectOrContainer.length === 0) {
+        console.error('Invalid container for PDF viewer');
+        return;
+    }
+
+    // Create a unique ID for this viewer
+    var viewerId = 'pdf-viewer-' + Date.now();
+
+    // Create container
+    var $container = $('<div/>')
+        .attr('id', viewerId)
+        .css({
+            'width': '100%',
+            'min-height': '800px'
+        });
+
+    // Replace the object with the container
+    $objectOrContainer.replaceWith($container);
+
+    // Initialize PDF viewer
+    if (window.initPDFViewer) {
+        setTimeout(function() {
+            window.initPDFViewer(pdfPath, viewerId);
+        }, 100);
+    } else {
+        console.error('PDF.js viewer not loaded');
+    }
+
+    return viewerId;
+}
+
+// Make functions globally available
+window.openPDFViewer = openPDFViewer;
+window.replacePDFObjectWithViewer = replacePDFObjectWithViewer;
+
+console.log('PDF helper functions loaded');
+
+</script>
