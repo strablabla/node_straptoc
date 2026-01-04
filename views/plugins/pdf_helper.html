@@ -10,6 +10,12 @@ Utilities for opening PDFs with the PDF.js viewer
 // Open a PDF in a modal with the PDF.js viewer
 function openPDFViewer(pdfPath, options) {
 
+    // Only open viewer for actual PDF files, not EPUBs or other formats
+    if (!pdfPath || !pdfPath.toLowerCase().endsWith('.pdf')) {
+        console.log('openPDFViewer: Not a PDF file, ignoring:', pdfPath);
+        return;
+    }
+
     options = options || {};
 
     var modalId = options.modalId || 'pdf-viewer-modal';
