@@ -9,8 +9,11 @@ Play list
 // rgb(255, 255, 204) pale yellow
 var color_play_list = 'rgb(255, 255, 204)'
 var icon_helmet = "capicon/svg/227.svg"
+var icon_playing = "animated/music_waves.gif"
 
+// icon in the lateral bar..
 var list_play_state = $('<img/>').attr('src',icon_helmet)  // icon for play_list, helmet
+                                 .attr('id', 'icon_play_state')
 list_play_state.css({
                 'position':'fixed',
                 'top':'80px',
@@ -23,6 +26,7 @@ list_play_state.click(function(event) {     // click on the helmet..
 
       $('#id_view_image').hide()            // prevent the browser to open the svg..
       $('#id_view_image_body').hide()   //
+
 
       //-------
 
@@ -38,7 +42,8 @@ list_play_state.click(function(event) {     // click on the helmet..
 
 // Toggle panel play list
 
-var img_helmet = $('<img/>').attr('src',icon_helmet) // helmet
+var img_helmet = $('<img/>').attr('src', icon_helmet) // helmet
+                            .attr('id', 'media_panel_icon')
 img_helmet.css({'position':'relative',
                 'margin-top':'25px',
                 'margin-left':'50%',
@@ -46,7 +51,7 @@ img_helmet.css({'position':'relative',
                 'width':'15px'
               })
 
-// Play
+// Play buttons
 
 var butt_play = $('<input/>').attr({   // play button
                    type: "button",
@@ -176,6 +181,8 @@ function reinitialize(sel){
 
 }
 
+// play music clicking a title...
+
 function selection_click(elem_li, selection, numsel){
 
       /*
@@ -191,9 +198,13 @@ function selection_click(elem_li, selection, numsel){
            var sel_vid = $(currvidid)[0]
            if (sel_vid.paused){                             // if video stopped.
                play_vid_list(numsel)
+               $('#media_panel_icon').attr('alt','music')
+                                     .attr('src',icon_playing)
              } else {                                       // if video active..
               selection.css({'color':'black'})
               sel_vid.pause()
+              $('#media_panel_icon').attr('alt','music')
+                                    .attr('src', icon_helmet)
             }
       })
 
@@ -345,7 +356,7 @@ function add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons){
       // color the link in the main document
       elem_li.css({'color':'black'})
       // icon to indicate vid is in the play list
-      list_icons[numsel] = $('<img/>').attr('src',icon_helmet)
+      list_icons[numsel] = $('<img/>').attr('src', icon_helmet)
                                       .css({'width':'12px', 'margin':'0px'})
                                       .addClass('icon_title')
       // add icon in the doc
