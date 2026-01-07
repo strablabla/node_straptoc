@@ -16,9 +16,13 @@ graph_obj.js for Arrow ..
 
 var socket = io.connect();
 
-function reload_js(src) {                     // reload a script..
-    $('script[src="' + src + '"]').remove();
-    $('<script>').attr('src', src).appendTo('head');
+function reload_js(src, callback) {                     // reload a script..
+    console.log("in reload_js... !!!")
+    $('script[src^="' + src + '"]').remove();
+    var script = document.createElement('script');
+    script.src = src + '?t=' + new Date().getTime();
+    script.onload = callback;
+    document.head.appendChild(script);
 }
 
 // New page
@@ -70,8 +74,10 @@ butt_save_new_page.click(function(){            // send note to server the name 
 
 socket.on('load_new_page',function(){
 
-      reload_js('global.js');
-      fill_list_page()  // fill the list of all the pages..
+      reload_js('global.js', function(){
+          console.log("just before fill_list_page")
+          fill_list_page()
+      });
 
 })
 
@@ -110,8 +116,10 @@ $('#content').append(toggle_pages)
 
 // list of pages..
 
+// Panel with the  List of pages
+
 var list_pages_color = '#000000' //
-var pages = $('<div/>').attr('id','pages')       // Panel with the  List of pages
+var pages = $('<div/>').attr('id','pages')
 pages.css({'background-color':list_pages_color,
           'box-shadow': '0.5em 0.5em 0.7em',
           'padding-bottom':'40px',
@@ -172,8 +180,8 @@ function add_elem_pages_toc(curr_page, name){
 
 var curr_page = window.location.href.split('//')[1].split('/')[1] || '' // name of the current page
 
-if (curr_page == ''){ var tit_page = 'main' }
-else {var tit_page = curr_page}
+if ( curr_page == '' ){ var tit_page = 'main' }
+else { var tit_page = curr_page }
 $(document).prop('title', tit_page)
 
 function fill_list_page(){
@@ -181,8 +189,12 @@ function fill_list_page(){
       $('#all_pages').empty()              // clear the list
       add_elem_pages_toc('main','Main')    //  add Main in first position in #all_pages
       $('#link_main').attr('href','/')     // specific link for Main
-      for (var curr_page of list_pages){
-            if (curr_page != 'main'){
+      var list_to_use = (typeof list_md !== 'undefined') ? list_md : list_pages;
+      console.log("list_to_use is " + list_to_use)
+      for ( var curr_item of list_to_use ){
+            var curr_page = curr_item.replace('_md', '')
+            if ( curr_page != 'main' ){
+                console.log("curr_page is " + curr_page)
                 add_elem_pages_toc(curr_page)
             }
       }
