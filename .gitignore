@@ -41,3 +41,5 @@ static/js/strap_database.db
 # Saved content
 views/saved/
 views/saved/*
+views/md/
+views/*.html
