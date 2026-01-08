@@ -333,7 +333,7 @@ vocabulaire:
     - Le Courrier International
 subtitles_path: ../../../../../../media/sdata/Films/Very_Good
 server:
-  port: 3001
+  port: 3007
   host: 0.0.0.0
   ssl:
     key: key.pem

@@ -146,9 +146,17 @@ io.sockets.on('connection', function (socket) {
       //------------
 
       console.log('A client is connected!');
-      re.emit_from_read(socket, patt, html_pos)
+      console.log('[html_app] Client connected, calling emit_from_read with:', {
+          global_patt: global.patt,
+          global_html_pos: global.html_pos,
+          global_curr_text: global.curr_text
+      });
+      re.emit_from_read(socket, global.patt, global.html_pos)
 
-      socket.on('join', function(data) { socket.emit('scroll', patt) });       // end socket.on join
+      socket.on('join', function(data) {
+          console.log('[html_app] Received join event, emitting scroll with global.patt:', global.patt);
+          socket.emit('scroll', global.patt)
+      });       // end socket.on join
 
       new_obj.create(socket, app, io)
 

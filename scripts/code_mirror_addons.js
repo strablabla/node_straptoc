@@ -33,11 +33,15 @@ document.addEventListener("click", printMousePos);
 
 function code_mirror_add_func(editor, socket){
 
+        console.log('[code_mirror_addons] code_mirror_add_func called');
+        console.log('[code_mirror_addons] line_number value:', typeof line_number !== 'undefined' ? line_number : 'undefined');
+
         editor.setSize('80%',500);
 
         editor.on('gutterClick', function(editor, line, gutter) {
 
            if (gutter === 'CodeMirror-linenumbers') {
+               console.log('[code_mirror_addons] Gutter click on line:', line);
                nbclick += 1
                if( nbclick == 2 ){$('#tool_text__panel').show() } //
                if( nbclick == 3 ){$('#tool_text__panel').hide(); nbclick = 0 } //
@@ -49,13 +53,17 @@ function code_mirror_add_func(editor, socket){
         });
 
         function jumpToLine(i) {
+              console.log('[code_mirror_addons] jumpToLine called with line:', i);
               var t = editor.charCoords({line: i, ch: 0}, "local").top;
               var middleHeight = editor.getScrollerElement().offsetHeight / 2;
+              console.log('[code_mirror_addons] Scrolling to position:', t - middleHeight - 5);
               editor.scrollTo(null, t - middleHeight - 5);
             }
 
+        console.log('[code_mirror_addons] About to jump to line_number:', line_number);
         jumpToLine(line_number)
 
+        console.log('[code_mirror_addons] Adding line highlight to line:', line_number-1);
         editor.addLineClass(line_number-1, "background", 'line_highlight')
 
         $('#wrap_url').click(function(){

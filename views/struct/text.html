@@ -52,9 +52,17 @@
     //------------- Scroll position
 
     socket.on('scroll', function(code) {
+            console.log('[text.html] Received scroll event, raw code:', code);
+            console.log('[text.html] Type of code:', typeof code);
+
             var json_line_patt = JSON.parse(code);
             line_number = json_line_patt['line']
             var patt = json_line_patt['pattern']
+
+            console.log('[text.html] Parsed JSON:', json_line_patt);
+            console.log('[text.html] line_number:', line_number);
+            console.log('[text.html] pattern:', patt);
+
             if (comment){ alert('line_number is : ' + line_number) }
 
             //-------------------------- CodeMirror
@@ -64,18 +72,23 @@
                   mode: 'markdown'
             });
 
+            console.log('[text.html] CodeMirror editor initialized');
+
             code_mirror_add_func(editor, socket) // set CodeMirror width etc..
 
              //------------- from textarea to html
 
              $('#submit').click(function(){               // submit new text.. from text to html
                    var new_text = editor.getValue()
+                   console.log('[text.html] Submitting new text, length:', new_text.length);
                    socket.emit('return', new_text);
                  }) // end click
       })
 
     socket.on('scroll_html', function(pos) {              // save html position of scroll
+            console.log('[text.html] Received scroll_html event, position:', pos);
             scroll_html_pos = pos
+            console.log('[text.html] scroll_html_pos set to:', scroll_html_pos);
             if (comment){ alert(' scroll_html pos = ' + pos) }
       })
 
@@ -101,7 +114,9 @@
     //-------------  pattern
 
     socket.on('pattern', function(patt) {              // pattern to be found in the md text..
+          console.log('[text.html] Received pattern event:', patt);
           pattern = patt
+          console.log('[text.html] pattern variable set to:', pattern);
       })
 
     $('#go_back').click(function(){                     // submit new text.. from text to html
@@ -115,6 +130,8 @@
           });
 
     socket.on('page_return_to_html', function(name){
+        console.log('[text.html] Received page_return_to_html event, name:', name);
+        console.log('[text.html] Navigating to:', new_loc);
         // alert(name)
         // alert(new_loc)
         window.location.href = new_loc;   // return to html..
