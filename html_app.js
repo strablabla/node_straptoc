@@ -135,6 +135,9 @@ util.save_regularly_all()                                                // save
 // Setup annotation handlers ONCE (not per connection)
 annotations.setupAnnotationHandlers(io)                              //---- annotations
 
+// Set app instance for config module
+config.setApp(app)
+
 io.sockets.on('connection', function (socket) {
       socket.on('new_user', function(name_user){
           users[socket.id] =  name_user        // parseInt((num_user-1)/2)

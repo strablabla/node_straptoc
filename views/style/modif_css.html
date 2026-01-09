@@ -149,7 +149,7 @@ $(window).scroll(function() {
 
 //-----------  open pages
 
-$('.open_new_page').click(function(){   // open the link in a new page..
+$(document).on('click', '.open_new_page', function(){   // open the link in a new page..
        var prev_elem = $(this).prev()
        window.open(prev_elem.attr('href'))
   });

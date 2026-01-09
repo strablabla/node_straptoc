@@ -510,13 +510,229 @@
 #notification_toast.warning {
     background-color: #ff9800;
 }
+
+/* Confirmation modal */
+#confirm_modal {
+    display: none;
+    position: fixed;
+    z-index: 10001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+#confirm_modal_content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 25px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+#confirm_modal_message {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+#confirm_modal_buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#confirm_modal_buttons button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+#confirm_modal_cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+#confirm_modal_cancel:hover {
+    background-color: #5a6268;
+}
+
+#confirm_modal_confirm {
+    background-color: #dc3545;
+    color: white;
+}
+
+#confirm_modal_confirm:hover {
+    background-color: #c82333;
+}
+
+/* Prompt modal */
+#prompt_modal {
+    display: none;
+    position: fixed;
+    z-index: 10001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+#prompt_modal_content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 25px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+#prompt_modal_message {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+#prompt_modal_input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+#prompt_modal_input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+#prompt_modal_buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#prompt_modal_buttons button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+#prompt_modal_cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+#prompt_modal_cancel:hover {
+    background-color: #5a6268;
+}
+
+#prompt_modal_ok {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#prompt_modal_ok:hover {
+    background-color: #45a049;
+}
+
+/* Pages tab specific styles */
+#pages_list_config_editor {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.page-management-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    border: 1px solid #e0e0e0;
+    transition: background-color 0.2s;
+}
+
+.page-management-row:hover {
+    background-color: #e9e9e9;
+}
+
+.page-management-row .page-name {
+    flex: 1;
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    font-family: monospace;
+}
+
+.page-management-row .page-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.page-management-row .btn-page-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.page-management-row .btn-page-rename {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.page-management-row .btn-page-rename:hover {
+    background-color: #45a049;
+    transform: translateY(-1px);
+}
+
+.page-management-row .btn-page-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.page-management-row .btn-page-delete:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+#pages_list_config_editor:empty::after {
+    content: 'No pages found';
+    display: block;
+    text-align: center;
+    color: #999;
+    padding: 40px;
+    font-style: italic;
+}
 </style>
 
 <!-- Modal Structure -->
 <div id="color_tags_modal">
     <div id="color_tags_modal_content">
         <div id="color_tags_modal_header">
-            <h2>Parameters Editor</h2>
+            <h2>Config Editor</h2>
             <span class="close_color_tags_modal">&times;</span>
         </div>
 
@@ -526,6 +742,7 @@
         <div class="tab-buttons">
             <button class="tab-button active" data-tab="color-tags">Color Tags</button>
             <button class="tab-button" data-tab="paths">Paths</button>
+            <button class="tab-button" data-tab="pages">Pages</button>
             <button class="tab-button" data-tab="server">Server</button>
         </div>
 
@@ -550,6 +767,15 @@
 
             <div id="paths_list">
                 <!-- Paths will be inserted here dynamically -->
+            </div>
+        </div>
+
+        <!-- Tab: Pages -->
+        <div id="tab-pages" class="tab-content">
+            <div id="pages_management_section">
+                <div id="pages_list_config_editor">
+                    <!-- Pages will be inserted here dynamically -->
+                </div>
             </div>
         </div>
 
@@ -588,6 +814,29 @@
 <!-- Notification Toast -->
 <div id="notification_toast"></div>
 
+<!-- Confirmation Modal -->
+<div id="confirm_modal">
+    <div id="confirm_modal_content">
+        <div id="confirm_modal_message"></div>
+        <div id="confirm_modal_buttons">
+            <button id="confirm_modal_cancel">Cancel</button>
+            <button id="confirm_modal_confirm">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Prompt Modal -->
+<div id="prompt_modal">
+    <div id="prompt_modal_content">
+        <div id="prompt_modal_message"></div>
+        <input type="text" id="prompt_modal_input" />
+        <div id="prompt_modal_buttons">
+            <button id="prompt_modal_cancel">Cancel</button>
+            <button id="prompt_modal_ok">OK</button>
+        </div>
+    </div>
+</div>
+
 <script>
 /*
  * Parameters Editor - Color tags and paths configuration
@@ -611,6 +860,75 @@ function showNotification(message, type) {
     setTimeout(function() {
         toast.fadeOut(300);
     }, 2000);
+}
+
+// Custom confirm modal
+function customConfirm(message, callback) {
+    $('#confirm_modal_message').text(message);
+    $('#confirm_modal').fadeIn(200);
+
+    // Remove previous event handlers
+    $('#confirm_modal_confirm').off('click');
+    $('#confirm_modal_cancel').off('click');
+
+    $('#confirm_modal_confirm').on('click', function() {
+        $('#confirm_modal').fadeOut(200);
+        if (callback) callback(true);
+    });
+
+    $('#confirm_modal_cancel').on('click', function() {
+        $('#confirm_modal').fadeOut(200);
+        if (callback) callback(false);
+    });
+
+    // Close on outside click
+    $('#confirm_modal').off('click').on('click', function(e) {
+        if (e.target.id === 'confirm_modal') {
+            $('#confirm_modal').fadeOut(200);
+            if (callback) callback(false);
+        }
+    });
+}
+
+// Custom prompt modal
+function customPrompt(message, defaultValue, callback) {
+    $('#prompt_modal_message').text(message);
+    $('#prompt_modal_input').val(defaultValue || '');
+    $('#prompt_modal').fadeIn(200);
+    $('#prompt_modal_input').focus().select();
+
+    // Remove previous event handlers
+    $('#prompt_modal_ok').off('click');
+    $('#prompt_modal_cancel').off('click');
+    $('#prompt_modal_input').off('keypress');
+
+    var submitPrompt = function() {
+        var value = $('#prompt_modal_input').val();
+        $('#prompt_modal').fadeOut(200);
+        if (callback) callback(value);
+    };
+
+    $('#prompt_modal_ok').on('click', submitPrompt);
+
+    $('#prompt_modal_cancel').on('click', function() {
+        $('#prompt_modal').fadeOut(200);
+        if (callback) callback(null);
+    });
+
+    // Submit on Enter key
+    $('#prompt_modal_input').on('keypress', function(e) {
+        if (e.which === 13) {
+            submitPrompt();
+        }
+    });
+
+    // Close on outside click
+    $('#prompt_modal').off('click').on('click', function(e) {
+        if (e.target.id === 'prompt_modal') {
+            $('#prompt_modal').fadeOut(200);
+            if (callback) callback(null);
+        }
+    });
 }
 
 // Initialisation
@@ -818,8 +1136,8 @@ function setupEventHandlers() {
     // Delete a tag
     $(document).on('click', '.color_tag_delete', function() {
         var tagName = $(this).attr('data-tag');
-        confirm('Are you sure you want to delete tag "' + tagName + '"?', function(result) {
-            if (result) {
+        customConfirm('Are you sure you want to delete tag "' + tagName + '"?', function(confirmed) {
+            if (confirmed) {
                 delete colorTagsData[tagName];
                 renderColorTags();
             }
@@ -881,6 +1199,11 @@ function setupEventHandlers() {
             loadPaths();
         }
 
+        // Load pages when switching to pages tab
+        if (targetTab === 'pages') {
+            loadPagesListConfigEditor();
+        }
+
         // Load server config when switching to server tab
         if (targetTab === 'server') {
             loadServerConfig();
@@ -907,9 +1230,11 @@ function setupEventHandlers() {
     // Remove path button
     $(document).on('click', '.remove-path', function() {
         var pathToRemove = $(this).closest('.path-item').attr('data-path');
-        if (confirm('Remove path "' + pathToRemove + '"?')) {
-            removePath(pathToRemove);
-        }
+        customConfirm('Remove path "' + pathToRemove + '"?', function(confirmed) {
+            if (confirmed) {
+                removePath(pathToRemove);
+            }
+        });
     });
 
     // Add child subdirectory button (arrow right)
@@ -998,8 +1323,8 @@ function setupEventHandlers() {
     $(document).on('click', '.delete-btn', function(e) {
         e.stopPropagation();
         var pathToRemove = $(this).attr('data-path');
-        confirm('Remove "' + pathToRemove + '"?', function(result) {
-            if (result) {
+        customConfirm('Remove "' + pathToRemove + '"?', function(confirmed) {
+            if (confirmed) {
                 removePath(pathToRemove);
             }
         });
@@ -1370,6 +1695,129 @@ $(document).ready(function() {
             saveServerConfig();
         }
     });
+});
+
+// ========== PAGES TAB FUNCTIONS ==========
+
+// Load pages list for config editor
+function loadPagesListConfigEditor() {
+    var container = $('#pages_list_config_editor');
+    container.empty();
+
+    var list_to_use = (typeof list_md !== 'undefined') ? list_md : (typeof list_pages !== 'undefined' ? list_pages : []);
+
+    if (list_to_use.length === 0) {
+        return;
+    }
+
+    for (var i = 0; i < list_to_use.length; i++) {
+        var curr_item = list_to_use[i];
+        var page_name = curr_item.replace('_md', '');
+
+        if (page_name !== 'main') {
+            var pageRow = createPageRow(page_name);
+            container.append(pageRow);
+        }
+    }
+}
+
+// Create a page row element
+function createPageRow(pageName) {
+    var row = $('<div>').addClass('page-management-row').attr('data-page', pageName);
+
+    var nameSpan = $('<span>').addClass('page-name').text(pageName);
+
+    var actionsDiv = $('<div>').addClass('page-actions');
+
+    var renameBtn = $('<button>')
+        .addClass('btn-page-action btn-page-rename')
+        .text('Rename')
+        .attr('data-page', pageName)
+        .click(function(e) {
+            e.stopPropagation();
+            renamePage($(this).attr('data-page'));
+        });
+
+    var deleteBtn = $('<button>')
+        .addClass('btn-page-action btn-page-delete')
+        .text('Delete')
+        .attr('data-page', pageName)
+        .click(function(e) {
+            e.stopPropagation();
+            deletePage($(this).attr('data-page'));
+        });
+
+    actionsDiv.append(renameBtn).append(deleteBtn);
+    row.append(nameSpan).append(actionsDiv);
+
+    return row;
+}
+
+// Rename a page
+function renamePage(oldName) {
+    customPrompt('Enter new name for page "' + oldName + '":', oldName, function(newName) {
+        if (newName && newName.trim() !== '' && newName !== oldName) {
+            newName = newName.trim();
+            socket.emit('rename_page', JSON.stringify({old_name: oldName, new_name: newName}));
+        }
+    });
+}
+
+// Delete a page
+function deletePage(pageName) {
+    customConfirm('Are you sure you want to delete page "' + pageName + '"?\nThis action cannot be undone.', function(confirmed) {
+        if (confirmed) {
+            socket.emit('delete_page', pageName);
+        }
+    });
+}
+
+// Listen for page rename confirmation
+socket.on('page_renamed', function(result) {
+    var data = JSON.parse(result);
+    if (data.success) {
+        showNotification('Page renamed successfully!', 'success');
+        // Reload global.js and refresh the list
+        if (typeof reload_js === 'function') {
+            reload_js('global.js', function() {
+                loadPagesListConfigEditor();
+                if (typeof fill_list_page === 'function') {
+                    fill_list_page();
+                }
+            });
+        } else {
+            // Fallback: just reload the page list
+            setTimeout(function() {
+                loadPagesListConfigEditor();
+            }, 500);
+        }
+    } else {
+        showNotification('Error renaming page: ' + data.error, 'error');
+    }
+});
+
+// Listen for page delete confirmation
+socket.on('page_deleted', function(result) {
+    var data = JSON.parse(result);
+    if (data.success) {
+        showNotification('Page deleted successfully!', 'success');
+        // Reload global.js and refresh the list
+        if (typeof reload_js === 'function') {
+            reload_js('global.js', function() {
+                loadPagesListConfigEditor();
+                if (typeof fill_list_page === 'function') {
+                    fill_list_page();
+                }
+            });
+        } else {
+            // Fallback: just reload the page list
+            setTimeout(function() {
+                loadPagesListConfigEditor();
+            }, 500);
+        }
+    } else {
+        showNotification('Error deleting page: ' + data.error, 'error');
+    }
 });
 
 console.log('Color Tags Editor loaded - Press Ctrl+C to open');

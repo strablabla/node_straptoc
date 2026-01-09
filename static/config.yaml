@@ -197,6 +197,11 @@ color_tags:
       color: '#fbd85b'
     title:
       color: '#c8ac48'
+  blingbling:
+    inside:
+      color: '#b75757'
+    title:
+      color: '#924545'
 vocabulaire:
   '#Science_':
     - Physique
