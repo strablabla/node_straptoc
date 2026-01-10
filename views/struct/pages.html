@@ -13,7 +13,9 @@ graph_obj.js for Arrow ..
 
 */
 
-var socket = io.connect();
+// Declare socket globally so it's accessible in other included scripts
+window.socket = io.connect();
+var socket = window.socket; // Keep local reference for this script
 
 // Initialize global variables (will be populated by socket.io)
 var dchandir = {};

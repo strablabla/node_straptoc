@@ -346,7 +346,9 @@ server:
 hidden_pages:
   - example2
   - example1
-config:
+addr_saved: ../../../../../media/sdata/docs/strap_save_test/
+autosave_interval: 1
+config_style:
   infos:
     hhh2:
       text-align: center

@@ -304,26 +304,64 @@ Use the extended markdown syntax to embed:
 ## Development
 
 ### Recent Updates
+
+#### Configuration & Settings
+- **Visual Configuration Editor** (Ctrl+Shift+C) with four tabs:
+  - **Server Tab**: Configure port, host, and SSL certificate paths
+  - **Paths Tab**: Hierarchical directory management
+  - **Color Tags Tab**: Visual color picker for category customization
+  - **Pages Tab**: Complete page management interface
+    - Hide/Show pages from left sidebar navigation
+    - Rename pages with automatic file synchronization
+    - Delete pages with confirmation dialogs
+    - **Saved Pages Directory Configuration**: Configure where old page versions are stored
+      - Enter absolute path with automatic relative path calculation
+      - Display folder name with absolute path tooltip on hover
+      - Double-click to edit the directory path
+      - Auto-sizing display that adapts to folder name width
+    - Hidden pages stored in config.yaml (persistent across browser sessions)
+    - Real-time updates across all connected clients
+  - Real-time YAML editing
+  - Custom notification system replacing native browser alerts
+  - Context-aware confirm dialogs with dynamic positioning
+  - Keyboard shortcuts (Ctrl+Shift+C to open, Enter to save)
+
+#### Data Management & Architecture
+- **Socket.io Data Transmission**: Migrated from static global.js file generation to real-time socket.io communication
+  - Pages data (dchandir, list_pages, list_md, dic_text_id) sent via socket on page load
+  - Eliminates need for file system writes on every page change
+  - Improved reliability and real-time synchronization
+  - Global socket reference (window.socket) accessible across all modules
+- **Centralized Configuration**: All settings now in config.yaml including addr_saved (saved pages directory)
+
+#### Developer Tools
+- **Debug Editor** (Ctrl+Shift+D): Real-time server console output viewer
+  - Live streaming of server logs (console.log, console.warn, console.error)
+  - Color-coded log levels ([LOG], [WARN], [ERROR], [INFO])
+  - Auto-scroll to latest logs
+  - Clear console button
+  - Intercepts Node.js console methods and broadcasts via socket.io
+  - Essential for debugging server-side issues without SSH access
+
+#### System Controls
+- **Shutdown Button**: Graceful server shutdown from the web interface
+  - Fixed position button in top-right corner (right: 10px)
+  - Confirmation modal to prevent accidental shutdowns
+  - Broadcasts shutdown notification to all connected clients
+  - Automatic window close or redirect to about:blank after shutdown
+  - Socket connection verification before sending shutdown command
+
+#### Search & Navigation
 - **Global Search System** across all pages (Shift+F)
   - Server-side search in markdown files with auto-scroll to results
   - Results grouped by page with temporary highlighting
   - Session storage for navigation state persistence
-  - Voice command integration
-- **Visual Configuration Editor** with four tabs (Server, Paths, Color Tags, Pages)
-  - **Pages Management Tab** for organizing and managing pages
-    - Hide/Show pages from left sidebar navigation
-    - Rename pages with automatic file synchronization
-    - Delete pages with confirmation dialogs
-    - Hidden pages stored in config.yaml (persistent across browser sessions)
-    - Real-time updates across all connected clients
-  - Real-time YAML editing with hierarchical path management
-  - Custom notification system replacing native browser alerts
-  - Context-aware confirm dialogs with dynamic positioning
-  - Keyboard shortcuts (Ctrl+Shift+C to open, Enter to save)
+  - Voice command integration ("Rechercher")
+
+#### UI Improvements
+- **Lock Button** repositioned (right: 50px) to make room for shutdown button
 - Calendar display improvements with full year view
 - Enhanced agenda functionality with time-based alerts
-- Centralized configuration in config.yaml
-- Database integration for user management
 - Bug fixes and stability improvements
 
 ## Security

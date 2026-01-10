@@ -79,7 +79,11 @@ app.use('/lib', express.static('lib'))
 
 init.static_addr(app, express)
 
-init.handle_pages(app)
+init.handle_pages(app, function() {
+    // Callback: handle_pages finished, global.list_md is now populated
+    console.log('[html_app] handle_pages completed, calling save_regularly_all');
+    util.save_regularly_all();
+})
 
 app.get('/', function(req, res){ res.render('main.html'); });
 app.get('/text', function(req, res){ res.render('struct/text.html'); });
@@ -172,7 +176,8 @@ subtit.make_sub() // make the subtitles..
 var users = {}
 num_user = 0
 
-util.save_regularly_all()                                                // save the regularly the text..
+// NOTE: save_regularly_all() is now called in handle_pages callback (line 85)
+// to ensure global.list_md is populated before setting up autosave timers
 
 // Setup annotation handlers ONCE (not per connection)
 annotations.setupAnnotationHandlers(io)                              //---- annotations
