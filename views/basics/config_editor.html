@@ -728,12 +728,12 @@
     transform: translateY(-1px);
 }
 
-.page-management-row .btn-page-visibility.hidden {
+.page-management-row .btn-page-visibility.page-is-hidden {
     background-color: #ffc107;
     color: #333;
 }
 
-.page-management-row .btn-page-visibility.hidden:hover {
+.page-management-row .btn-page-visibility.page-is-hidden:hover {
     background-color: #e0a800;
 }
 
@@ -1762,23 +1762,53 @@ function loadPagesListConfigEditor() {
 
     var list_to_use = (typeof list_md !== 'undefined') ? list_md : (typeof list_pages !== 'undefined' ? list_pages : []);
 
+    console.log('[Pages Tab] list_md:', typeof list_md !== 'undefined' ? list_md : 'undefined');
+    console.log('[Pages Tab] list_pages:', typeof list_pages !== 'undefined' ? list_pages : 'undefined');
+    console.log('[Pages Tab] list_to_use:', list_to_use);
+
     if (list_to_use.length === 0) {
+        container.html('<p style="color: #999; text-align: center; padding: 20px;">No pages found. Try refreshing the page.</p>');
         return;
     }
 
+    // IMPORTANT: Show ALL pages in Config Editor, even hidden ones
+    // This allows users to toggle visibility and manage hidden pages
     for (var i = 0; i < list_to_use.length; i++) {
         var curr_item = list_to_use[i];
         var page_name = curr_item.replace('_md', '');
 
+        console.log('[Pages Tab] Processing:', curr_item, '->', page_name);
+
+        // Show all pages except 'main' in the Config Editor
         if (page_name !== 'main') {
             var pageRow = createPageRow(page_name);
+            console.log('[Pages Tab] About to append pageRow for:', page_name, pageRow);
             container.append(pageRow);
+            console.log('[Pages Tab] After append, container children count:', container.children().length);
         }
     }
+    console.log('[Pages Tab] Final container HTML:', container.html());
+
+    // Debug: Check what's actually visible after a short delay
+    setTimeout(function() {
+        console.log('[Pages Tab Debug] Container after timeout:');
+        console.log('[Pages Tab Debug] - Children count:', container.children().length);
+        console.log('[Pages Tab Debug] - Visible children:', container.children(':visible').length);
+        console.log('[Pages Tab Debug] - Hidden children:', container.children(':hidden').length);
+        container.children().each(function(idx, elem) {
+            var $elem = $(elem);
+            console.log('[Pages Tab Debug] - Row', idx, ':', $elem.attr('data-page'),
+                       'display:', $elem.css('display'),
+                       'visibility:', $elem.css('visibility'),
+                       'opacity:', $elem.css('opacity'));
+        });
+    }, 100);
 }
 
 // Create a page row element
 function createPageRow(pageName) {
+    console.log('[createPageRow] Creating row for:', pageName);
+
     var row = $('<div>').addClass('page-management-row').attr('data-page', pageName);
 
     var nameSpan = $('<span>').addClass('page-name').text(pageName);
@@ -1789,11 +1819,13 @@ function createPageRow(pageName) {
     var hiddenPages = getHiddenPages();
     var isHidden = hiddenPages.indexOf(pageName) !== -1;
 
+    console.log('[createPageRow] Page:', pageName, 'isHidden:', isHidden, 'hiddenPages:', hiddenPages);
+
     var visibilityBtn = $('<button>')
         .addClass('btn-page-action btn-page-visibility')
         .text(isHidden ? 'Show' : 'Hide')
         .attr('data-page', pageName)
-        .toggleClass('hidden', isHidden)
+        .toggleClass('page-is-hidden', isHidden)
         .click(function(e) {
             e.stopPropagation();
             togglePageVisibility($(this).attr('data-page'));
@@ -1819,6 +1851,8 @@ function createPageRow(pageName) {
 
     actionsDiv.append(visibilityBtn).append(renameBtn).append(deleteBtn);
     row.append(nameSpan).append(actionsDiv);
+
+    console.log('[createPageRow] Row created successfully for:', pageName);
 
     return row;
 }
