@@ -1,0 +1,508 @@
+<style>
+/* Debug Editor Modal */
+#debug_editor_modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+#debug_editor_modal_content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 1200px;
+    height: 80%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+#debug_editor_modal_header {
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#debug_editor_modal_header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 24px;
+}
+
+.close_debug_editor_modal {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close_debug_editor_modal:hover,
+.close_debug_editor_modal:focus {
+    color: #000;
+}
+
+.debug-shortcut-hint {
+    margin: 10px 20px;
+    padding: 10px;
+    background-color: #e7f3ff;
+    border-left: 4px solid #2196F3;
+    font-size: 13px;
+    color: #555;
+}
+
+/* Tab buttons */
+.debug-tab-buttons {
+    display: flex;
+    gap: 5px;
+    padding: 0 20px;
+    background-color: #f5f5f5;
+    border-bottom: 2px solid #ddd;
+}
+
+.debug-tab-button {
+    padding: 12px 24px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.debug-tab-button:hover {
+    background-color: #e9e9e9;
+    color: #333;
+}
+
+.debug-tab-button.active {
+    color: #2196F3;
+    border-bottom-color: #2196F3;
+}
+
+/* Tab content */
+.debug-tab-content {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.debug-tab-content.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Console tab specific styles */
+#console_container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#console_toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+#console_toolbar button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+#console_clear_btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+#console_clear_btn:hover {
+    background-color: #c82333;
+}
+
+.console-filter-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.console-filter-btn:hover {
+    background-color: #5a6268;
+}
+
+.console-filter-btn.active {
+    background-color: #4CAF50;
+}
+
+#console_output {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 4px;
+    line-height: 1.5;
+}
+
+.console-entry {
+    padding: 4px 0;
+    border-bottom: 1px solid #333;
+}
+
+.console-entry:last-child {
+    border-bottom: none;
+}
+
+.console-timestamp {
+    color: #858585;
+    margin-right: 8px;
+}
+
+.console-log {
+    color: #d4d4d4;
+}
+
+.console-warn {
+    color: #dcdcaa;
+}
+
+.console-error {
+    color: #f48771;
+}
+
+.console-info {
+    color: #4fc1ff;
+}
+
+#console_output:empty::after {
+    content: 'Console is empty. Messages will appear here.';
+    display: block;
+    text-align: center;
+    color: #858585;
+    padding: 40px;
+    font-style: italic;
+}
+
+/* Terminal tab specific styles */
+#terminal_container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#terminal_toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+#terminal_toolbar button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+#terminal_clear_btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+#terminal_clear_btn:hover {
+    background-color: #c82333;
+}
+
+#terminal_output {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 4px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+#terminal_output:empty::after {
+    content: 'Terminal output will appear here. Server logs are captured automatically.';
+    display: block;
+    text-align: center;
+    color: #858585;
+    padding: 40px;
+    font-style: italic;
+}
+</style>
+
+<!-- Modal Structure -->
+<div id="debug_editor_modal">
+    <div id="debug_editor_modal_content">
+        <div id="debug_editor_modal_header">
+            <h2 class="tit_page_in_nav">Debug Editor</h2>
+            <span class="close_debug_editor_modal">&times;</span>
+        </div>
+
+        <p class="debug-shortcut-hint">💡 Shortcut: Press <strong>Ctrl+Shift+D</strong> to open/close | <strong>Esc</strong> to close</p>
+
+        <!-- Tab buttons -->
+        <div class="debug-tab-buttons">
+            <button class="debug-tab-button active" data-tab="console">Console</button>
+            <button class="debug-tab-button" data-tab="terminal">Terminal</button>
+        </div>
+
+        <!-- Tab: Console -->
+        <div id="debug-tab-console" class="debug-tab-content active">
+            <div id="console_container">
+                <div id="console_toolbar">
+                    <button id="console_clear_btn">Clear</button>
+                    <button class="console-filter-btn active" data-level="log">Log</button>
+                    <button class="console-filter-btn active" data-level="warn">Warn</button>
+                    <button class="console-filter-btn active" data-level="error">Error</button>
+                    <button class="console-filter-btn active" data-level="info">Info</button>
+                </div>
+                <div id="console_output"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Terminal -->
+        <div id="debug-tab-terminal" class="debug-tab-content">
+            <div id="terminal_container">
+                <div id="terminal_toolbar">
+                    <button id="terminal_clear_btn">Clear</button>
+                </div>
+                <div id="terminal_output"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/*
+ * Debug Editor - Console and Terminal output
+ * Shortcut: Ctrl+Shift+D
+ */
+
+// ========== MODAL CONTROLS ==========
+
+// Open/close modal
+$('.close_debug_editor_modal').click(function() {
+    $('#debug_editor_modal').fadeOut(200);
+});
+
+// Close on outside click
+$('#debug_editor_modal').click(function(e) {
+    if (e.target.id === 'debug_editor_modal') {
+        $(this).fadeOut(200);
+    }
+});
+
+// Keyboard shortcuts
+$(document).keydown(function(e) {
+    // Ctrl+Shift+D to open/close
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 68) {
+        e.preventDefault();
+        $('#debug_editor_modal').fadeToggle(200);
+    }
+
+    // Escape to close
+    if (e.keyCode === 27 && $('#debug_editor_modal').is(':visible')) {
+        $('#debug_editor_modal').fadeOut(200);
+    }
+});
+
+// Tab switching
+$('.debug-tab-button').click(function() {
+    var targetTab = $(this).attr('data-tab');
+
+    $('.debug-tab-button').removeClass('active');
+    $(this).addClass('active');
+
+    $('.debug-tab-content').removeClass('active');
+    $('#debug-tab-' + targetTab).addClass('active');
+});
+
+// ========== CONSOLE TAB FUNCTIONS ==========
+
+var consoleMessages = [];
+var consoleFilters = {
+    log: true,
+    warn: true,
+    error: true,
+    info: true
+};
+
+// Store original console methods
+var originalConsole = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+    info: console.info
+};
+
+// Intercept console methods
+function interceptConsole() {
+    console.log = function() {
+        originalConsole.log.apply(console, arguments);
+        addConsoleMessage('log', Array.prototype.slice.call(arguments));
+    };
+
+    console.warn = function() {
+        originalConsole.warn.apply(console, arguments);
+        addConsoleMessage('warn', Array.prototype.slice.call(arguments));
+    };
+
+    console.error = function() {
+        originalConsole.error.apply(console, arguments);
+        addConsoleMessage('error', Array.prototype.slice.call(arguments));
+    };
+
+    console.info = function() {
+        originalConsole.info.apply(console, arguments);
+        addConsoleMessage('info', Array.prototype.slice.call(arguments));
+    };
+}
+
+// Add console message to the array
+function addConsoleMessage(level, args) {
+    var timestamp = new Date().toLocaleTimeString();
+    var message = args.map(function(arg) {
+        if (typeof arg === 'object') {
+            try {
+                return JSON.stringify(arg, null, 2);
+            } catch(e) {
+                return String(arg);
+            }
+        }
+        return String(arg);
+    }).join(' ');
+
+    consoleMessages.push({
+        level: level,
+        timestamp: timestamp,
+        message: message
+    });
+
+    // Limit to last 500 messages
+    if (consoleMessages.length > 500) {
+        consoleMessages.shift();
+    }
+
+    renderConsole();
+}
+
+// Render console output
+function renderConsole() {
+    var output = $('#console_output');
+    output.empty();
+
+    consoleMessages.forEach(function(entry) {
+        // Check if this level is filtered
+        if (!consoleFilters[entry.level]) {
+            return;
+        }
+
+        var entryDiv = $('<div>')
+            .addClass('console-entry')
+            .addClass('console-' + entry.level);
+
+        var timestamp = $('<span>')
+            .addClass('console-timestamp')
+            .text('[' + entry.timestamp + ']');
+
+        var message = $('<span>')
+            .text(entry.message);
+
+        entryDiv.append(timestamp).append(message);
+        output.append(entryDiv);
+    });
+
+    // Auto-scroll to bottom
+    output.scrollTop(output[0].scrollHeight);
+}
+
+// Clear console
+$('#console_clear_btn').click(function() {
+    consoleMessages = [];
+    renderConsole();
+});
+
+// Toggle filter buttons
+$('.console-filter-btn').click(function() {
+    var level = $(this).attr('data-level');
+    $(this).toggleClass('active');
+    consoleFilters[level] = $(this).hasClass('active');
+    renderConsole();
+});
+
+// Initialize console interception
+interceptConsole();
+
+// ========== TERMINAL TAB FUNCTIONS ==========
+
+var terminalMessages = [];
+
+// Listen for terminal messages from server
+if (typeof socket !== 'undefined') {
+    socket.on('terminal_output', function(data) {
+        addTerminalMessage(data);
+    });
+}
+
+// Add terminal message
+function addTerminalMessage(message) {
+    terminalMessages.push(message);
+
+    // Limit to last 1000 lines
+    if (terminalMessages.length > 1000) {
+        terminalMessages.shift();
+    }
+
+    renderTerminal();
+}
+
+// Render terminal output
+function renderTerminal() {
+    var output = $('#terminal_output');
+    output.text(terminalMessages.join('\n'));
+
+    // Auto-scroll to bottom
+    output.scrollTop(output[0].scrollHeight);
+}
+
+// Clear terminal
+$('#terminal_clear_btn').click(function() {
+    terminalMessages = [];
+    renderTerminal();
+});
+
+console.log('Debug Editor loaded - Press Ctrl+Shift+D to open');
+</script>

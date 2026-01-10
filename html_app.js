@@ -116,6 +116,48 @@ global.html_pos = 0              // position in html view,  used in modify.texta
 global.curr_text = '#main'
 var comment = false;
 
+// ========== INTERCEPT CONSOLE FOR DEBUG TERMINAL ==========
+// Store original console methods
+var originalConsole = {
+  log: console.log,
+  warn: console.warn,
+  error: console.error,
+  info: console.info
+};
+
+// Intercept console methods and broadcast to clients
+console.log = function() {
+  originalConsole.log.apply(console, arguments);
+  var message = Array.prototype.slice.call(arguments).map(function(arg) {
+    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+  }).join(' ');
+  io.sockets.emit('terminal_output', '[LOG] ' + message);
+};
+
+console.warn = function() {
+  originalConsole.warn.apply(console, arguments);
+  var message = Array.prototype.slice.call(arguments).map(function(arg) {
+    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+  }).join(' ');
+  io.sockets.emit('terminal_output', '[WARN] ' + message);
+};
+
+console.error = function() {
+  originalConsole.error.apply(console, arguments);
+  var message = Array.prototype.slice.call(arguments).map(function(arg) {
+    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+  }).join(' ');
+  io.sockets.emit('terminal_output', '[ERROR] ' + message);
+};
+
+console.info = function() {
+  originalConsole.info.apply(console, arguments);
+  var message = Array.prototype.slice.call(arguments).map(function(arg) {
+    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+  }).join(' ');
+  io.sockets.emit('terminal_output', '[INFO] ' + message);
+};
+
 //----------- format strings..
 
 String.prototype.format = function () {
