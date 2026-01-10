@@ -13,6 +13,8 @@ exports.create_new_page = function(app, name_page, io){
         init.handle_pages(app, function(){
             console.log("emit load_new_page")
             io.sockets.emit('load_new_page', '')
+            // Send updated pages data
+            init.pages_data(io)
         })
     })
 

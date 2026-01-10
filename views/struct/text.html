@@ -8,7 +8,6 @@
 
 {% include 'page_struct/header.html' %}
 
-<script  src="global.js"></script>
 <script  src="/edit_textarea.js"></script>
 <script  src="/code_mirror_addons.js"></script>
 <link rel="stylesheet" href="codemirror.css">
@@ -22,6 +21,30 @@
  <script>
 
     var socket = io.connect();  //'http://localhost:3000'
+
+    // Initialize global variables (will be populated by socket.io)
+    var dchandir = {};
+    var list_pages = [];
+    var list_md = [];
+    var dic_text_id = {};
+
+    // Request pages data from server
+    socket.emit('ask_pages_data');
+
+    // Receive pages data from server
+    socket.on('pages_data', function(data) {
+        console.log('[text.html] Received pages_data:', data);
+        try {
+            var pagesData = JSON.parse(data);
+            dchandir = pagesData.dchandir;
+            list_pages = pagesData.list_pages;
+            list_md = pagesData.list_md;
+            dic_text_id = pagesData.dic_text_id;
+            console.log('[text.html] Pages data loaded successfully');
+        } catch(e) {
+            console.error('[text.html] Error parsing pages_data:', e);
+        }
+    });
     var comment = false;
     var scroll_html_pos = 0
     var pattern = ''

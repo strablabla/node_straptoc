@@ -1954,20 +1954,14 @@ socket.on('page_renamed', function(result) {
     var data = JSON.parse(result);
     if (data.success) {
         showNotification('Page renamed successfully!', 'success');
-        // Reload global.js and refresh the list
-        if (typeof reload_js === 'function') {
-            reload_js('global.js', function() {
-                loadPagesListConfigEditor();
-                if (typeof fill_list_page === 'function') {
-                    fill_list_page();
-                }
-            });
-        } else {
-            // Fallback: just reload the page list
-            setTimeout(function() {
-                loadPagesListConfigEditor();
-            }, 500);
-        }
+        // Request updated pages data (will be sent via socket.io by server)
+        // Wait a bit for the data to arrive, then refresh the list
+        setTimeout(function() {
+            loadPagesListConfigEditor();
+            if (typeof fill_list_page === 'function') {
+                fill_list_page();
+            }
+        }, 300);
     } else {
         showNotification('Error renaming page: ' + data.error, 'error');
     }
@@ -1978,20 +1972,14 @@ socket.on('page_deleted', function(result) {
     var data = JSON.parse(result);
     if (data.success) {
         showNotification('Page deleted successfully!', 'success');
-        // Reload global.js and refresh the list
-        if (typeof reload_js === 'function') {
-            reload_js('global.js', function() {
-                loadPagesListConfigEditor();
-                if (typeof fill_list_page === 'function') {
-                    fill_list_page();
-                }
-            });
-        } else {
-            // Fallback: just reload the page list
-            setTimeout(function() {
-                loadPagesListConfigEditor();
-            }, 500);
-        }
+        // Request updated pages data (will be sent via socket.io by server)
+        // Wait a bit for the data to arrive, then refresh the list
+        setTimeout(function() {
+            loadPagesListConfigEditor();
+            if (typeof fill_list_page === 'function') {
+                fill_list_page();
+            }
+        }, 300);
     } else {
         showNotification('Error deleting page: ' + data.error, 'error');
     }

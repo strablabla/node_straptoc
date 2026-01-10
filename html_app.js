@@ -224,6 +224,9 @@ io.sockets.on('connection', function (socket) {
       socket.on('ask_color_tags',function(){
           init.color_tags(io)
       })
+      socket.on('ask_pages_data',function(){
+          init.pages_data(io)
+      })
 
       socket.on('disconnect', () => {
         console.log('Client disconnected');

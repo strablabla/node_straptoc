@@ -1,6 +1,5 @@
 
 <script  src="graph_obj.js"></script>
-<script  src="global.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
@@ -15,6 +14,37 @@ graph_obj.js for Arrow ..
 */
 
 var socket = io.connect();
+
+// Initialize global variables (will be populated by socket.io)
+var dchandir = {};
+var list_pages = [];
+var list_md = [];
+var dic_text_id = {};
+
+// Request pages data from server
+socket.emit('ask_pages_data');
+
+// Receive pages data from server
+socket.on('pages_data', function(data) {
+    console.log('[pages.html] Received pages_data:', data);
+    try {
+        var pagesData = JSON.parse(data);
+        dchandir = pagesData.dchandir;
+        list_pages = pagesData.list_pages;
+        list_md = pagesData.list_md;
+        dic_text_id = pagesData.dic_text_id;
+        console.log('[pages.html] Pages data loaded successfully');
+        console.log('[pages.html] list_pages:', list_pages);
+        console.log('[pages.html] list_md:', list_md);
+
+        // Trigger fill_list_page if it was waiting
+        if (typeof window.pagesDataReady !== 'undefined') {
+            window.pagesDataReady = true;
+        }
+    } catch(e) {
+        console.error('[pages.html] Error parsing pages_data:', e);
+    }
+});
 
 function reload_js(src, callback) {                     // reload a script..
     console.log("in reload_js... !!!")
@@ -74,10 +104,15 @@ butt_save_new_page.click(function(){            // send note to server the name 
 
 socket.on('load_new_page',function(){
 
-      reload_js('global.js', function(){
+      console.log("New page created, requesting updated pages data...")
+      // Request fresh pages data from server
+      socket.emit('ask_pages_data');
+
+      // Wait a bit for the data to arrive, then refresh the list
+      setTimeout(function() {
           console.log("just before fill_list_page")
           fill_list_page()
-      });
+      }, 200);
 
 })
 
