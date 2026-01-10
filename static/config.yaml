@@ -344,8 +344,8 @@ server:
     key: key.pem
     cert: server.crt
 hidden_pages:
-  - example1
   - example2
+  - example1
 config:
   infos:
     hhh2:
