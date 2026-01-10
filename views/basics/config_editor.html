@@ -1220,7 +1220,9 @@ function setupEventHandlers() {
 
         // Load pages when switching to pages tab
         if (targetTab === 'pages') {
-            loadPagesListConfigEditor();
+            loadHiddenPagesFromServer(function() {
+                loadPagesListConfigEditor();
+            });
         }
 
         // Load server config when switching to server tab
@@ -1718,20 +1720,89 @@ $(document).ready(function() {
 
 // ========== PAGES TAB FUNCTIONS ==========
 
-// Get hidden pages from localStorage
-function getHiddenPages() {
-    var hidden = localStorage.getItem('hidden_pages');
-    return hidden ? JSON.parse(hidden) : [];
+// Global variable to store hidden pages loaded from server
+var serverHiddenPages = [];
+
+// Migrate localStorage data to server (one-time migration)
+function migrateLocalStorageToServer(callback) {
+    try {
+        var localData = localStorage.getItem('hidden_pages');
+        if (localData) {
+            var localHiddenPages = JSON.parse(localData);
+            console.log('Migrating localStorage hidden pages to server:', localHiddenPages);
+
+            // Save to server
+            socket.emit('save_hidden_pages', JSON.stringify(localHiddenPages));
+            socket.once('hidden_pages_saved', function(result) {
+                var data = JSON.parse(result);
+                if (data.success) {
+                    console.log('Successfully migrated localStorage to server');
+                    // Remove from localStorage after successful migration
+                    localStorage.removeItem('hidden_pages');
+                    serverHiddenPages = localHiddenPages;
+                }
+                if (callback) callback();
+            });
+        } else {
+            // No localStorage data to migrate
+            if (callback) callback();
+        }
+    } catch(e) {
+        console.log('Error during migration:', e);
+        if (callback) callback();
+    }
 }
 
-// Save hidden pages to localStorage
-function saveHiddenPages(hiddenPages) {
-    localStorage.setItem('hidden_pages', JSON.stringify(hiddenPages));
+// Load hidden pages from server
+function loadHiddenPagesFromServer(callback) {
+    socket.emit('get_hidden_pages');
+
+    // Set up one-time listener for the response
+    socket.once('hidden_pages_data', function(data) {
+        try {
+            serverHiddenPages = JSON.parse(data);
+
+            // Check if we need to migrate localStorage data
+            var localData = localStorage.getItem('hidden_pages');
+            if (localData && serverHiddenPages.length === 0) {
+                // Server has no data but localStorage has data - migrate it
+                migrateLocalStorageToServer(function() {
+                    if (callback) callback(serverHiddenPages);
+                });
+            } else {
+                if (callback) callback(serverHiddenPages);
+            }
+        } catch(e) {
+            console.log('Error parsing hidden pages:', e);
+            serverHiddenPages = [];
+            if (callback) callback([]);
+        }
+    });
+}
+
+// Get hidden pages (from server cache)
+function getHiddenPages() {
+    return serverHiddenPages;
+}
+
+// Save hidden pages to server
+function saveHiddenPages(hiddenPages, callback) {
+    serverHiddenPages = hiddenPages;
+    socket.emit('save_hidden_pages', JSON.stringify(hiddenPages));
+
+    // Set up one-time listener for the response
+    socket.once('hidden_pages_saved', function(result) {
+        var data = JSON.parse(result);
+        if (!data.success) {
+            console.log('Error saving hidden pages:', data.error);
+        }
+        if (callback) callback(data.success);
+    });
 }
 
 // Toggle page visibility
 function togglePageVisibility(pageName) {
-    var hiddenPages = getHiddenPages();
+    var hiddenPages = getHiddenPages().slice(); // Make a copy
     var index = hiddenPages.indexOf(pageName);
 
     if (index !== -1) {
@@ -1744,15 +1815,17 @@ function togglePageVisibility(pageName) {
         showNotification('Page "' + pageName + '" is now hidden', 'success');
     }
 
-    saveHiddenPages(hiddenPages);
+    saveHiddenPages(hiddenPages, function(success) {
+        if (success) {
+            // Refresh the pages list
+            loadPagesListConfigEditor();
 
-    // Refresh the pages list
-    loadPagesListConfigEditor();
-
-    // Also refresh the main pages list if the function exists
-    if (typeof fill_list_page === 'function') {
-        fill_list_page();
-    }
+            // Also refresh the main pages list if the function exists
+            if (typeof fill_list_page === 'function') {
+                fill_list_page();
+            }
+        }
+    });
 }
 
 // Load pages list for config editor

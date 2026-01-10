@@ -137,6 +137,11 @@ Press **Ctrl+Shift+C** to open the visual Configuration Editor, which provides a
   - Use ↓ to add sibling directories
   - Use ✕ to remove directories
 - **Color Tags Tab**: Customize category colors with visual color pickers
+- **Pages Tab**: Manage page visibility, rename, and delete pages
+  - Hide/Show pages from the left sidebar navigation
+  - Rename pages (updates file names automatically)
+  - Delete pages (with confirmation)
+  - Hidden pages are stored in config.yaml (survives browser data clearing)
 - **Real-time Updates**: Changes are immediately saved to config.yaml
 - **Visual Notifications**: User-friendly feedback for all operations
 
@@ -146,6 +151,7 @@ Press **Ctrl+Shift+C** to open the visual Configuration Editor, which provides a
 - **color_tags**: Category definitions for content organization
 - **vocabulaire**: Hierarchical voice command vocabulary
 - **subtitles_path**: Path to subtitle files
+- **hidden_pages**: List of pages to hide from the left sidebar navigation
 - **config**: UI styling and page properties
 
 ### Server Configuration Example:
@@ -156,6 +162,14 @@ server:
   ssl:
     key: "key.pem"     # SSL private key path
     cert: "server.crt" # SSL certificate path
+```
+
+### Hidden Pages Configuration Example:
+```yaml
+hidden_pages:
+  - example1          # Pages listed here won't appear in the left sidebar
+  - example2          # but can still be accessed directly via URL
+  - archived_notes    # Hidden pages can be toggled visible/hidden in the Config Editor
 ```
 
 ### User-Specific Files (ignored by git):
@@ -266,6 +280,10 @@ Press **Ctrl+Shift+C** to open the Configuration Editor:
 - **Add a directory path**: Go to Paths tab, enter path, click Add Path
 - **Create subdirectories**: Click ↳ next to a path to add a child, or ↓ to add a sibling
 - **Customize colors**: Go to Color Tags tab, click color swatches to change category colors
+- **Manage pages**: Go to Pages tab to:
+  - Hide/Show pages from the left sidebar (click Hide/Show button)
+  - Rename pages (click Rename, enter new name)
+  - Delete pages (click Delete, confirm action)
 
 ### Adding a Scheduled Event
 In the agenda, add an entry in the format:
@@ -291,7 +309,13 @@ Use the extended markdown syntax to embed:
   - Results grouped by page with temporary highlighting
   - Session storage for navigation state persistence
   - Voice command integration
-- **Visual Configuration Editor** with three tabs (Server, Paths, Color Tags)
+- **Visual Configuration Editor** with four tabs (Server, Paths, Color Tags, Pages)
+  - **Pages Management Tab** for organizing and managing pages
+    - Hide/Show pages from left sidebar navigation
+    - Rename pages with automatic file synchronization
+    - Delete pages with confirmation dialogs
+    - Hidden pages stored in config.yaml (persistent across browser sessions)
+    - Real-time updates across all connected clients
   - Real-time YAML editing with hierarchical path management
   - Custom notification system replacing native browser alerts
   - Context-aware confirm dialogs with dynamic positioning
