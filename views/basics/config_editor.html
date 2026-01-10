@@ -718,6 +718,25 @@
     transform: translateY(-1px);
 }
 
+.page-management-row .btn-page-visibility {
+    background-color: #6c757d;
+    color: white;
+}
+
+.page-management-row .btn-page-visibility:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+}
+
+.page-management-row .btn-page-visibility.hidden {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.page-management-row .btn-page-visibility.hidden:hover {
+    background-color: #e0a800;
+}
+
 #pages_list_config_editor:empty::after {
     content: 'No pages found';
     display: block;
@@ -1699,6 +1718,43 @@ $(document).ready(function() {
 
 // ========== PAGES TAB FUNCTIONS ==========
 
+// Get hidden pages from localStorage
+function getHiddenPages() {
+    var hidden = localStorage.getItem('hidden_pages');
+    return hidden ? JSON.parse(hidden) : [];
+}
+
+// Save hidden pages to localStorage
+function saveHiddenPages(hiddenPages) {
+    localStorage.setItem('hidden_pages', JSON.stringify(hiddenPages));
+}
+
+// Toggle page visibility
+function togglePageVisibility(pageName) {
+    var hiddenPages = getHiddenPages();
+    var index = hiddenPages.indexOf(pageName);
+
+    if (index !== -1) {
+        // Page is hidden, show it
+        hiddenPages.splice(index, 1);
+        showNotification('Page "' + pageName + '" is now visible', 'success');
+    } else {
+        // Page is visible, hide it
+        hiddenPages.push(pageName);
+        showNotification('Page "' + pageName + '" is now hidden', 'success');
+    }
+
+    saveHiddenPages(hiddenPages);
+
+    // Refresh the pages list
+    loadPagesListConfigEditor();
+
+    // Also refresh the main pages list if the function exists
+    if (typeof fill_list_page === 'function') {
+        fill_list_page();
+    }
+}
+
 // Load pages list for config editor
 function loadPagesListConfigEditor() {
     var container = $('#pages_list_config_editor');
@@ -1729,6 +1785,20 @@ function createPageRow(pageName) {
 
     var actionsDiv = $('<div>').addClass('page-actions');
 
+    // Check if page is hidden
+    var hiddenPages = getHiddenPages();
+    var isHidden = hiddenPages.indexOf(pageName) !== -1;
+
+    var visibilityBtn = $('<button>')
+        .addClass('btn-page-action btn-page-visibility')
+        .text(isHidden ? 'Show' : 'Hide')
+        .attr('data-page', pageName)
+        .toggleClass('hidden', isHidden)
+        .click(function(e) {
+            e.stopPropagation();
+            togglePageVisibility($(this).attr('data-page'));
+        });
+
     var renameBtn = $('<button>')
         .addClass('btn-page-action btn-page-rename')
         .text('Rename')
@@ -1747,7 +1817,7 @@ function createPageRow(pageName) {
             deletePage($(this).attr('data-page'));
         });
 
-    actionsDiv.append(renameBtn).append(deleteBtn);
+    actionsDiv.append(visibilityBtn).append(renameBtn).append(deleteBtn);
     row.append(nameSpan).append(actionsDiv);
 
     return row;
