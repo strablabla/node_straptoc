@@ -319,6 +319,11 @@ Use the extended markdown syntax to embed:
       - Display folder name with absolute path tooltip on hover
       - Double-click to edit the directory path
       - Auto-sizing display that adapts to folder name width
+    - **Autosave Interval Configuration**: Configurable autosave frequency
+      - HTML5 number input with native spinner controls
+      - Set interval in minutes (1-1440)
+      - Real-time updates to autosave system
+      - Elapsed-time tracking instead of fixed time windows
     - Hidden pages stored in config.yaml (persistent across browser sessions)
     - Real-time updates across all connected clients
   - Real-time YAML editing
@@ -359,7 +364,16 @@ Use the extended markdown syntax to embed:
   - Voice command integration ("Rechercher")
 
 #### UI Improvements
-- **Lock Button** repositioned (right: 50px) to make room for shutdown button
+- **Page Icon Management System**: Visual icon picker for pages
+  - Click on page icon (top-right) to open icon selector modal
+  - 375 SVG icons available in responsive grid layout
+  - Icons stored in config.yaml (dic_icon_pages)
+  - Default icon 335 for pages without assigned icon
+  - Real-time synchronization across all connected clients
+  - Hover effects and visual feedback on selection
+  - Persistent icon assignments across sessions
+- **Lock Button** repositioned (right: 70px) with tooltip
+- **Shutdown Button** positioned at top: 3px, right: 20px
 - Calendar display improvements with full year view
 - Enhanced agenda functionality with time-based alerts
 - Bug fixes and stability improvements
