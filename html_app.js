@@ -196,17 +196,47 @@ io.sockets.on('connection', function (socket) {
       //------------
 
       console.log('A client is connected!');
-      console.log('[html_app] Client connected, calling emit_from_read with:', {
+      console.log('[html_app] Client connected with initial globals:', {
           global_patt: global.patt,
           global_html_pos: global.html_pos,
           global_curr_text: global.curr_text
       });
-      re.emit_from_read(socket, global.patt, global.html_pos)
+      // NOTE: emit_from_read is now called in 'join' handler below
+      // This ensures global values are updated by earlier socket events first
 
       socket.on('join', function(data) {
-          console.log('[html_app] Received join event, emitting scroll with global.patt:', global.patt);
-          socket.emit('scroll', global.patt)
+          console.log('[html_app] Received join event');
+          console.log('[html_app] Current globals at join time:', {
+              global_patt: global.patt,
+              global_html_pos: global.html_pos,
+              global_curr_text: global.curr_text
+          });
+
+          // Now call emit_from_read with potentially updated globals
+          // emit_from_read will handle all the socket emissions (scroll, scroll_html, pattern)
+          re.emit_from_read(socket, global.patt, global.html_pos);
       });       // end socket.on join
+
+      socket.on('curr_txt', function(currtxt) {
+          console.log('[html_app] Received curr_txt:', currtxt);
+          global.curr_text = currtxt;
+          console.log('[html_app] Updated global.curr_text to:', global.curr_text);
+          // Send confirmation back to client
+          socket.emit('globals_updated');
+          console.log('[html_app] Sent globals_updated confirmation to client');
+      });       // end socket.on curr_txt
+
+      socket.on('scroll', function(patt) {
+          console.log('[html_app] Received scroll pattern:', patt);
+          global.patt = patt;
+          console.log('[html_app] Updated global.patt to:', global.patt);
+      });       // end socket.on scroll
+
+      socket.on('scroll_html', function(pos) {
+          console.log('[html_app] Received scroll_html position:', pos);
+          global.html_pos = pos;
+          console.log('[html_app] Updated global.html_pos to:', global.html_pos);
+      });       // end socket.on scroll_html
 
       new_obj.create(socket, app, io)
 

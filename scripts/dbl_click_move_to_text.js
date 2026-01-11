@@ -103,24 +103,22 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
     });
 
     // ------------ send informations BEFORE navigation
+    // Store in sessionStorage so they survive the page reload
 
-    console.log('[pattern_and_flip] Emitting socket events', {
+    var scroll_html_pos = $(document).scrollTop()     // scroll pos in html
+
+    console.log('[pattern_and_flip] Storing navigation data in sessionStorage', {
         scroll_pattern: patt,
-        scroll_html_pos: $(document).scrollTop(),
+        scroll_html_pos: scroll_html_pos,
         curr_txt: curr_text
     });
 
-    socket.emit('scroll', patt );                     //  emit pattern toward html_app.js
-    var scroll_html_pos = $(document).scrollTop()     // scroll pos in html
-    socket.emit('scroll_html', scroll_html_pos);
-    socket.emit('curr_txt', curr_text);
+    // Store values in sessionStorage to survive page navigation
+    sessionStorage.setItem('text_mode_patt', patt);
+    sessionStorage.setItem('text_mode_scroll_html_pos', scroll_html_pos);
+    sessionStorage.setItem('text_mode_curr_txt', curr_text);
 
-    console.log('[pattern_and_flip] Socket events emitted, waiting before navigation');
-
-    // Wait a bit to ensure socket events are sent before navigation
-    setTimeout(function() {
-        console.log('[pattern_and_flip] Now navigating to text mode');
-        window.location.href = addr;                    // flip from html to textarea
-    }, 100);  // 100ms delay to ensure socket events are processed
+    console.log('[pattern_and_flip] sessionStorage saved, navigating to text mode');
+    window.location.href = addr;                    // flip from html to textarea
 
 }

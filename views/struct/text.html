@@ -28,8 +28,76 @@
     var list_md = [];
     var dic_text_id = {};
 
-    // Request pages data from server
-    socket.emit('ask_pages_data');
+    // Store sessionStorage values globally so they can be used after pages_data arrives
+    var stored_patt = null;
+    var stored_scroll_html_pos = null;
+    var stored_curr_txt = null;
+    var pages_data_received = false;
+    var globals_updated_received = false;
+
+    // Wait for socket to be fully connected before sending events
+    socket.on('connect', function() {
+        console.log('[text.html] Socket fully connected, checking sessionStorage...');
+
+        // Retrieve values from sessionStorage (set by dbl_click_move_to_text.js)
+        stored_patt = sessionStorage.getItem('text_mode_patt');
+        stored_scroll_html_pos = sessionStorage.getItem('text_mode_scroll_html_pos');
+        stored_curr_txt = sessionStorage.getItem('text_mode_curr_txt');
+
+        console.log('[text.html] sessionStorage values:', {
+            text_mode_patt: stored_patt,
+            text_mode_scroll_html_pos: stored_scroll_html_pos,
+            text_mode_curr_txt: stored_curr_txt
+        });
+
+        // Send curr_txt first to update server globals
+        if (stored_curr_txt) {
+            console.log('[text.html] Emitting curr_txt:', stored_curr_txt);
+            socket.emit('curr_txt', stored_curr_txt);
+        }
+
+        if (stored_patt) {
+            console.log('[text.html] Emitting scroll pattern:', stored_patt);
+            socket.emit('scroll', stored_patt);
+        }
+        if (stored_scroll_html_pos) {
+            console.log('[text.html] Emitting scroll_html position:', stored_scroll_html_pos);
+            socket.emit('scroll_html', parseInt(stored_scroll_html_pos));
+        }
+
+        // Request pages data from server
+        socket.emit('ask_pages_data');
+    });
+
+    // Wait for BOTH pages_data AND globals_updated before sending join
+    function checkReadyToJoin() {
+        console.log('[text.html] checkReadyToJoin called', {
+            pages_data_received: pages_data_received,
+            globals_updated_received: globals_updated_received,
+            has_stored_curr_txt: !!stored_curr_txt
+        });
+
+        // If we have stored_curr_txt, wait for both pages_data and globals_updated
+        // If no stored_curr_txt, only wait for pages_data
+        var ready = pages_data_received && (!stored_curr_txt || globals_updated_received);
+
+        if (ready) {
+            console.log('[text.html] Ready to join! Emitting join event');
+            socket.emit('join', 'This is a message from client textarea !!' );
+
+            // Clear sessionStorage after use
+            sessionStorage.removeItem('text_mode_patt');
+            sessionStorage.removeItem('text_mode_scroll_html_pos');
+            sessionStorage.removeItem('text_mode_curr_txt');
+            console.log('[text.html] sessionStorage cleared');
+        }
+    }
+
+    socket.on('globals_updated', function() {
+        console.log('[text.html] Server confirmed globals updated');
+        globals_updated_received = true;
+        checkReadyToJoin();
+    });
 
     // Receive pages data from server
     socket.on('pages_data', function(data) {
@@ -41,6 +109,27 @@
             list_md = pagesData.list_md;
             dic_text_id = pagesData.dic_text_id;
             console.log('[text.html] Pages data loaded successfully');
+            console.log('[text.html] dchandir is now:', dchandir);
+
+            // NOW create the channel listeners AFTER dchandir is populated
+            console.log('[text.html] Creating channel listeners for:', Object.keys(dchandir));
+            Object.entries(dchandir).forEach(([elem,k]) => {
+                console.log('[text.html] Setting up listener for channel:', elem, '→', k);
+                socket.on(elem, function(message) {
+                    console.log('[text.html] Received message on channel', elem, 'length:', message.length);
+                    $('#comment').val(message);
+                    if (comment){ alert('received message  !! ') }
+                    new_loc = k
+                    name_origin_page(new_loc)
+                })
+            });
+            console.log('[text.html] All channel listeners created');
+
+            // Mark that pages_data has been received
+            pages_data_received = true;
+
+            // Check if we're ready to join (need both pages_data and globals_updated if curr_txt was sent)
+            checkReadyToJoin();
         } catch(e) {
             console.error('[text.html] Error parsing pages_data:', e);
         }
@@ -115,24 +204,8 @@
             if (comment){ alert(' scroll_html pos = ' + pos) }
       })
 
-      //------------- just a message
-
-    socket.on('connection', function() {
-        socket.emit('join', 'This is a message from client textarea !!' );
-      });
-
     //------------- from html to textarea
-
-    Object.entries(dchandir).forEach(([elem,k]) =>
-          socket.on(elem, function(message) {     //
-              $('#comment').val(message);
-              if (comment){ alert('received message  !! ') }
-              new_loc = k
-
-              name_origin_page(new_loc)
-
-            })
-    )
+    // NOTE: Channel listeners are now created in pages_data handler (after dchandir is populated)
 
     //-------------  pattern
 

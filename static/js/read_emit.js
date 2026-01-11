@@ -58,9 +58,11 @@ exports.emit_from_read = function(socket, patt, scroll_html_pos){
       console.log('[read_emit] emit_from_read called', {
           patt: patt,
           scroll_html_pos: scroll_html_pos,
-          curr_text: curr_text
+          curr_text: global.curr_text
       })
-      console.log('in read_emit.js, curr_text is ' + curr_text)
-      emit_from_read_txt (socket, patt, scroll_html_pos, dic_md_name[curr_text] )
+      console.log('in read_emit.js, global.curr_text is ' + global.curr_text)
+      console.log('[read_emit] global.dic_md_name is', global.dic_md_name)
+      console.log('[read_emit] Looking up dic_md_name[' + global.curr_text + ']:', global.dic_md_name[global.curr_text])
+      emit_from_read_txt (socket, patt, scroll_html_pos, global.dic_md_name[global.curr_text] )
 
 }
