@@ -316,33 +316,210 @@ icon_page.css({
                 'right': '230px',  // shifted left to make room for shutdown button
                 'top':'5px',
                 'width': '15px',
-                'z-index': '10'
+                'z-index': '10',
+                'cursor': 'pointer'
 
               })
+icon_page.attr('title', 'Click to change icon')
 $('#content').append(icon_page)
 
-var dic_icon_pages = {
-                      'todo': '044', 'science':'205',
-                      'fait':'265', 'infos':'342',
-                      'idees': '040','a_lire':'195',
-                      'musique':'379', 'good_links':'034',
-                      'culture':'238', 'sante':'008',
-                      'chansons':'067', 'medias': '070',
-                      'innovation':'345', 'pratique':'072',
-                      'reflexion':'378', 'societe':'050',
-                      'job':'376', 'medias':'377', 'projet':'380'
-                    }
-if (curr_page){
+// Load icon mappings from config.yaml
+var dic_icon_pages = {}
+socket.emit('get_icon_pages')
 
-      try{
-        var num_icon = dic_icon_pages[curr_page]
+socket.on('icon_pages_data', function(data) {
+    var parsedData = JSON.parse(data)
+    dic_icon_pages = parsedData.dic_icon_pages || {}
+    console.log('[pages.html] Loaded icon mappings:', dic_icon_pages)
+
+    // Update current page icon
+    updateCurrentPageIcon()
+})
+
+// Listen for icon updates from other clients
+socket.on('icon_updated', function(data) {
+    var parsedData = JSON.parse(data)
+    dic_icon_pages[parsedData.page] = parsedData.icon
+    if (curr_page === parsedData.page) {
+        updateCurrentPageIcon()
+    }
+})
+
+function updateCurrentPageIcon() {
+    if (curr_page){
+        var num_icon = dic_icon_pages[curr_page] || '335'  // Default icon 335
         $('#icon_page').attr('src',"capicon/svg/" + num_icon + ".svg")
-
-      }catch(err){
-        console.log('no icon in the dic')
-      }
-
+        console.log('[pages.html] Updated icon for', curr_page, 'to', num_icon)
+    }
 }
+
+//------- Icon Picker Modal
+
+/*
+
+Modal for selecting page icons
+
+*/
+
+// Create modal HTML
+var iconPickerModal = $('<div/>').attr('id', 'icon_picker_modal')
+iconPickerModal.css({
+    'display': 'none',
+    'position': 'fixed',
+    'z-index': 10001,
+    'left': 0,
+    'top': 0,
+    'width': '100%',
+    'height': '100%',
+    'background-color': 'rgba(0,0,0,0.5)'
+})
+
+var iconPickerContent = $('<div/>').attr('id', 'icon_picker_content')
+iconPickerContent.css({
+    'background-color': '#fff',
+    'margin': '5% auto',
+    'padding': '20px',
+    'border-radius': '8px',
+    'width': '80%',
+    'max-width': '900px',
+    'max-height': '80%',
+    'overflow-y': 'auto',
+    'box-shadow': '0 4px 20px rgba(0,0,0,0.3)'
+})
+
+var iconPickerTitle = $('<h3/>').text('Select an icon for ' + curr_page)
+iconPickerTitle.css({
+    'margin-top': 0,
+    'margin-bottom': '20px',
+    'color': '#333'
+})
+
+var iconPickerGrid = $('<div/>').attr('id', 'icon_picker_grid')
+iconPickerGrid.css({
+    'display': 'grid',
+    'grid-template-columns': 'repeat(auto-fill, minmax(60px, 1fr))',
+    'gap': '10px',
+    'margin-bottom': '20px'
+})
+
+var iconPickerClose = $('<button/>').text('Close')
+iconPickerClose.css({
+    'padding': '10px 24px',
+    'border': 'none',
+    'border-radius': '4px',
+    'cursor': 'pointer',
+    'font-size': '14px',
+    'font-weight': '600',
+    'background-color': '#6c757d',
+    'color': 'white'
+})
+
+iconPickerContent.append(iconPickerTitle)
+                  .append(iconPickerGrid)
+                  .append(iconPickerClose)
+iconPickerModal.append(iconPickerContent)
+$('body').append(iconPickerModal)
+
+// Load all SVG icons into the grid (375 icons numbered 001-375)
+function loadIconGrid() {
+    $('#icon_picker_grid').empty()
+
+    for (var i = 1; i <= 375; i++) {
+        var iconNum = String(i).padStart(3, '0')
+        var iconWrapper = $('<div/>').addClass('icon_picker_item')
+        iconWrapper.css({
+            'padding': '8px',
+            'border': '2px solid #ddd',
+            'border-radius': '4px',
+            'cursor': 'pointer',
+            'text-align': 'center',
+            'transition': 'all 0.2s'
+        })
+        iconWrapper.hover(
+            function() {
+                $(this).css({
+                    'border-color': '#007bff',
+                    'background-color': '#f0f8ff',
+                    'transform': 'scale(1.1)'
+                })
+            },
+            function() {
+                $(this).css({
+                    'border-color': '#ddd',
+                    'background-color': 'transparent',
+                    'transform': 'scale(1)'
+                })
+            }
+        )
+
+        var iconImg = $('<img/>').attr('src', 'capicon/svg/' + iconNum + '.svg')
+        iconImg.css({
+            'width': '27px',
+            'height': '27px',
+            'display': 'block',
+            'margin': '0 auto 5px auto'
+        })
+
+        var iconLabel = $('<div/>').text(iconNum)
+        iconLabel.css({
+            'font-size': '11px',
+            'color': '#666'
+        })
+
+        iconWrapper.append(iconImg).append(iconLabel)
+        iconWrapper.attr('data-icon', iconNum)
+
+        // Click handler for icon selection
+        iconWrapper.click(function() {
+            var selectedIcon = $(this).attr('data-icon')
+            console.log('[pages.html] Selected icon:', selectedIcon, 'for page:', curr_page)
+
+            // Save to config.yaml
+            socket.emit('save_page_icon', JSON.stringify({
+                page: curr_page,
+                icon: selectedIcon
+            }))
+
+            // Close modal
+            $('#icon_picker_modal').fadeOut(200)
+        })
+
+        $('#icon_picker_grid').append(iconWrapper)
+    }
+}
+
+// Open modal when clicking on icon_page
+$('#icon_page').click(function() {
+    if (curr_page) {  // Only allow icon change if we're on a specific page
+        loadIconGrid()
+        $('#icon_picker_modal').fadeIn(200)
+    }
+})
+
+// Close button
+iconPickerClose.click(function() {
+    $('#icon_picker_modal').fadeOut(200)
+})
+
+// Close on outside click
+$('#icon_picker_modal').click(function(e) {
+    if (e.target.id === 'icon_picker_modal') {
+        $(this).fadeOut(200)
+    }
+})
+
+// Listen for successful icon save
+socket.on('page_icon_updated', function(data) {
+    var parsedData = JSON.parse(data)
+    if (parsedData.success) {
+        console.log('[pages.html] Icon updated successfully for', parsedData.page)
+        dic_icon_pages[parsedData.page] = parsedData.icon
+        updateCurrentPageIcon()
+    } else {
+        console.error('[pages.html] Error updating icon:', parsedData.error)
+        alert('Error saving icon: ' + parsedData.error)
+    }
+})
 
 //------- backgrnd_icons
 
