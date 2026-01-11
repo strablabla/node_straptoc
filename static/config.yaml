@@ -348,6 +348,14 @@ hidden_pages:
   - example1
 addr_saved: ../../../../../media/sdata/docs/strap_save_test/
 autosave_interval: 30
+reminders:
+  email_enabled: false
+  email_address: ''
+  email_service: gmail
+  email_user: ''
+  email_password: ''
+  notification_minutes_before: 30
+  check_interval_minutes: 5
 dic_icon_pages:
   todo: '044'
   science: '205'

@@ -771,6 +771,7 @@
             <button class="tab-button active" data-tab="color-tags">Color Tags</button>
             <button class="tab-button" data-tab="paths">Paths</button>
             <button class="tab-button" data-tab="pages">Pages</button>
+            <button class="tab-button" data-tab="reminders">Reminders</button>
             <button class="tab-button" data-tab="server">Server</button>
         </div>
 
@@ -845,6 +846,99 @@
                 <div id="pages_list_config_editor">
                     <!-- Pages will be inserted here dynamically -->
                 </div>
+            </div>
+        </div>
+
+        <!-- Tab: Reminders -->
+        <div id="tab-reminders" class="tab-content">
+            <div style="max-width: 700px;">
+                <h3 style="margin-top: 0; color: #333;">Calendar Reminders & Notifications</h3>
+
+                <!-- Post-it Notifications Section -->
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0; color: #856404;">📌 Post-it Notifications</h4>
+                    <p style="margin: 5px 0; color: #856404; font-size: 13px;">
+                        Events from your calendar will appear as sticky notes at the top of the page
+                    </p>
+
+                    <div style="margin-top: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Notify me before event:</label>
+                        <input type="number" id="notification_minutes_before" min="0" max="1440" step="5" placeholder="30"
+                               style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 3px;">
+                        <span style="margin-left: 8px; color: #666;">minutes</span>
+                        <small style="display: block; margin-top: 5px; color: #666;">
+                            How many minutes before the event to show the notification
+                        </small>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Check for reminders every:</label>
+                        <input type="number" id="check_interval_minutes" min="1" max="60" step="1" placeholder="5"
+                               style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 3px;">
+                        <span style="margin-left: 8px; color: #666;">minutes</span>
+                        <small style="display: block; margin-top: 5px; color: #666;">
+                            How often to check the calendar for upcoming events
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Email Notifications Section -->
+                <div style="background: #e7f3ff; border: 1px solid #2196F3; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0; color: #0c5460;">📧 Email Notifications (Optional)</h4>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="email_enabled" style="margin-right: 8px; cursor: pointer;">
+                            <span style="font-weight: 600;">Enable email notifications</span>
+                        </label>
+                        <small style="display: block; margin-top: 5px; margin-left: 24px; color: #666;">
+                            Send email reminders in addition to post-it notifications
+                        </small>
+                    </div>
+
+                    <div id="email_config_fields" style="margin-left: 24px; display: none;">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Your email address:</label>
+                            <input type="email" id="email_address" placeholder="your.email@example.com"
+                                   style="width: 100%; max-width: 400px; padding: 8px; border: 1px solid #ccc; border-radius: 3px;">
+                            <small style="display: block; margin-top: 5px; color: #666;">
+                                Where to send the reminder emails
+                            </small>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Email service:</label>
+                            <select id="email_service" style="padding: 8px; border: 1px solid #ccc; border-radius: 3px;">
+                                <option value="gmail">Gmail</option>
+                                <option value="outlook">Outlook</option>
+                                <option value="yahoo">Yahoo</option>
+                                <option value="custom">Custom SMTP</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Sender email:</label>
+                            <input type="email" id="email_user" placeholder="sender@gmail.com"
+                                   style="width: 100%; max-width: 400px; padding: 8px; border: 1px solid #ccc; border-radius: 3px;">
+                            <small style="display: block; margin-top: 5px; color: #666;">
+                                Email account used to send reminders
+                            </small>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">App password:</label>
+                            <input type="password" id="email_password" placeholder="••••••••••••••••"
+                                   style="width: 100%; max-width: 400px; padding: 8px; border: 1px solid #ccc; border-radius: 3px;">
+                            <small style="display: block; margin-top: 5px; color: #666;">
+                                ⚠️ For Gmail, use an <a href="https://support.google.com/accounts/answer/185833" target="_blank" style="color: #2196F3;">App Password</a>, not your regular password
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="save_reminders_button" style="padding: 10px 24px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600;">
+                    💾 Save Reminder Settings
+                </button>
             </div>
         </div>
 
@@ -2193,6 +2287,77 @@ socket.on('autosave_interval_updated', function(result) {
         showNotification('Autosave interval updated to ' + data.interval + ' minutes. Restart server to apply.', 'success', 3000);
     } else {
         showNotification('Error updating interval: ' + data.error, 'error');
+    }
+});
+
+// ========== REMINDERS CONFIGURATION ==========
+
+// Load reminders tab when opened
+$(document).on('click', '[data-tab="reminders"]', function() {
+    console.log('[Reminders Tab] Loading reminders configuration');
+    loadRemindersConfig();
+});
+
+// Load current reminders configuration
+function loadRemindersConfig() {
+    socket.emit('get_reminders_config');
+}
+
+socket.on('reminders_config_data', function(data) {
+    console.log('[Reminders] Received config:', data);
+    var config = JSON.parse(data);
+    var reminders = config.reminders || {};
+
+    // Load notification settings
+    $('#notification_minutes_before').val(reminders.notification_minutes_before || 30);
+    $('#check_interval_minutes').val(reminders.check_interval_minutes || 5);
+
+    // Load email settings
+    $('#email_enabled').prop('checked', reminders.email_enabled || false);
+    $('#email_address').val(reminders.email_address || '');
+    $('#email_service').val(reminders.email_service || 'gmail');
+    $('#email_user').val(reminders.email_user || '');
+    $('#email_password').val(reminders.email_password || '');
+
+    // Show/hide email fields based on checkbox
+    toggleEmailFields();
+});
+
+// Toggle email configuration fields
+function toggleEmailFields() {
+    if ($('#email_enabled').is(':checked')) {
+        $('#email_config_fields').slideDown();
+    } else {
+        $('#email_config_fields').slideUp();
+    }
+}
+
+$('#email_enabled').change(function() {
+    toggleEmailFields();
+});
+
+// Save reminders configuration
+$('#save_reminders_button').click(function() {
+    var config = {
+        email_enabled: $('#email_enabled').is(':checked'),
+        email_address: $('#email_address').val().trim(),
+        email_service: $('#email_service').val(),
+        email_user: $('#email_user').val().trim(),
+        email_password: $('#email_password').val(),
+        notification_minutes_before: parseInt($('#notification_minutes_before').val()) || 30,
+        check_interval_minutes: parseInt($('#check_interval_minutes').val()) || 5
+    };
+
+    console.log('[Reminders] Saving config:', config);
+    socket.emit('save_reminders_config', JSON.stringify(config));
+});
+
+socket.on('reminders_config_updated', function(result) {
+    var data = JSON.parse(result);
+    if (data.success) {
+        showNotification('Reminder settings saved successfully!', 'success', 2000);
+    } else {
+        showNotification('Error saving reminder settings: ' + data.error, 'error');
     }
 });
 

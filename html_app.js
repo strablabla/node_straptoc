@@ -21,6 +21,7 @@ var store = require('./static/js/store');
 var agenda = require('./static/js/agenda');
 var config = require('./lib/config');
 var annotations = require('./lib/annotations');
+var reminders = require('./lib/reminders');
 
 //--------------  Load configuration
 
@@ -280,3 +281,14 @@ var addr = 'https://{}'.format(host) + ':{}/'.format(port) // access through 192
 console.log('Server running at {}'.format(addr));
 console.log('Port: {} | Host: {}'.format(port, host));
 open(addr,"node-strap");
+
+// Start reminder system
+reminders.start(io);
+
+// Listen for reminders config changes to restart the system
+io.sockets.on('connection', function(socket) {
+    socket.on('reminders_config_changed_internal', function(data) {
+        var config = JSON.parse(data);
+        reminders.restart(io, config);
+    });
+});

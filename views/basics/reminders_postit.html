@@ -1,0 +1,208 @@
+<style>
+/* Post-it Reminders Container */
+#reminders_container {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    max-width: 90%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* Individual Post-it Note */
+.reminder_postit {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    border: 1px solid #fdcb6e;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 15px 40px 15px 15px;
+    min-width: 250px;
+    max-width: 400px;
+    font-family: 'apple_garamond', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    animation: slideDown 0.3s ease-out;
+    pointer-events: auto;
+}
+
+.reminder_postit.alert {
+    background: linear-gradient(135deg, #ff9ff3 0%, #ff6b9d 100%);
+    border-color: #ff6b9d;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Close button */
+.reminder_close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    color: #2d3436;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reminder_close:hover {
+    background: rgba(0, 0, 0, 0.2);
+    transform: scale(1.1);
+}
+
+/* Post-it content */
+.reminder_date {
+    font-weight: bold;
+    font-size: 14px;
+    color: #2d3436;
+    margin-bottom: 8px;
+}
+
+.reminder_time {
+    font-size: 18px;
+    font-weight: bold;
+    color: #e74c3c;
+    margin-bottom: 5px;
+}
+
+.reminder_text {
+    font-size: 14px;
+    color: #2d3436;
+    line-height: 1.4;
+}
+
+/* Alert indicator */
+.reminder_postit.alert::before {
+    content: '🔔';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-size: 18px;
+}
+</style>
+
+<!-- Container for post-it reminders -->
+<div id="reminders_container"></div>
+
+<script>
+/*
+
+Post-it Reminders Display
+
+Shows upcoming calendar events as sticky notes at the top of the page
+
+*/
+
+// Keep track of shown reminders to avoid duplicates
+var shownReminders = new Set();
+
+// Listen for reminder notifications from server
+socket.on('show_reminders', function(data) {
+    console.log('[Reminders] Received reminders:', data);
+    var notifications = JSON.parse(data);
+
+    notifications.forEach(function(reminder) {
+        showReminderPostit(reminder);
+    });
+});
+
+// Create and display a post-it reminder
+function showReminderPostit(reminder) {
+    // Create unique key for this reminder
+    var reminderKey = reminder.dateKey + '_' + reminder.text;
+
+    // Skip if already shown
+    if (shownReminders.has(reminderKey)) {
+        console.log('[Reminders] Already showing:', reminderKey);
+        return;
+    }
+
+    shownReminders.add(reminderKey);
+
+    console.log('[Reminders] Showing post-it for:', reminder);
+
+    // Create post-it element
+    var postit = $('<div/>').addClass('reminder_postit');
+
+    if (reminder.isAlert) {
+        postit.addClass('alert');
+    }
+
+    // Create date header
+    var dateDiv = $('<div/>').addClass('reminder_date').text('📅 ' + reminder.date);
+    postit.append(dateDiv);
+
+    // If there's a time, show it prominently
+    if (reminder.time) {
+        var timeDiv = $('<div/>').addClass('reminder_time').text('⏰ ' + reminder.time);
+        postit.append(timeDiv);
+
+        // Show text without the time (since we're displaying it separately)
+        var textWithoutTime = reminder.text.replace(/^\d{1,2}:\d{2}\s*/, '');
+        if (textWithoutTime) {
+            var textDiv = $('<div/>').addClass('reminder_text').text(textWithoutTime);
+            postit.append(textDiv);
+        }
+    } else {
+        // All-day event, just show the text
+        var textDiv = $('<div/>').addClass('reminder_text').text(reminder.text);
+        postit.append(textDiv);
+    }
+
+    // Create close button
+    var closeBtn = $('<button/>').addClass('reminder_close').html('&times;');
+    closeBtn.attr('title', 'Dismiss reminder');
+    closeBtn.click(function() {
+        postit.fadeOut(300, function() {
+            $(this).remove();
+            shownReminders.delete(reminderKey);
+        });
+    });
+    postit.append(closeBtn);
+
+    // Add to container
+    $('#reminders_container').append(postit);
+
+    // Auto-dismiss after 5 minutes for non-alert events
+    if (!reminder.isAlert) {
+        setTimeout(function() {
+            if (postit.is(':visible')) {
+                postit.fadeOut(300, function() {
+                    $(this).remove();
+                    shownReminders.delete(reminderKey);
+                });
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    }
+}
+
+// Clear all reminders (e.g., when user wants to dismiss all)
+function clearAllReminders() {
+    $('#reminders_container .reminder_postit').fadeOut(300, function() {
+        $(this).remove();
+    });
+    shownReminders.clear();
+}
+
+console.log('[Reminders] Post-it notification system loaded');
+</script>

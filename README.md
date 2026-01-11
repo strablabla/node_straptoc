@@ -292,6 +292,76 @@ In the agenda, add an entry in the format:
 14h00 Project review
 ```
 
+### Setting Up Calendar Reminders
+
+#### Installation
+The reminder system requires the `nodemailer` package:
+```bash
+npm install nodemailer
+```
+
+#### Configuration
+1. Press **Ctrl+Shift+C** to open the Configuration Editor
+2. Navigate to the **Reminders** tab
+3. Configure post-it notifications:
+   - **Notification Minutes Before**: How many minutes before an event to show notifications (default: 30)
+   - **Check Interval Minutes**: How often the server checks for upcoming events (default: 5)
+4. (Optional) Configure email notifications:
+   - **Enable Email Notifications**: Toggle on to activate email alerts
+   - **Email Address**: Where to send reminder emails
+   - **Email Service**: Select Gmail, Outlook, Yahoo, or Custom SMTP
+   - **Email User**: Your email account username
+   - **Email Password**: Your email account password (use app password for Gmail/Outlook)
+5. Click **Save Reminders Settings**
+
+#### Gmail App Password Setup
+For Gmail accounts, you need to create an app password:
+1. Enable 2-factor authentication on your Google account
+2. Visit [Google App Passwords](https://myaccount.google.com/apppasswords)
+3. Create a new app password for "Mail"
+4. Copy the 16-character password and use it in the Email Password field
+
+#### Usage Examples
+
+**Time-based alert (will send email if enabled):**
+```
+14:30 Important client meeting
+```
+- Displays in pink post-it with clock icon
+- Sends email notification (if configured)
+- Shows 30 minutes before event (configurable)
+
+**All-day event:**
+```
+Team building day
+Conference in Paris
+```
+- Displays in yellow post-it with calendar icon
+- Shows at 9 AM on the event day
+- Auto-dismisses after 5 minutes
+
+**How the system works:**
+- Server checks for upcoming events every 5 minutes (configurable)
+- Post-it notifications appear at the top center of the page
+- Notifications are broadcast to all connected clients
+- Email sent separately for each upcoming event (if enabled)
+- Alert events (with time HH:MM format) get special pink styling
+- Regular events auto-dismiss after 5 minutes, alerts require manual close
+
+#### Troubleshooting
+
+**Email not sending:**
+- Verify email credentials are correct
+- For Gmail/Outlook: Ensure you're using an app password, not your regular password
+- Check that "Email Enabled" is toggled on
+- Check server console for error messages (Ctrl+Shift+D to open Debug Editor)
+
+**Notifications not appearing:**
+- Verify events are properly formatted in the agenda
+- Check the "Check Interval" isn't set too high
+- Ensure "Notification Minutes Before" gives enough window for detection
+- Open browser console (F12) and check for [Reminders] log messages
+
 ### Using Voice Commands
 Enable voice commands and use the configured vocabulary to navigate and control the application hands-free.
 
@@ -377,6 +447,31 @@ Use the extended markdown syntax to embed:
 - Calendar display improvements with full year view
 - Enhanced agenda functionality with time-based alerts
 - Bug fixes and stability improvements
+
+#### Calendar Reminder System
+- **Post-it Notifications**: Visual sticky note reminders at the top of the page
+  - Configurable notification timing (minutes before events)
+  - Automatic display for all calendar events
+  - Time-based alerts shown with clock icon (⏰)
+  - All-day events shown with calendar icon (📅)
+  - Alert events displayed in pink gradient, regular events in yellow
+  - Manual dismiss with close button (×)
+  - Auto-dismiss after 5 minutes for non-alert events
+  - Animated slide-down entrance
+  - Deduplication to prevent duplicate notifications
+- **Email Notifications** (Optional):
+  - Support for Gmail, Outlook, Yahoo, and custom SMTP servers
+  - App password authentication (required for Gmail/Outlook)
+  - Configurable recipient address
+  - Automatic email sending for upcoming events
+  - Separate email sent for each event
+- **Configuration** (via Ctrl+Shift+C → Reminders tab):
+  - Notification timing: Minutes before event to show notification (default: 30)
+  - Check interval: How often to check for upcoming events (default: 5 minutes)
+  - Email toggle: Enable/disable email notifications
+  - Email service selection: Gmail, Outlook, Yahoo, or Custom SMTP
+  - Email credentials: User/password with app password instructions
+  - Real-time configuration updates without server restart
 
 ## Security
 
