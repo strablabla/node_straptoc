@@ -62,4 +62,11 @@ $('#content').append(help_state) // 266, 353, 354
 
 toggle_panel('help')
 
+// Override help_state click to open README modal instead
+$('#help_state').off('click'); // Remove the toggle_panel click handler
+$('#help_state').click(function() {
+    console.log('[Help] Opening README modal');
+    openReadmeModal();
+});
+
 </script>
