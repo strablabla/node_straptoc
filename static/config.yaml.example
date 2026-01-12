@@ -1,379 +1,386 @@
-# Configuration centralisée pour node_straptoc
-# Ce fichier regroupe addr.yaml, color_tags.json, comm_voc.json, subtit.json et config.json
-#
-# INSTRUCTIONS:
-# 1. Copiez ce fichier vers config.yaml: cp config.yaml.example config.yaml
-# 2. Modifiez config.yaml avec vos propres chemins et préférences
-# 3. Le fichier config.yaml est ignoré par git et ne sera pas écrasé par git pull
-
-# ============================================================================
-# Adresses et chemins (anciennement addr.yaml)
-# ============================================================================
 addresses:
-  # Remplacez ces chemins par vos propres répertoires
-  - "path/to/your/downloads/folder"
-  - "path/to/your/media/folder"
-  - path: "path/to/your/media/data"
-    subdirs:
-      - "subfolder1"
-      - "subfolder2"
-      - "subfolder3"
-  - "public"
-  - "scripts"
-  - "lib"
-  - "icons"
-  - "fonts"
-
-# ============================================================================
-# Tags de couleur (anciennement color_tags.json)
-# ============================================================================
+  - ../../../../../../media/sdata:
+      - Alire
+      - papers_to_keep:
+          - Litt
+          - Physics
+      - Lemonde:
+          - '2018'
+          - '2019'
+          - '2020'
+      - zic
+  - ../../../../../../media
+  - fonts
+  - icons
+  - lib
+  - public
+  - scripts
+  - static
 color_tags:
   job:
     inside:
-      color: "#99dfff"
+      color: '#99dfff'
     title:
-      color: "#00aeff"
+      color: '#00aeff'
   prog:
     inside:
-      color: "#ffe6e6"
+      color: '#ffe6e6'
     title:
-      color: "#ff9999"
+      color: '#ff9999'
   phys:
     inside:
-      color: "#adebad"
+      color: '#adebad'
     title:
-      color: "#5cd65c"
+      color: '#5cd65c'
   astroph:
     inside:
-      color: "#d279a6"
+      color: '#d279a6'
     title:
-      color: "#d98cb3"
+      color: '#d98cb3'
   math:
     inside:
-      color: "#ffb380"
+      color: '#ffb380'
     title:
-      color: "#ff944d"
+      color: '#ff944d'
   infos:
     inside:
-      color: "#c2d6d6"
+      color: '#c2d6d6'
     title:
-      color: "#85adad"
+      color: '#85adad'
   société:
     inside:
-      color: "#993300"
+      color: '#993300'
     title:
-      color: "#b33c00"
+      color: '#b33c00'
   ML:
     inside:
-      color: "#e60000"
+      color: '#e60000'
     title:
-      color: "#ff0000"
+      color: '#ff0000'
   drôle:
     inside:
-      color: "#ffcc00"
+      color: '#f7f7c0'
     title:
-      color: "#ffd11a"
+      color: '#c5c599'
   histoire:
     inside:
-      color: "#77b300"
+      color: '#77b300'
     title:
-      color: "#88cc00"
+      color: '#88cc00'
   films:
     inside:
-      color: "#7575a3"
+      color: '#cc66cc'
     title:
-      color: "#8585ad"
+      color: '#a351a3'
   org:
     inside:
-      color: "#ffe066"
+      color: '#ffe066'
     title:
-      color: "#ffe680"
+      color: '#ffe680'
   boulot:
     inside:
-      color: "#cccc00"
+      color: '#f3f381'
     title:
-      color: "#e6e600"
+      color: '#c2c267'
   perso:
     inside:
-      color: "#c6538c"
+      color: '#c6538c'
     title:
-      color: "#cc6699"
+      color: '#cc6699'
   docs:
     inside:
-      color: "#00cc00"
+      color: '#00cc00'
     title:
-      color: "#00e600"
+      color: '#00e600'
   admin:
     inside:
-      color: "#ff9966"
+      color: '#ff9966'
     title:
-      color: "#ffaa80"
+      color: '#ffaa80'
   énergie:
     inside:
-      color: "#88cc00"
+      color: '#88cc00'
     title:
-      color: "#99e600"
+      color: '#99e600'
   réflexion:
     inside:
-      color: "#99e699"
+      color: '#99e699'
     title:
-      color: "#adebad"
+      color: '#adebad'
   divers:
     inside:
-      color: "#33bbff"
+      color: '#33bbff'
     title:
-      color: "#4dc3ff"
+      color: '#4dc3ff'
   tests:
     inside:
-      color: "#ff6666"
+      color: '#f5f82a'
     title:
-      color: "#ff8080"
+      color: '#c4c621'
   écologie:
     inside:
-      color: "#47d147"
+      color: '#00e600'
     title:
-      color: "#5cd65c"
+      color: '#00b800'
   techno:
     inside:
-      color: "#99cc00"
+      color: '#99cc00'
     title:
-      color: "#ace600"
+      color: '#ace600'
   bricolage:
     inside:
-      color: "#1ab2ff"
+      color: '#1ab2ff'
     title:
-      color: "#33bbff"
+      color: '#33bbff'
   réparations:
     inside:
-      color: "#88cc00"
+      color: '#88cc00'
     title:
-      color: "#99e600"
+      color: '#99e600'
   idées:
     inside:
-      color: "#cc8800"
+      color: '#cc8800'
     title:
-      color: "#e69900"
+      color: '#e69900'
   lire:
     inside:
-      color: "#ffcc99"
+      color: '#ffcc99'
     title:
-      color: "#ffd9b3"
+      color: '#ffd9b3'
   remarque:
     inside:
-      color: "#cccc00"
+      color: '#cccc00'
     title:
-      color: "#e6e600"
+      color: '#e6e600'
   potes:
     inside:
-      color: "#adad85"
+      color: '#adad85'
     title:
-      color: "#b8b894"
+      color: '#b8b894'
   santé:
     inside:
-      color: "#99cc00"
+      color: '#ff80ca'
     title:
-      color: "#ace600"
+      color: '#cc66a1'
   phrases:
     inside:
-      color: "#00aaff"
+      color: '#00aaff'
     title:
-      color: "#1ab2ff"
+      color: '#1ab2ff'
   récup:
     inside:
-      color: "#e085c2"
+      color: '#e085c2'
     title:
-      color: "#e699cc"
+      color: '#e699cc'
   projets:
     inside:
-      color: "#ffaa80"
+      color: '#ffaa80'
     title:
-      color: "#ffbb99"
+      color: '#ffbb99'
   contacts:
     inside:
-      color: "#00e600"
+      color: '#009999'
     title:
-      color: "#00cc00"
+      color: '#007a7a'
   langues:
     inside:
-      color: "#ff4d4d"
+      color: '#ff7d7d'
     title:
-      color: "#ff6666"
+      color: '#cc6464'
   médias:
     inside:
-      color: "#ffcc33"
+      color: '#ffcc33'
     title:
-      color: "#ffd24d"
-
-# ============================================================================
-# Vocabulaire commun (anciennement comm_voc.json)
-# Ajoutez ou modifiez les catégories selon vos besoins
-# ============================================================================
+      color: '#ffd24d'
+  voyage:
+    inside:
+      color: '#fbd85b'
+    title:
+      color: '#c8ac48'
+  blingbling:
+    inside:
+      color: '#b75757'
+    title:
+      color: '#924545'
 vocabulaire:
-  "#Science_":
-    - "Physique"
-    - "Chimie"
-    - "Gros instruments"
-    - "Grands organismes"
-    - "Publications libres"
-    - "Mathématiques"
-    - "Algos"
-    - "Traitement du signal"
-    - "Neuroscience"
-    - "Biologie"
-    - "Géologie"
-    - "Planétologie"
-    - "Evolution"
-    - "Astrophysique"
-    - "Zoologie"
-    - "Linguistique"
-    - "Archéologie"
-    - "Histoire"
-    - "Psychologie"
-    - "Médecine santé"
-    - "Podcast science"
-
-  "#Culture_":
-    - "Mediathèque"
-    - "Biblis en ligne"
-    - "Les jardins"
-    - "Architecture"
-    - "Cinéma"
-    - "Musique"
-    - "Danse"
-    - "Chanson"
-    - "Dessin"
-    - "Peinture"
-    - "Photo"
-    - "Littérature"
-    - "Langues"
-    - "Bande dessinée"
-    - "Série télé"
-    - "Animation"
-    - "Echecs"
-    - "Les ailleurs"
-    - " Voyages"
-    - "Langues_Latin"
-    - "Cuisine"
-    - "Sport"
-    - "Personnes intéressantes"
-    - "Personnes diverses"
-
-  "#Culture_Langues_":
-    - "hop"
-
-  "#Culture_Chanson_":
-    - "Oriental"
-    - "Pop"
-    - "Ska"
-    - "Anglosaxonne"
-    - "Créole"
-    - "Variantes"
-    - "Latine"
-    - "Brésilienne"
-    - "Italienne"
-    - "Française"
-    - "Variantes"
-    - "Artisanale"
-    - "Bollywoodienne"
-    - "Planante"
-    - "Asiatique"
-    - "Slave"
-
-  "#Recherche jobs_":
-    - "Entretien"
-    - "Demandes job faites"
-    - "Travail"
-    - "Bordel"
-
-  "#Société_Thèmes_":
-    - "Cartes"
-    - "Europe"
-    - "Ecologie"
-    - "Evolution"
-    - "Egalité"
-    - "Féminisme"
-    - "liberté d'expression"
-    - "Liberté"
-    - "Education"
-    - "Recherche"
-    - "Economie"
-    - "Histoire géo"
-    - "Circulation"
-    - "l'humour"
-    - "Le travail"
-    - "Les autres"
-    - "Santé et société"
-    - "Energie"
-    - "Futur"
-    - "Prison"
-    - "Prostitution"
-    - "Sexalité"
-    - "Xénophobie"
-    - "Action sociale"
-    - "Laïcité"
-    - "initiatives intelligentes"
-    - "Progrès et dangers associés"
-    - "Honnêteté intellectuelle"
-    - "Fanatisme"
-    - "Sectes"
-    - "Nucléaire"
-    - "Femmes"
-    - "Discrimination"
-    - "Vie régentée"
-    - "Développement"
-    - "Education"
-    - "Politique"
-
-  "#":
-    - "Santé"
-    - "Marrant"
-    - "Administratif"
-    - "Réflexion"
-    - "Innovation"
-    - "Science"
-    - "Pratique"
-    - "Mes Projets"
-    - "Programmation"
-    - "Contacts"
-    - "Latin"
-    - "Français"
-    - "Turc"
-    - "Arabe"
-    - "Chinois"
-    - "Russe"
-    - "Allemand"
-    - "Thaï"
-    - "Vietnamien"
-    - "Anglais"
-
-  "##":
-    - "Le Monde"
-    - "Le Courrier International"
-
-# ============================================================================
-# Sous-titres (anciennement subtit.json)
-# ============================================================================
-subtitles_path: "path/to/your/subtitles/folder"
-
-# ============================================================================
-# Configuration serveur
-# ============================================================================
+  '#Science_':
+    - Physique
+    - Chimie
+    - Gros instruments
+    - Grands organismes
+    - Publications libres
+    - Mathématiques
+    - Algos
+    - Traitement du signal
+    - Neuroscience
+    - Biologie
+    - Géologie
+    - Planétologie
+    - Evolution
+    - Astrophysique
+    - Zoologie
+    - Linguistique
+    - Archéologie
+    - Histoire
+    - Psychologie
+    - Médecine santé
+    - Podcast science
+  '#Culture_':
+    - Mediathèque
+    - Biblis en ligne
+    - Les jardins
+    - Architecture
+    - Cinéma
+    - Musique
+    - Danse
+    - Chanson
+    - Dessin
+    - Peinture
+    - Photo
+    - Littérature
+    - Langues
+    - Bande dessinée
+    - Série télé
+    - Animation
+    - Echecs
+    - Les ailleurs
+    - ' Voyages'
+    - Langues_Latin
+    - Cuisine
+    - Sport
+    - Personnes intéressantes
+    - Personnes diverses
+  '#Culture_Langues_':
+    - hop
+  '#Culture_Chanson_':
+    - Oriental
+    - Pop
+    - Ska
+    - Anglosaxonne
+    - Créole
+    - Variantes
+    - Latine
+    - Brésilienne
+    - Italienne
+    - Française
+    - Variantes
+    - Artisanale
+    - Bollywoodienne
+    - Planante
+    - Asiatique
+    - Slave
+  '#Recherche jobs_':
+    - Entretien
+    - Demandes job faites
+    - Travail
+    - Bordel
+  '#Société_Thèmes_':
+    - Cartes
+    - Europe
+    - Ecologie
+    - Evolution
+    - Egalité
+    - Féminisme
+    - liberté d'expression
+    - Liberté
+    - Education
+    - Recherche
+    - Economie
+    - Histoire géo
+    - Circulation
+    - l'humour
+    - Le travail
+    - Les autres
+    - Santé et société
+    - Energie
+    - Futur
+    - Prison
+    - Prostitution
+    - Sexualité
+    - Xénophobie
+    - Action sociale
+    - Laïcité
+    - initiatives intelligentes
+    - Progrès et dangers associés
+    - Honnêteté intellectuelle
+    - Fanatisme
+    - Sectes
+    - Nucléaire
+    - Femmes
+    - Discrimination
+    - Vie régentée
+    - Développement
+    - Education
+    - Politique
+  '#':
+    - Santé
+    - Marrant
+    - Administratif
+    - Réflexion
+    - Innovation
+    - Science
+    - Pratique
+    - Mes Projets
+    - Programmation
+    - Contacts
+    - Latin
+    - Français
+    - Turc
+    - Arabe
+    - Chinois
+    - Russe
+    - Allemand
+    - Thaï
+    - Vietnamien
+    - Anglais
+  '##':
+    - Le Monde
+    - Le Courrier International
+subtitles_path: ../../../../../../media/sdata/Films/Very_Good
 server:
-  port: 3001           # Port HTTPS du serveur (par défaut: 3001)
-  host: "0.0.0.0"      # Interface d'écoute (0.0.0.0 = toutes les interfaces, 127.0.0.1 = localhost uniquement)
-  # Certificats SSL (chemins relatifs à la racine du projet)
+  port: 3007
+  host: 0.0.0.0
   ssl:
-    key: "key.pem"     # Clé privée SSL
-    cert: "server.crt" # Certificat SSL
-
-# ============================================================================
-# Configuration info (anciennement config.json)
-# ============================================================================
-config:
+    key: key.pem
+    cert: server.crt
+hidden_pages:
+  - example2
+  - example1
+addr_saved: ../../../../../media/sdata/docs/strap_save_test/
+autosave_interval: 30
+reminders:
+  email_enabled: false
+  email_address: ''
+  email_service: gmail
+  email_user: ''
+  email_password: ''
+  notification_minutes_before: 30
+  check_interval_minutes: 5
+dic_icon_pages:
+  todo: '044'
+  science: '205'
+  fait: '265'
+  infos: '342'
+  idees: '040'
+  a_lire: '195'
+  musique: '379'
+  good_links: '034'
+  culture: '238'
+  sante: '008'
+  chansons: '067'
+  medias: '070'
+  innovation: '345'
+  pratique: '072'
+  reflexion: '378'
+  societe: '050'
+  job: '376'
+  projet: '380'
+  tests: '164'
+config_style:
   infos:
     hhh2:
-      text-align: "center"
-      color: "#ff00ff"
+      text-align: center
+      color: '#ff00ff'
     h2:
-      text-align: "left"
-      color: "#b30047"
+      text-align: left
+      color: '#b30047'

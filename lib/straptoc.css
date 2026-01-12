@@ -698,3 +698,29 @@ div.eq {
     opacity:0.7;
     z-index: 10;
     }
+
+/* Customizations */
+div.syntax h1 {
+    color: #ffddcc;
+}
+
+.syntax-toc {
+    background-color: #f9f9f9;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+}
+.syntax-toc ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+.syntax-toc li {
+    margin-bottom: 5px;
+}
+.syntax-toc a {
+    text-decoration: none;
+    color: #337ab7;
+}
+.syntax-toc a:hover {
+    text-decoration: underline;
+}
