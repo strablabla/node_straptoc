@@ -157,7 +157,9 @@ var css_delete_note = {
     'color': '#000000',
     'font-weight': 'bold',
     'line-height': '16px',
-    'text-align': 'center'
+    'text-align': 'center',
+    'font-style': 'normal',
+    'font-family': 'Arial, sans-serif'
 }
 
 var css_note_timestamp = {
@@ -316,7 +318,9 @@ function fill_cell(i,j){
           }
 
       }
-      curr_cell.click(function(){
+      curr_cell.click(function(e){
+
+          e.stopPropagation();
           var fullYear = new Date().getFullYear()
           var dateKey = fullYear + '_' + selected_month + '_' + index_cell
 
@@ -383,10 +387,6 @@ $(document).on('click', '.delete-note-btn', function(e){
       socket.emit('delete_note', data)
 })
 
-// Close panel with double click anywhere on the panel
-pan_day.dblclick(function(){
-      $('#pan_day').hide()
-})
 
 // Function to display notes in the panel
 function displayNotesInPanel(notesJson){

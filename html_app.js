@@ -229,8 +229,34 @@ io.sockets.on('connection', function (socket) {
 
       socket.on('scroll', function(patt) {
           console.log('[html_app] Received scroll pattern:', patt);
-          global.patt = patt;
-          console.log('[html_app] Updated global.patt to:', global.patt);
+
+          // Try to parse as JSON to check if it has context
+          try {
+              var pattern_data = JSON.parse(patt);
+              if (pattern_data.pattern) {
+                  // New format with context
+                  global.patt = pattern_data.pattern;
+                  global.patt_prev = pattern_data.pattern_prev;
+                  global.patt_next = pattern_data.pattern_next;
+                  console.log('[html_app] Updated global.patt with context:', {
+                      patt: global.patt,
+                      patt_prev: global.patt_prev,
+                      patt_next: global.patt_next
+                  });
+              } else {
+                  // Fallback if JSON doesn't have expected structure
+                  global.patt = patt;
+                  global.patt_prev = null;
+                  global.patt_next = null;
+                  console.log('[html_app] Updated global.patt (no context):', global.patt);
+              }
+          } catch (e) {
+              // Old format - plain string
+              global.patt = patt;
+              global.patt_prev = null;
+              global.patt_next = null;
+              console.log('[html_app] Updated global.patt (legacy format):', global.patt);
+          }
       });       // end socket.on scroll
 
       socket.on('scroll_html', function(pos) {

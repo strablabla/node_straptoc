@@ -327,14 +327,13 @@ div.onside {
     opacity: 0.8;
   }
 
-  #gotop.fa-chevron-up,
   #gotop {
     font-size: 14px;
     color: #ffffff;
     font-style: normal;
     display: inline-block;
     width: 100%;
-    margin-left: -10px;
+    text-align: center;
   }
 
 /*==================================================
@@ -363,14 +362,13 @@ div.onside {
   opacity: 0.8;
 }
 
-#gobottom.fa-chevron-down,
 #gobottom {
     font-size: 14px;
     color: #ffffff;
     font-style: normal;
     display: inline-block;
     width: 100%;
-    margin-left: -10px;
+    text-align: center;
   }
 
 /*==================================================

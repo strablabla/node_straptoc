@@ -61,10 +61,23 @@ function code_mirror_add_func(editor, socket){
             }
 
         console.log('[code_mirror_addons] About to jump to line_number:', line_number);
-        jumpToLine(line_number)
+        console.log('[code_mirror_addons] Type of line_number:', typeof line_number);
+        console.log('[code_mirror_addons] line_number value:', line_number);
 
-        console.log('[code_mirror_addons] Adding line highlight to line:', line_number-1);
-        editor.addLineClass(line_number-1, "background", 'line_highlight')
+        if (line_number && line_number > 0) {
+            jumpToLine(line_number)
+
+            console.log('[code_mirror_addons] Adding line highlight to line:', line_number-1);
+            editor.addLineClass(line_number-1, "background", 'line_highlight')
+
+            // Force CodeMirror to refresh to ensure the highlighting is visible
+            setTimeout(function() {
+                editor.refresh();
+                console.log('[code_mirror_addons] Editor refreshed');
+            }, 100);
+        } else {
+            console.warn('[code_mirror_addons] Invalid line_number:', line_number);
+        }
 
         $('#wrap_url').click(function(){
               var selection = editor.getSelection()

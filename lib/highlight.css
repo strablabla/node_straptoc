@@ -1,5 +1,12 @@
 .line_highlight {
+    background-color: yellow !important;
+}
 
-    background-color:yellow !important;
+/* Make sure CodeMirror respects this */
+.CodeMirror-line.line_highlight {
+    background-color: yellow !important;
+}
 
+.CodeMirror .line_highlight {
+    background-color: yellow !important;
 }

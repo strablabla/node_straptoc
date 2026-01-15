@@ -62,16 +62,33 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
 
     // ------------ find the pattern
 
+    var patt_prev = null;  // Pattern for line before
+    var patt_next = null;  // Pattern for line after
+
     if (elem.is('li')){
         var patt = elem.text().split('\n')[0]
-        console.log('[pattern_and_flip] Element is <li>, pattern before escape:', patt);
-        // Escape regex special characters
-        patt = patt.replace(/[?+()[\]{}|.*^$\\]/g, '\\$&')
+        console.log('[pattern_and_flip] Element is <li>, pattern:', patt);
+
         // If the line contains deleted text (%%%), add %%% to pattern
         if (elem.find('del').length > 0) {
             patt = patt + '%%%'
             console.log('[pattern_and_flip] Found deleted text, added %%% to pattern');
         }
+
+        // Get context: previous and next sibling elements
+        var prevElem = elem.prev('li');
+        var nextElem = elem.next('li');
+
+        if (prevElem.length > 0) {
+            patt_prev = prevElem.text().split('\n')[0];
+            console.log('[pattern_and_flip] Previous sibling pattern:', patt_prev);
+        }
+
+        if (nextElem.length > 0) {
+            patt_next = nextElem.text().split('\n')[0];
+            console.log('[pattern_and_flip] Next sibling pattern:', patt_next);
+        }
+
         console.log('[pattern_and_flip] Final pattern for <li>:', patt);
     }
     else if (elem.is('.date')){
@@ -84,10 +101,7 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
     }
     else if (elem.is('h2') || elem.is('h3') || elem.is('h4') || elem.is('h5') || elem.is('h6')){
         var patt = elem.text().trim()
-        console.log('[pattern_and_flip] Element is heading, pattern before escape:', patt);
-        // Escape regex special characters
-        patt = patt.replace(/[?+()[\]{}|.*^$\\]/g, '\\$&')
-        console.log('[pattern_and_flip] Final pattern for heading:', patt);
+        console.log('[pattern_and_flip] Element is heading, pattern:', patt);
     }
 
     // ------------ flip to text
@@ -109,12 +123,16 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
 
     console.log('[pattern_and_flip] Storing navigation data in sessionStorage', {
         scroll_pattern: patt,
+        scroll_pattern_prev: patt_prev,
+        scroll_pattern_next: patt_next,
         scroll_html_pos: scroll_html_pos,
         curr_txt: curr_text
     });
 
     // Store values in sessionStorage to survive page navigation
     sessionStorage.setItem('text_mode_patt', patt);
+    sessionStorage.setItem('text_mode_patt_prev', patt_prev || '');
+    sessionStorage.setItem('text_mode_patt_next', patt_next || '');
     sessionStorage.setItem('text_mode_scroll_html_pos', scroll_html_pos);
     sessionStorage.setItem('text_mode_curr_txt', curr_text);
 
