@@ -42,4 +42,6 @@ static/js/strap_database.db
 views/saved/
 views/saved/*
 views/md/
+!views/md/example1
+!views/md/example2
 views/*.html
