@@ -722,3 +722,90 @@ div.syntax h1 {
 .syntax-toc a:hover {
     text-decoration: underline;
 }
+
+/*==================================================
+ * Lazy Loading PDF/Video Styles
+ * ===============================================*/
+
+/* Container for lazy-loaded PDFs from << syntax */
+.lazy-pdf-folder {
+    margin: 15px 0;
+}
+
+.lazy-pdf-item {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.lazy-pdf-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.lazy-pdf-load-btn {
+    background-color: #337ab7;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.lazy-pdf-load-btn:hover {
+    background-color: #286090;
+}
+
+.lazy-pdf-load-btn:disabled {
+    background-color: #999;
+    cursor: wait;
+}
+
+.lazy-pdf-container {
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Container for lazy-loaded PDFs from !fold syntax (PDF.js viewer) */
+.lazy-pdfjs-container {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.lazy-pdfjs-load-btn {
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    display: block;
+    margin: 0 auto;
+}
+
+.lazy-pdfjs-load-btn:hover {
+    background-color: #449d44;
+}
+
+.lazy-pdfjs-load-btn:disabled {
+    background-color: #999;
+    cursor: wait;
+}
+
+.lazy-pdfjs-viewer {
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+}

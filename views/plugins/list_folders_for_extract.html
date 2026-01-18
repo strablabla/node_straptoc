@@ -23,7 +23,7 @@ toggle_pdf_ok = false
 
 var list_li = $('body').find('li');
 var length_list_li = list_li.length;
-//alert(length_list_li)
+console.log('[list_folders_for_extract] Total li elements:', length_list_li)
 var num_li = 0
 
 socket.on('list_folders', function(strap_addr){
@@ -80,7 +80,7 @@ $('li').each(function(){
             // no need to go inside folder..
             num_li += 1
             if (num_li == length_list_li){      // if no !fold inside found, emit make_elems
-                //alert('emit the signal !!!')
+                console.log('[list_folders_for_extract] Emitting make_elems signal')
                 socket.emit('make_elems', '')
                 // use extract_folder..
             }
