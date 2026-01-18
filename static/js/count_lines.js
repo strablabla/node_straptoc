@@ -36,7 +36,7 @@ exports.find_line_of_pattern = function(text, pattern, pattern_prev, pattern_nex
       console.log('[count_lines] Using context_next:', context_next);
 
       // If no context is provided, use old behavior (find first match)
-      // Check for null, undefined, or empty string
+      // Check for null, undefined, or empty string..
       var hasContext = (context_prev && context_prev.trim() !== '') || (context_next && context_next.trim() !== '');
 
       if (!hasContext) {
@@ -64,7 +64,7 @@ exports.find_line_of_pattern = function(text, pattern, pattern_prev, pattern_nex
           context_next: context_next
       });
 
-      console.log("WITHHHH CONTEXT !!!!")
+      console.log("WITH CONTEXT !!!!")
 
       for (var i = 0; i < astring.length; i++) {
           var line = astring[i];
