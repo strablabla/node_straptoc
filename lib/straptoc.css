@@ -809,3 +809,26 @@ div.syntax h1 {
     border-radius: 4px;
     background-color: #fff;
 }
+
+/* Lazy loading styles for videos */
+.embed_video {
+    color: #008cffab;
+    margin: 5px 0;
+}
+
+.lazy-video-container {
+    margin: 10px 0;
+}
+
+.lazy-video-viewer {
+    margin-top: 10px;
+}
+
+.lazy-video-viewer video {
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.fold_video {
+    list-style-type: none;
+}

@@ -27,6 +27,11 @@ function image_ext(name) {
   return /\.(png|jpg|webp)$/i.test(name);
 }
 
+// video extension
+function video_ext(name) {
+  return /\.(mp4|webm|ogg|mkv|avi)$/i.test(name);
+}
+
 function sort_list_pattern(array, list){
       /*
       Sort a list with patterns..
@@ -245,6 +250,17 @@ function handle_docs(sorted_list, new_ul, current_count){
                new_ul.append( divportf )
 
           }
+
+          // detect video
+
+          else if ( video_ext(first_elem) ){
+              console.log('[extract_folder] Processing as video, calling make_li_video for each file')
+              var web_path = extract_folder_addr_abs[current_count]
+              console.log('[extract_folder] Using web_path for videos:', web_path)
+              sorted_list.forEach( function(elem){
+                              make_li_video(web_path, elem, new_ul)
+                         })
+          }
           //alert(sorted_list)
           // Don't hide - show the content by default for lazy loading
           // new_ul.hide()
@@ -379,21 +395,53 @@ function relative_addr(addr, addr_short){
 
     }
 
+    function make_li_video(addr, elem, new_ul){
+
+          /*
+
+          List of video files with lazy loading.
+          Full address is addr + '/' + elem
+
+          */
+          console.log('[extract_folder] make_li_video - addr:', addr, 'elem:', elem)
+          var full_path = addr + '/' + elem
+          console.log('[extract_folder] make_li_video - full_path:', full_path)
+
+          // Get video name without extension
+          var video_name = elem.replace(/\.(mp4|webm|ogg|mkv|avi)$/i, '')
+
+          var div_format = $('<div/>').text(video_name).addClass('embed_video')
+          var a_deploy = $('<a/>').text(' [+]')  // Start with [+] since video is hidden
+          var span_tog = $('<span/>').addClass('tog_elem tog_video').append(a_deploy)
+
+          // Create lazy loading placeholder for video
+          var viewerId = 'video-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
+          var video_container = '<br><div class="lazy-video-container" id="' + viewerId + '" data-video-path="' + full_path + '" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
+                    '<div class="lazy-video-viewer" style="display: none;"></div>' +
+                    '</div><br>'
+
+          var divformat_plus = div_format.append(span_tog)
+          var div_obj = $('<div/>').html(video_container).hide()
+          var curr_li = $('<li/>').addClass('fold_li fold_video')
+          new_ul.append( curr_li.append( divformat_plus.append( div_obj ) ) )
+
+    }
+
     function toggle_elem(){
 
         /*
 
-        Code for closing, opening the pdfs..
-        Lazy loading: PDF is loaded with <object> tag when user clicks [+] to open
-        Note: We use <object> instead of PDF.js for inline PDFs because PDF.js uses
-        a global viewer that can only display one PDF at a time.
+        Code for closing, opening the pdfs and videos.
+        Lazy loading: PDF/Video is loaded when user clicks [+] to open
+        Note: We use <object> for PDFs and <video> for videos.
 
         */
 
         $('.tog_elem').click(function(){
 
                 var taga = $(this).find('a')
-                var $container = $(this).next().find('.lazy-pdfjs-container')
+                var $pdfContainer = $(this).next().find('.lazy-pdfjs-container')
+                var $videoContainer = $(this).next().find('.lazy-video-container')
 
                 if (taga.text() == ' [-]'){
                     // Closing - just hide
@@ -401,25 +449,41 @@ function relative_addr(addr, addr_short){
                     $(this).next().hide()
 
                 } else {
-                    // Opening - show and lazy load PDF if not already loaded
+                    // Opening - show and lazy load content if not already loaded
                     taga.text(' [-]')
                     $(this).next().show()
 
-                    // Lazy load the PDF with <object> tag (independent for each PDF)
-                    if ($container.length > 0) {
-                        var isLoaded = $container.data('loaded')
+                    // Lazy load PDF with <object> tag
+                    if ($pdfContainer.length > 0) {
+                        var isLoaded = $pdfContainer.data('loaded')
                         if (!isLoaded || isLoaded === 'false') {
-                            var pdfPath = $container.data('pdf-path')
-                            var $viewer = $container.find('.lazy-pdfjs-viewer')
+                            var pdfPath = $pdfContainer.data('pdf-path')
+                            var $viewer = $pdfContainer.find('.lazy-pdfjs-viewer')
 
-                            // Use <object> tag - each PDF viewer is independent
                             var obj = $('<object/>').attr('data', pdfPath)
                                                     .attr('type', 'application/pdf')
                                                     .attr('width', '100%')
                                                     .attr('height', '800px')
                             $viewer.empty().append(obj)
                             $viewer.show()
-                            $container.data('loaded', 'true')
+                            $pdfContainer.data('loaded', 'true')
+                        }
+                    }
+
+                    // Lazy load Video with <video> tag
+                    if ($videoContainer.length > 0) {
+                        var isLoaded = $videoContainer.data('loaded')
+                        if (!isLoaded || isLoaded === 'false') {
+                            var videoPath = $videoContainer.data('video-path')
+                            var $viewer = $videoContainer.find('.lazy-video-viewer')
+
+                            var video = $('<video/>').attr('src', videoPath)
+                                                     .attr('controls', true)
+                                                     .attr('width', '100%')
+                                                     .attr('style', 'max-width: 800px;')
+                            $viewer.empty().append(video)
+                            $viewer.show()
+                            $videoContainer.data('loaded', 'true')
                         }
                     }
                 }
