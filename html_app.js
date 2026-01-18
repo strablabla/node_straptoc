@@ -86,7 +86,9 @@ init.handle_pages(app, function() {
     util.save_regularly_all();
 })
 
-app.get('/', function(req, res){ res.render('main.html'); });
+// app.get('/', function(req, res){ res.render('main.html'); });
+page_main = { 'path': '/', 'name': 'main' }
+init.feed_page(app, page_main);
 app.get('/text', function(req, res){ res.render('struct/text.html'); });
 
 db = init.data_base()
