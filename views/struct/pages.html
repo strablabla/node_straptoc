@@ -39,10 +39,8 @@ socket.on('pages_data', function(data) {
         console.log('[pages.html] list_pages:', list_pages);
         console.log('[pages.html] list_md:', list_md);
 
-        // Trigger fill_list_page if it was waiting
-        if (typeof window.pagesDataReady !== 'undefined') {
-            window.pagesDataReady = true;
-        }
+        // Fill the page list now that we have the data
+        fill_list_page();
     } catch(e) {
         console.error('[pages.html] Error parsing pages_data:', e);
     }
@@ -265,7 +263,8 @@ function fill_list_page(){
 
 }
 
-fill_list_page()
+// Note: fill_list_page() is now called inside the 'pages_data' socket handler
+// to ensure it runs after the data has been received
 
 // Change size of the current name page in the list..
 
