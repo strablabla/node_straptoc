@@ -92,8 +92,24 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
         console.log('[pattern_and_flip] Final pattern for <li>:', patt);
     }
     else if (elem.is('.date')){
-        var patt = elem.attr('id').split('_')[take_elem]
-        console.log('[pattern_and_flip] Element is .date, extracted pattern:', patt, 'from id:', elem.attr('id'));
+        // Use the actual text content of the date element, not the ID
+        var patt = elem.text().trim();
+        console.log('[pattern_and_flip] Element is .date, extracted pattern from text:', patt);
+        console.log('[pattern_and_flip] Date element id for reference:', elem.attr('id'));
+
+        // Extract context from surrounding elements
+        var prevElem = elem.prev();
+        var nextElem = elem.next();
+
+        if (prevElem.length > 0) {
+            patt_prev = prevElem.text().split('\n')[0];
+            console.log('[pattern_and_flip] Previous sibling pattern for .date:', patt_prev);
+        }
+
+        if (nextElem.length > 0) {
+            patt_next = nextElem.text().split('\n')[0];
+            console.log('[pattern_and_flip] Next sibling pattern for .date:', patt_next);
+        }
     }
     else if (elem.is('.tag_a_to_text')){
         patt = elem.parent().text()
