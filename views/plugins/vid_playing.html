@@ -41,23 +41,37 @@ elem1.css({'background-color':'rgb(255,104,102)', // bottom window bar for video
 $('#vid_name').hide()
 $('#vid_name').attr('href','#vid_playing')
 
-$("video").on('play', function() {     // on play
+// Use capture phase for play/pause events (they don't bubble, and this works with dynamic videos)
+document.addEventListener('play', function(e) {
+    if (e.target.tagName === 'VIDEO') {
+        var $video = $(e.target)
+        // Find the yellow highlighted title element
+        var $li = $video.closest('.vid-lazy-item')
+        var $title = $li.find('.embed_video.vid-lazy-title')
+        var offset = $title.length ? $title.offset() : $video.offset()
+        if (offset) {
+            var x = 200
+            var y = offset.top
+            $('#vid_playing').show()
+            $('#vid_name').text($video.attr('src')).show()         // video with link
+            $('#vid_playing').css({ 'left': x, 'top': y })         // indicator
+        }
+        e.target.volume = 0.5                                  // halving the video volume
+    }
+}, true);
 
-     var offset = $(this).offset()
-     var x = offset.left-100                               // x position of indicator
-     var y = offset.top                                    // y position of indicator
-     $('#vid_playing').show()
-     $('#vid_name').text($(this).attr('src')).show()       // video with link
-     $('#vid_playing').css({ 'left': x, 'top': y })        // indicator
-     $(this)[0].volume = 0.5                               // halving the video volume
+document.addEventListener('pause', function(e) {
+    if (e.target.tagName === 'VIDEO') {
+        $('#vid_playing').hide()
+        $('#vid_name').hide()
+    }
+}, true);
 
- });
-
- $("video").on('pause', function() {   // on pause
-
-      $('#vid_playing').hide()
-      $('#vid_name').hide()
-
-  });
+document.addEventListener('ended', function(e) {
+    if (e.target.tagName === 'VIDEO') {
+        $('#vid_playing').hide()
+        $('#vid_name').hide()
+    }
+}, true);
 
 </script>

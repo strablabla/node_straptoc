@@ -595,7 +595,8 @@ function play_vid_list(i){
       var curr_ul;
       $('.strapvid').each(function(){
           if ($(this).attr('index') == i){
-               $(this).toggle()
+               // Keep the ul hidden - don't toggle visibility
+               // $(this).toggle()
                curr_ul = $(this)
            }
         })
