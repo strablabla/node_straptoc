@@ -6,8 +6,8 @@ Play list
 
 */
 
-// rgb(255, 255, 204) pale yellow
-var color_play_list = 'rgb(255, 255, 204)'
+// rgb(255, 255, 255) white
+var color_play_list = 'rgb(255, 255, 255)'
 var icon_helmet = "capicon/svg/227.svg"
 var icon_playing = "animated/music_waves.gif"
 
@@ -51,20 +51,76 @@ img_helmet.css({'position':'relative',
                 'width':'15px'
               })
 
-// Play buttons
+// Play/Pause toggle button (single button that switches between play and pause)
 
-var butt_play = $('<input/>').attr({   // play button
-                   type: "button",
-                   id: "butt_play",
-                   value: "play",
-                   class: "btn btn-warning"
-               });
-butt_play.css({'position':'absolute',  // play button css
-                'bottom':'30px',
+var butt_play_pause = $('<div/>').attr('id', 'butt_play_pause')
+butt_play_pause.css({'position':'absolute',
+                'bottom':'25px',
                 'margin-left':'50%',
-                'left':'-30px',
-                'padding-bottom':'5px'
+                'left':'-7px',
+                'cursor': 'pointer'
               })
+
+// Play icon (triangle)
+var icon_play = $('<img/>').attr({
+                   id: "icon_play",
+                   src: "capicon/svg/276.svg",
+                   alt: "play"
+               });
+icon_play.css({'width': '10px'})
+
+// Pause icon (two vertical bars)
+var icon_pause = $('<div/>').attr('id', 'icon_pause')
+var bar1 = $('<div/>').css({
+    'display': 'inline-block',
+    'width': '4px',
+    'height': '14px',
+    'background-color': '#333',
+    'margin-right': '3px'
+})
+var bar2 = $('<div/>').css({
+    'display': 'inline-block',
+    'width': '4px',
+    'height': '14px',
+    'background-color': '#333'
+})
+icon_pause.append(bar1).append(bar2)
+icon_pause.hide()  // Initially hidden (show play icon)
+
+butt_play_pause.append(icon_play).append(icon_pause)
+
+// Track playing state
+var is_playing = false
+
+// Prev/Next buttons for navigation (double chevrons)
+var butt_prev = $('<img/>').attr({
+                   id: "butt_prev",
+                   src: "capicon/svg/279.svg",  // double chevron left
+                   alt: "previous"
+               });
+butt_prev.css({'position':'absolute',
+                'bottom':'25px',
+                'margin-left':'50%',
+                'left':'-50px',
+                'width': '10px',
+                'cursor': 'pointer'
+              })
+
+var butt_next = $('<img/>').attr({
+                   id: "butt_next",
+                   src: "capicon/svg/278.svg",  // double chevron right
+                   alt: "next"
+               });
+butt_next.css({'position':'absolute',
+                'bottom':'25px',
+                'margin-left':'50%',
+                'left':'30px',
+                'width': '10px',
+                'cursor': 'pointer'
+              })
+
+// Track current playing index
+var current_playing_index = 0
 
 // -- Arrows
 
@@ -147,7 +203,9 @@ var tit = $('<h3/>').css({'text-align':'center'})
 
 $('#vid_play_list').append(img_helmet)    // pict helmet
                    .append(tit)           // title
-                   .append(butt_play)     // button for playing..
+                   .append(butt_prev)     // button for previous..
+                   .append(butt_play_pause)  // toggle play/pause button
+                   .append(butt_next)     // button for next..
                    .append(pl_act_bin)    // bin
 
 function reinit_act(selection, elem, action){
@@ -200,27 +258,41 @@ function selection_click(elem_li, selection, numsel){
                play_vid_list(numsel)
                $('#media_panel_icon').attr('alt','music')
                                      .attr('src',icon_playing)
+               // Update play/pause button to show pause icon
+               $('#icon_play').hide()
+               $('#icon_pause').show()
+               is_playing = true
              } else {                                       // if video active..
               selection.css({'color':'black'})
               sel_vid.pause()
               $('#media_panel_icon').attr('alt','music')
                                     .attr('src', icon_helmet)
+              // Update play/pause button to show play icon
+              $('#icon_pause').hide()
+              $('#icon_play').show()
+              is_playing = false
             }
       })
 
 }
 
-var len_lim = 60
+var len_lim = 45
 
 function change_vid_name(vid_id){
+      // Get full name without extension
+      var full_name = vid_id.split('/').pop()
+      full_name = full_name.replace(/\.(mp4|webm|ogg|mkv|avi)$/i, '')
 
-      vid_name = vid_id.split('/').pop()
+      var vid_name = full_name
+      var is_truncated = false
+
+      // Truncate at the end if too long
       if (vid_name.length > len_lim){
-          vid_name = '...' + vid_name
+          vid_name = vid_name.substring(0, len_lim) + '...'
+          is_truncated = true
       }
-      vid_name = vid_name.slice(-len_lim,-4)
 
-      return vid_name
+      return { name: vid_name, full_name: full_name, truncated: is_truncated }
 }
 
 function fill_play_list(elem_li, vid_id, numsel){
@@ -240,11 +312,12 @@ function fill_play_list(elem_li, vid_id, numsel){
       var currid = 'vid_num' + numsel
       var selection = $('<div/>')
 
-      vid_name = change_vid_name(vid_id)
+      var vid_info = change_vid_name(vid_id)
       selection.addClass('elem_list_play_selected').attr('index', numsel)
                .attr('src', vid_id)
                .attr('id', 'sel_' + currid)
-               .text(vid_name.toLowerCase())
+               .text((numsel + 1) + '. ' + vid_info.name.toLowerCase())  // index + title
+               .attr('title', vid_info.full_name)  // tooltip with full name
                .append(icon_sound.hide())
                .append($('<span/>').text(' - ')
                                    .hide()
@@ -252,7 +325,10 @@ function fill_play_list(elem_li, vid_id, numsel){
                                    .css({'font-size':'20px'}))
                .css({'font-size':'17px',
                      'font-family': "apple_garamond",
-                     'text-shadow':'none'})
+                     'text-shadow':'none',
+                     'white-space': 'nowrap',
+                     'overflow': 'hidden',
+                     'text-overflow': 'ellipsis'})
 
       $('#vid_play_list').append(selection)     // add media title to the play list..
 
@@ -327,6 +403,11 @@ function clear_play_list(){
 
        }
     currvid = null
+    // Reset play/pause button to play icon
+    $('#icon_pause').hide()
+    $('#icon_play').show()
+    is_playing = false
+    current_playing_index = 0
     //----------
     $('.ul_selected').removeAttr('index')
     $('.ul_selected').hide()
@@ -504,7 +585,13 @@ function play_vid_list(i){
 
       vid_id = '#vid_num' + i
       currvid = $(vid_id)[0]
+      if (!currvid) return  // video not found
+      current_playing_index = i  // track current index
       currvid.play()
+      // Update play/pause button to show pause icon
+      $('#icon_play').hide()
+      $('#icon_pause').show()
+      is_playing = true
       var curr_ul;
       $('.strapvid').each(function(){
           if ($(this).attr('index') == i){
@@ -542,12 +629,78 @@ function play_vid_list(i){
       })
 }
 
-// Launch the playlist..
+// Toggle play/pause
 
-$('#butt_play').click(function(){
+$('#butt_play_pause').click(function(){
+    if (!is_playing) {
+        // Start playing
+        reinitialize($('<div/>'))  // dummy element to reinit all
+        $('#media_panel_icon').attr('alt','music')
+                              .attr('src', icon_playing)
+        // If no video playing yet, start from beginning, otherwise resume current
+        if (!currvid || currvid.paused) {
+            if (current_playing_index === 0 && !currvid) {
+                play_vid_list(0)
+            } else {
+                play_vid_list(current_playing_index)
+            }
+        }
+        // Switch to pause icon
+        $('#icon_play').hide()
+        $('#icon_pause').show()
+        is_playing = true
+    } else {
+        // Pause
+        if (currvid && !currvid.paused) {
+            currvid.pause()
+            $('#media_panel_icon').attr('alt','music')
+                                  .attr('src', icon_helmet)
+            $('.elem_list_play_selected').each(function(){
+                if ($(this).css('color') == 'rgb(0, 0, 255)') {
+                    $(this).css({'color': 'black'})
+                }
+            })
+        }
+        // Switch to play icon
+        $('#icon_pause').hide()
+        $('#icon_play').show()
+        is_playing = false
+    }
+})
 
-    play_vid_list(0)
+// Go to previous video
 
+$('#butt_prev').click(function(){
+    // Find the previous existing index
+    for (var j = 1; j < 100; j++) {
+        var prev_ind = current_playing_index - j
+        if (prev_ind < 0) break
+        if ($('#sel_vid_num' + prev_ind).length) {
+            reinitialize($('<div/>'))  // reinit all
+            $('#media_panel_icon').attr('alt','music')
+                                  .attr('src', icon_playing)
+            play_vid_list(prev_ind)
+            // Icon update is now handled in play_vid_list
+            break
+        }
+    }
+})
+
+// Go to next video
+
+$('#butt_next').click(function(){
+    // Find the next existing index
+    for (var j = 1; j < 100; j++) {
+        var next_ind = current_playing_index + j
+        if ($('#sel_vid_num' + next_ind).length) {
+            reinitialize($('<div/>'))  // reinit all
+            $('#media_panel_icon').attr('alt','music')
+                                  .attr('src', icon_playing)
+            play_vid_list(next_ind)
+            // Icon update is now handled in play_vid_list
+            break
+        }
+    }
 })
 
 // Clear the whole play list..
