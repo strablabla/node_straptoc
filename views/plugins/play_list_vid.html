@@ -357,10 +357,15 @@ function add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons){
       elem_li.css({'color':'black'})
       // icon to indicate vid is in the play list
       list_icons[numsel] = $('<img/>').attr('src', icon_helmet)
-                                      .css({'width':'12px', 'margin':'0px'})
+                                      .css({'width':'12px', 'margin':'0px', 'margin-left':'5px'})
                                       .addClass('icon_title')
-      // add icon in the doc
-      elem_li.append($('<span/>').text(' ').append(list_icons[numsel]))
+      // add icon in the doc - for lazy videos, add after [+], otherwise append to li
+      var tog_elem = elem_li.find('.tog_elem_vid')
+      if (tog_elem.length) {
+          tog_elem.after($('<span/>').append(list_icons[numsel]))
+      } else {
+          elem_li.append($('<span/>').text(' ').append(list_icons[numsel]))
+      }
       // save the videos id to avoid doublons.
       list_vid.push(vid_id)
 
@@ -378,11 +383,17 @@ var numsel = 0
 $("li").click( function(){
     var elem_li = $(this)
     var vid = elem_li.find('ul li div video')
-    if ( vid ){
+    if ( vid.length ){
         if(elem_li.children('ul').hasClass('strapvid')){  // filter the li element..
-            var vid_id = vid.attr('src')
-            if (list_vid.indexOf(vid_id) == -1){      // if not yet in the list..
+            // Support lazy loading: use data-src or data-video-path if src not yet set
+            var vid_id = vid.attr('src') || vid.attr('data-src') || elem_li.find('.vid-lazy-container').attr('data-video-path')
+            if (vid_id && list_vid.indexOf(vid_id) == -1){      // if not yet in the list..
                 if ($('#vid_play_list').is(':visible')){
+                    // For lazy videos, set the src now so it can be played
+                    if (!vid.attr('src') && vid_id) {
+                        vid.attr('src', vid_id)
+                        elem_li.find('.vid-lazy-container').attr('data-loaded', 'true')
+                    }
                     add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
                 }
                 // increment the number of selected elements ..
@@ -400,11 +411,17 @@ $("li").dblclick( function(){
     if (elem_li_grp.hasClass('strapvid_inside')){
         // find each video..
         elem_li_grp.find('video').each( function(){
-            var vid_id = $(this).attr('src')
+            // Support lazy loading: use data-src if src not yet set
+            var vid_id = $(this).attr('src') || $(this).attr('data-src')
             var elem_li = $(this).parents().eq(3)
             //alert(elem_li.text())
-            if (list_vid.indexOf(vid_id) == -1){      // if not yet in the list..
+            if (vid_id && list_vid.indexOf(vid_id) == -1){      // if not yet in the list..
                 if ($('#vid_play_list').is(':visible')){
+                    // For lazy videos, set the src now so it can be played
+                    if (!$(this).attr('src') && vid_id) {
+                        $(this).attr('src', vid_id)
+                        $(this).closest('.vid-lazy-container').attr('data-loaded', 'true')
+                    }
                     add_vid(elem_li, $(this), vid_id, numsel, list_vid, list_icons)
                 }
                 // increment the number of selected elements ..
@@ -413,6 +430,36 @@ $("li").dblclick( function(){
         })
     }
   })
+
+// Select all lazy videos by clicking on the parent container
+$("li").click( function(e){
+    var elem_li_parent = $(this)
+    // Check if this li contains a vid-lazy-list (parent of lazy videos)
+    var lazyList = elem_li_parent.find('.vid-lazy-list')
+    if (lazyList.length && !elem_li_parent.hasClass('vid-lazy-item')){
+        // Don't trigger if clicking directly on a vid-lazy-item
+        if ($(e.target).closest('.vid-lazy-item').length) {
+            return  // Let the individual item handler deal with it
+        }
+        // Add all lazy videos from this parent to the playlist
+        lazyList.find('.vid-lazy-item').each(function(){
+            var elem_li = $(this)
+            var vid = elem_li.find('video')
+            var vid_id = vid.attr('src') || vid.attr('data-src') || elem_li.find('.vid-lazy-container').attr('data-video-path')
+            if (vid_id && list_vid.indexOf(vid_id) == -1){
+                if ($('#vid_play_list').is(':visible')){
+                    // For lazy videos, set the src now so it can be played
+                    if (!vid.attr('src') && vid_id) {
+                        vid.attr('src', vid_id)
+                        elem_li.find('.vid-lazy-container').attr('data-loaded', 'true')
+                    }
+                    add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
+                }
+                numsel += 1
+            }
+        })
+    }
+})
 
 $('#vid_play_list').hide()
 $('#toggle_play_list').hide()
