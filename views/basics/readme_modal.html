@@ -202,6 +202,124 @@
     font-style: italic;
 }
 
+/* Tabs styling */
+.help-tabs {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    background-color: #f8f9fa;
+    padding: 0 20px;
+}
+
+.help-tab {
+    padding: 12px 24px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.help-tab:hover {
+    color: #333;
+    background-color: rgba(0,0,0,0.05);
+}
+
+.help-tab.active {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.help-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.help-tab-content {
+    display: none;
+}
+
+.help-tab-content.active {
+    display: block;
+}
+
+/* Keyboard shortcuts styling */
+.shortcut-section {
+    margin-bottom: 24px;
+}
+
+.shortcut-section h3 {
+    color: #667eea;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.shortcut-key {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.shortcut-desc {
+    color: #555;
+    font-size: 14px;
+}
+
+/* Syntax styling */
+.syntax-section {
+    margin-bottom: 24px;
+}
+
+.syntax-section h3 {
+    color: #667eea;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.syntax-item {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.syntax-item code {
+    display: block;
+    background: #282c34;
+    color: #abb2bf;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 13px;
+}
+
+.syntax-item .syntax-desc {
+    color: #666;
+    font-size: 13px;
+    font-style: italic;
+}
+
 /* Loading animation */
 .readme-loading {
     text-align: center;
@@ -226,11 +344,208 @@
 <div id="readme_modal">
     <div id="readme_modal_content">
         <div id="readme_modal_header">
-            <h2 class="tit_page_in_nav" id="readme_modal_title">📖 README - Documentation</h2>
+            <h2 class="tit_page_in_nav" id="readme_modal_title">Aide</h2>
             <button id="readme_modal_close">&times;</button>
         </div>
+        <!-- Tabs -->
+        <div class="help-tabs">
+            <button class="help-tab active" data-tab="shortcuts">Raccourcis clavier</button>
+            <button class="help-tab" data-tab="syntax">Syntaxe md</button>
+            <button class="help-tab" data-tab="readme">README</button>
+        </div>
         <div id="readme_modal_body">
-            <div class="readme-loading">Loading README</div>
+            <!-- Keyboard Shortcuts Tab -->
+            <div id="tab-shortcuts" class="help-tab-content active">
+                <div class="shortcut-section">
+                    <h3>Navigation</h3>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Aller en mode texte</span>
+                        <span class="shortcut-key">Double-clic</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Retour au mode HTML (sauvegarde)</span>
+                        <span class="shortcut-key">Clic droit</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Fermer les modales</span>
+                        <span class="shortcut-key">Echap</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Rechercher dans toutes les pages</span>
+                        <span class="shortcut-key">Ctrl+Shift+F</span>
+                    </div>
+                </div>
+                <div class="shortcut-section">
+                    <h3>Edition (mode texte)</h3>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Sauvegarder et retour HTML</span>
+                        <span class="shortcut-key">Alt + S</span>
+                    </div>
+                </div>
+                <div class="shortcut-section">
+                    <h3>Listes pliables</h3>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Plier/déplier toutes les listes</span>
+                        <span class="shortcut-key">Alt + L</span>
+                    </div>
+                </div>
+                <div class="shortcut-section">
+                    <h3>Panneaux</h3>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Ouvrir/fermer la playlist</span>
+                        <span class="shortcut-key">Clic casque</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Ouvrir/fermer l'agenda</span>
+                        <span class="shortcut-key">Clic calendrier</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span class="shortcut-desc">Ouvrir/fermer l'aide</span>
+                        <span class="shortcut-key">Clic ?</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Syntax Tab -->
+            <div id="tab-syntax" class="help-tab-content">
+                <div class="syntax-section">
+                    <h3>Vidéos YouTube</h3>
+                    <div class="syntax-item">
+                        <code>[titre ;;](https://youtube.com/...)</code>
+                        <div class="syntax-desc">Insère une vidéo YouTube via iframe</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Vidéos locales</h3>
+                    <div class="syntax-item">
+                        <code>[titre %%](video.mp4)</code>
+                        <div class="syntax-desc">Insère une vidéo locale (mp4, webm, ogg...)</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>PDFs</h3>
+                    <div class="syntax-item">
+                        <code>[titre §§](document.pdf)</code>
+                        <div class="syntax-desc">Insère un PDF avec balise object</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>iFrames</h3>
+                    <div class="syntax-item">
+                        <code>[titre ,,](page.html)</code>
+                        <div class="syntax-desc">Insère n'importe quelle iframe</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Images avec légende</h3>
+                    <div class="syntax-item">
+                        <code>[légende %caption%](image.jpg)</code>
+                        <div class="syntax-desc">Insère une image avec une légende en dessous</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Listes spéciales</h3>
+                    <div class="syntax-item">
+                        <code>* $vid<br>[Titre %%](video.mp4)<br>[Titre2 %%](video2.mp4)</code>
+                        <div class="syntax-desc">Liste de vidéos locales avec lazy loading</div>
+                    </div>
+                    <div class="syntax-item">
+                        <code>* $pdf<br>[Doc1 §§](doc1.pdf)<br>[Doc2 §§](doc2.pdf)</code>
+                        <div class="syntax-desc">Liste de PDFs</div>
+                    </div>
+                    <div class="syntax-item">
+                        <code>* $htm<br>[Page1 ,,](page1.html)<br>[Page2 ,,](page2.html)</code>
+                        <div class="syntax-desc">Liste d'iframes HTML</div>
+                    </div>
+                    <div class="syntax-item">
+                        <code>* $portf 3<br>![](img1.jpg)<br>![](img2.jpg)</code>
+                        <div class="syntax-desc">Portfolio d'images (3 colonnes par défaut)</div>
+                    </div>
+                    <div class="syntax-item">
+                        <code>* $carr nom<br>![](img1.jpg)<br>![](img2.jpg)</code>
+                        <div class="syntax-desc">Carrousel d'images</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Chemin commun</h3>
+                    <div class="syntax-item">
+                        <code>* $vid<br>+++ dossier/videos/<br>[Vid1 %%](v1.mp4)<br>[Vid2 %%](v2.mp4)</code>
+                        <div class="syntax-desc">+++ définit un chemin racine pour tous les fichiers suivants</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Dates</h3>
+                    <div class="syntax-item">
+                        <code>.date 25_1_24</code>
+                        <div class="syntax-desc">Crée un marqueur de date (format jour_mois_année)</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Texte barré</h3>
+                    <div class="syntax-item">
+                        <code>texte %%%</code>
+                        <div class="syntax-desc">Le texte avant %%% est affiché barré</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Tooltips</h3>
+                    <div class="syntax-item">
+                        <code># Titre {info-bulle ici}</code>
+                        <div class="syntax-desc">Ajoute une info-bulle après un titre h1 ou h2</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Listes pliables</h3>
+                    <div class="syntax-item">
+                        <code>* élément ::<br>&nbsp;&nbsp;* sous-élément</code>
+                        <div class="syntax-desc">:: crée une liste pliable (fermée par défaut). Alt+L pour plier/déplier</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Paramètres de page</h3>
+                    <div class="syntax-item">
+                        <code>§width_video 80%<br>§width_pdf 80%<br>§height_pdf 500<br>§width_iframe 900<br>§height_iframe 400<br>§width_content 800</code>
+                        <div class="syntax-desc">Configure les dimensions des éléments (en début de document)</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Désactivation</h3>
+                    <div class="syntax-item">
+                        <code>§notoc<br>§novideo<br>§noiframe</code>
+                        <div class="syntax-desc">Désactive la table des matières, les vidéos ou les iframes</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Couleurs et copie</h3>
+                    <div class="syntax-item">
+                        <code>@rouge texte</code>
+                        <div class="syntax-desc">Change la couleur du texte (dans les listes)</div>
+                    </div>
+                    <div class="syntax-item">
+                        <code>@@texte@@</code>
+                        <div class="syntax-desc">Copier/coller un élément de liste</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Blocs de code</h3>
+                    <div class="syntax-item">
+                        <code>\`\`\`<br>code non interprété<br>\`\`\`</code>
+                        <div class="syntax-desc">Le contenu n'est pas interprété. Échappez [ avec \[ pour éviter les liens</div>
+                    </div>
+                </div>
+                <div class="syntax-section">
+                    <h3>Alertes agenda</h3>
+                    <div class="syntax-item">
+                        <code>!alert votre message</code>
+                        <div class="syntax-desc">Dans une note d'agenda, crée une alerte (point bleu)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- README Tab -->
+            <div id="tab-readme" class="help-tab-content">
+                <div class="readme-loading">Loading README</div>
+            </div>
         </div>
     </div>
 </div>
@@ -238,11 +553,32 @@
 <script>
 /*
 
-README Modal Display
+Help Modal with Tabs
 
-Shows the README.md file in a modal when the help icon is clicked
+Shows keyboard shortcuts, extended markdown syntax, and README
 
 */
+
+var readmeLoaded = false;  // Track if README has been loaded
+
+// Tab switching
+$('.help-tab').click(function() {
+    var tabId = $(this).data('tab');
+
+    // Update active tab button
+    $('.help-tab').removeClass('active');
+    $(this).addClass('active');
+
+    // Show corresponding content
+    $('.help-tab-content').removeClass('active');
+    $('#tab-' + tabId).addClass('active');
+
+    // Load README on first click
+    if (tabId === 'readme' && !readmeLoaded) {
+        socket.emit('get_readme');
+        readmeLoaded = true;
+    }
+});
 
 // Close modal when clicking the close button
 $('#readme_modal_close').click(function() {
@@ -263,28 +599,22 @@ $(document).keyup(function(e) {
     }
 });
 
-// Function to open README modal
+// Function to open help modal
 function openReadmeModal() {
-    console.log('[README Modal] Opening README modal');
+    console.log('[Help Modal] Opening help modal');
     $('#readme_modal').fadeIn(200);
-
-    // Show loading state
-    $('#readme_modal_body').html('<div class="readme-loading">Loading README</div>');
-
-    // Request README content from server
-    socket.emit('get_readme');
 }
 
 // Listen for README content from server
 socket.on('readme_content', function(data) {
-    console.log('[README Modal] Received README content');
+    console.log('[Help Modal] Received README content');
     var response = JSON.parse(data);
 
     if (response.success) {
-        // Display the rendered HTML
-        $('#readme_modal_body').html(response.html);
+        // Display the rendered HTML in the README tab
+        $('#tab-readme').html(response.html);
     } else {
-        $('#readme_modal_body').html(
+        $('#tab-readme').html(
             '<div style="color: #d73a49; padding: 20px;">' +
             '<h3>Error Loading README</h3>' +
             '<p>' + (response.error || 'Could not load README file') + '</p>' +
@@ -293,5 +623,5 @@ socket.on('readme_content', function(data) {
     }
 });
 
-console.log('[README Modal] README modal system loaded');
+console.log('[Help Modal] Help modal system loaded');
 </script>

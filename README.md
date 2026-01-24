@@ -245,7 +245,7 @@ The search functionality ([views/basics/search.html](views/basics/search.html), 
 - Results grouped by page with match counts
 - Auto-navigation and scroll-to-result functionality
 - Temporary highlighting (2s) of matched elements
-- Keyboard shortcut: Shift+F to open, Enter to search, Escape to close
+- Keyboard shortcut: Ctrl+Shift+F to open, Enter to search, Escape to close
 - Voice command: "Rechercher"
 
 ### Auto-save and Version Control
