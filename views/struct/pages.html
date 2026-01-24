@@ -38,9 +38,15 @@ socket.on('pages_data', function(data) {
         console.log('[pages.html] Pages data loaded successfully');
         console.log('[pages.html] list_pages:', list_pages);
         console.log('[pages.html] list_md:', list_md);
+        console.log('[pages.html] dic_text_id:', dic_text_id);
 
         // Fill the page list now that we have the data
         fill_list_page();
+
+        // Emit event to notify other scripts that data is loaded
+        socket.emit('pages_data_loaded_client');
+        // Also trigger a custom event for same-page listeners
+        $(document).trigger('pages_data_loaded');
     } catch(e) {
         console.error('[pages.html] Error parsing pages_data:', e);
     }

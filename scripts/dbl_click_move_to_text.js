@@ -32,6 +32,12 @@ function dblclick_to_text(socket, elem, index, addr_chann){
                 elem_text: $(this).text().substring(0, 50) + '...'
             });
 
+            // Skip lazy video elements - they don't have corresponding text in source
+            if ($(this).hasClass('vid-lazy-item') || $(this).closest('.vid-lazy-list').length > 0) {
+                console.log('[dblclick_to_text] Skipping lazy video element');
+                return;
+            }
+
             e.preventDefault();
             e.stopPropagation();
 
@@ -66,7 +72,10 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
     var patt_next = null;  // Pattern for line after
 
     if (elem.is('li')){
-        var patt = elem.text().split('\n')[0]
+        // Clone element and remove lazy video lists to get clean text
+        var elemClone = elem.clone()
+        elemClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid').remove()
+        var patt = elemClone.text().split('\n')[0]
         console.log('[pattern_and_flip] Element is <li>, pattern:', patt);
 
         // If the line contains deleted text (%%%), add %%% to pattern
@@ -80,12 +89,16 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
         var nextElem = elem.next('li');
 
         if (prevElem.length > 0) {
-            patt_prev = prevElem.text().split('\n')[0];
+            var prevClone = prevElem.clone()
+            prevClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid').remove()
+            patt_prev = prevClone.text().split('\n')[0];
             console.log('[pattern_and_flip] Previous sibling pattern:', patt_prev);
         }
 
         if (nextElem.length > 0) {
-            patt_next = nextElem.text().split('\n')[0];
+            var nextClone = nextElem.clone()
+            nextClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid').remove()
+            patt_next = nextClone.text().split('\n')[0];
             console.log('[pattern_and_flip] Next sibling pattern:', patt_next);
         }
 

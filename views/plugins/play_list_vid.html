@@ -381,6 +381,11 @@ var numsel = 0
 // action when clicking on a green video name
 
 $("li").click( function(){
+    // Only process if playlist is visible - don't interfere with double-click to text mode
+    if (!$('#vid_play_list').is(':visible')){
+        return  // Let other handlers (like dblclick to text) work
+    }
+
     var elem_li = $(this)
     var vid = elem_li.find('ul li div video')
     if ( vid.length ){
@@ -388,14 +393,12 @@ $("li").click( function(){
             // Support lazy loading: use data-src or data-video-path if src not yet set
             var vid_id = vid.attr('src') || vid.attr('data-src') || elem_li.find('.vid-lazy-container').attr('data-video-path')
             if (vid_id && list_vid.indexOf(vid_id) == -1){      // if not yet in the list..
-                if ($('#vid_play_list').is(':visible')){
-                    // For lazy videos, set the src now so it can be played
-                    if (!vid.attr('src') && vid_id) {
-                        vid.attr('src', vid_id)
-                        elem_li.find('.vid-lazy-container').attr('data-loaded', 'true')
-                    }
-                    add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
+                // For lazy videos, set the src now so it can be played
+                if (!vid.attr('src') && vid_id) {
+                    vid.attr('src', vid_id)
+                    elem_li.find('.vid-lazy-container').attr('data-loaded', 'true')
                 }
+                add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
                 // increment the number of selected elements ..
                 numsel += 1
             }
@@ -407,6 +410,11 @@ $("li").click( function(){
 // select videos by group
 
 $("li").dblclick( function(){
+    // Only process if playlist is visible - don't interfere with double-click to text mode
+    if (!$('#vid_play_list').is(':visible')){
+        return  // Let dblclick_to_text handler work
+    }
+
     var elem_li_grp = $(this)
     if (elem_li_grp.hasClass('strapvid_inside')){
         // find each video..
@@ -416,15 +424,12 @@ $("li").dblclick( function(){
             var elem_li = $(this).parents().eq(3)
             //alert(elem_li.text())
             if (vid_id && list_vid.indexOf(vid_id) == -1){      // if not yet in the list..
-                if ($('#vid_play_list').is(':visible')){
-                    // For lazy videos, set the src now so it can be played
-                    if (!$(this).attr('src') && vid_id) {
-                        $(this).attr('src', vid_id)
-                        $(this).closest('.vid-lazy-container').attr('data-loaded', 'true')
-                    }
-                    add_vid(elem_li, $(this), vid_id, numsel, list_vid, list_icons)
+                // For lazy videos, set the src now so it can be played
+                if (!$(this).attr('src') && vid_id) {
+                    $(this).attr('src', vid_id)
+                    $(this).closest('.vid-lazy-container').attr('data-loaded', 'true')
                 }
-                // increment the number of selected elements ..
+                add_vid(elem_li, $(this), vid_id, numsel, list_vid, list_icons)
                 numsel += 1
             }
         })
@@ -433,6 +438,11 @@ $("li").dblclick( function(){
 
 // Select all lazy videos by clicking on the parent container
 $("li").click( function(e){
+    // Only process if playlist is visible - don't interfere with double-click to text mode
+    if (!$('#vid_play_list').is(':visible')){
+        return  // Let other handlers (like dblclick to text) work
+    }
+
     var elem_li_parent = $(this)
     // Check if this li contains a vid-lazy-list (parent of lazy videos)
     var lazyList = elem_li_parent.find('.vid-lazy-list')
@@ -447,14 +457,12 @@ $("li").click( function(e){
             var vid = elem_li.find('video')
             var vid_id = vid.attr('src') || vid.attr('data-src') || elem_li.find('.vid-lazy-container').attr('data-video-path')
             if (vid_id && list_vid.indexOf(vid_id) == -1){
-                if ($('#vid_play_list').is(':visible')){
-                    // For lazy videos, set the src now so it can be played
-                    if (!vid.attr('src') && vid_id) {
-                        vid.attr('src', vid_id)
-                        elem_li.find('.vid-lazy-container').attr('data-loaded', 'true')
-                    }
-                    add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
+                // For lazy videos, set the src now so it can be played
+                if (!vid.attr('src') && vid_id) {
+                    vid.attr('src', vid_id)
+                    elem_li.find('.vid-lazy-container').attr('data-loaded', 'true')
                 }
+                add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
                 numsel += 1
             }
         })

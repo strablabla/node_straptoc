@@ -40,9 +40,27 @@ var dic_modes_switch = { '.date': 1, 'li li': 0,    // possible to click on date
                          //'li:not(:has(span))': 0} //,'h1':0,'h2':0} // , '.tag_a_to_text':0
                          'li': 0, 'h2': 0, 'h3': 0, 'h4': 0, 'h5': 0, 'h6': 0} // Added h2-h6 support
 
-Object.entries(dic_modes_switch).forEach(([elem, i]) =>
-        dblclick_to_text(socket, $(elem), i, dic_text_id[loc])
-)
+// Initialize dblclick handlers - wait for dic_text_id to be loaded if needed
+function init_dblclick_handlers() {
+    var addr_chann = dic_text_id[loc]
+    if (addr_chann) {
+        console.log('[scroll_socket] Initializing dblclick handlers with addr_chann:', addr_chann)
+        Object.entries(dic_modes_switch).forEach(([elem, i]) =>
+            dblclick_to_text(socket, $(elem), i, addr_chann)
+        )
+    } else {
+        console.log('[scroll_socket] dic_text_id not ready yet, waiting...')
+    }
+}
+
+// Try to init immediately (in case data already loaded)
+init_dblclick_handlers()
+
+// Also init when pages_data is received (in case it wasn't loaded yet)
+$(document).on('pages_data_loaded', function() {
+    console.log('[scroll_socket] pages_data_loaded event received')
+    init_dblclick_handlers()
+})
 
 
 </script>
