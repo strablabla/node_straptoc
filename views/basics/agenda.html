@@ -522,26 +522,53 @@ function hasAlerts(dateKey) {
       return false
 }
 
-// Function to add blue dots to dates with alerts
+// Function to check if a date has notes (non-alert)
+function hasNotes(dateKey) {
+      if (!allAgendaData[dateKey]) return false
+      var notes = allAgendaData[dateKey]
+      for (var i = 0; i < notes.length; i++) {
+          if (!notes[i].alert) return true
+      }
+      return false
+}
+
+// Function to add dots to dates with alerts or notes
 function updateAlertIndicators() {
       var fullYear = new Date().getFullYear()
       for (var i = 1; i <= 31; i++) {
           var dateKey = fullYear + '_' + selected_month + '_' + i
           var cellId = '#cell_' + i
+
+          // Remove existing dots first (to handle updates)
+          $(cellId).find('.alert-dot').remove()
+          $(cellId).find('.note-dot').remove()
+
           if (hasAlerts(dateKey)) {
-              // Add blue dot indicator
-              if ($(cellId).find('.alert-dot').length === 0) {
-                  var dot = $('<div/>').addClass('alert-dot').css({
-                      'position': 'absolute',
-                      'top': '-5px',
-                      'right': '-5px',
-                      'width': '6px',
-                      'height': '6px',
-                      'background-color': '#0066ff',
-                      'border-radius': '50%'
-                  })
-                  $(cellId).append(dot)
-              }
+              // Add blue dot indicator for alerts (top right)
+              var blueDot = $('<div/>').addClass('alert-dot').css({
+                  'position': 'absolute',
+                  'top': '-5px',
+                  'right': '-5px',
+                  'width': '6px',
+                  'height': '6px',
+                  'background-color': '#0066ff',
+                  'border-radius': '50%'
+              })
+              $(cellId).append(blueDot)
+          }
+
+          if (hasNotes(dateKey)) {
+              // Add green dot indicator for notes (bottom right)
+              var greenDot = $('<div/>').addClass('note-dot').css({
+                  'position': 'absolute',
+                  'bottom': '-5px',
+                  'right': '-5px',
+                  'width': '6px',
+                  'height': '6px',
+                  'background-color': '#28a745',
+                  'border-radius': '50%'
+              })
+              $(cellId).append(greenDot)
           }
       }
 }
