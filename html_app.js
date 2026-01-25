@@ -14,7 +14,6 @@ var re = require('./static/js/read_emit');
 var modify = require('./static/js/modify_html');
 var folders = require('./static/js/folders');
 var init = require('./lib/init');
-var notes = require('./lib/notes');
 var subtit = require('./static/js/make_subtit');
 var new_obj = require('./static/js/new_obj');
 var store = require('./static/js/store');
@@ -271,7 +270,6 @@ io.sockets.on('connection', function (socket) {
 
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                              //---- pdfs in folders
-      notes.handle(socket, 'notes')                                //---- notes
       agenda.handle(socket)                                        //---- agenda
       config.handle(io,socket)
 
