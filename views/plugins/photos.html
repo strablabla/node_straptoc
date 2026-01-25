@@ -53,6 +53,20 @@ function make_big_pic(wpic, hpic, idpic){
 
     new_pic.draggable().hide()
 
+    // Bring to front on click
+    new_pic.click(function(e){
+        // Don't trigger on slider
+        if ($(e.target).hasClass('slider') || $(e.target).closest('.slider').length) return;
+        // Find max z-index among all bigpics
+        var maxZ = 20;
+        $('.bigpic').each(function(){
+            var z = parseInt($(this).css('z-index')) || 20;
+            if (z > maxZ) maxZ = z;
+        });
+        // Set this one higher
+        $(this).css('z-index', maxZ + 1);
+    });
+
     // close the current open photo
 
     new_pic.dblclick(function(){
@@ -209,12 +223,13 @@ function change_dim_with_slider(pic,val){
 
 }
 
-function hook_slider(){
+function hook_slider(picId){
 
-        var slider = $('#imslider_bp' + nb_bpics)
+        var currentId = picId || ('bp' + nb_bpics)
+        var slider = $('#imslider_' + currentId)
         slider.bootstrapSlider({                                                   // slider for opacity
               formatter: function(val) {
-                    var pic = $('#imbp_bp' + nb_bpics)
+                    var pic = $('#imbp_' + currentId)
                     change_dim_with_slider(pic,val)
                   }
               })
@@ -247,7 +262,7 @@ $('figure').click(function(){
         if ( pic_yet_open.indexOf(addr_pic) == -1 ){
 
             add_new_bigpic(addr_pic)
-            hook_slider()
+            hook_slider('bp' + nb_bpics)
             save_pos_drag()
 
            }
