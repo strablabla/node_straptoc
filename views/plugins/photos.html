@@ -30,6 +30,59 @@ function make_big_pic(wpic, hpic, idpic){
                                       'height': hpic + 10 + 'px',
                                       'z-index': 20 + nb_bpics
                                     })
+    //--- Menu de disposition
+    var layoutMenu = $('<div/>').addClass('layout-menu').css({
+        'position': 'absolute',
+        'top': '5px',
+        'left': '5px',
+        'z-index': '100'
+    })
+
+    var menuBtn = $('<div/>').html('&#9776;').css({
+        'background': 'rgba(0,0,0,0.6)',
+        'color': 'white',
+        'padding': '3px 8px',
+        'cursor': 'pointer',
+        'border-radius': '3px',
+        'font-size': '14px'
+    })
+
+    var menuDropdown = $('<div/>').addClass('layout-dropdown').css({
+        'display': 'none',
+        'position': 'absolute',
+        'top': '25px',
+        'left': '0',
+        'background': 'white',
+        'border': '1px solid #ccc',
+        'border-radius': '3px',
+        'box-shadow': '2px 2px 5px rgba(0,0,0,0.3)',
+        'min-width': '150px'
+    })
+
+    var optCascade = $('<div/>').text('Cascade').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer',
+        'border-bottom': '1px solid #eee'
+    }).hover(
+        function(){ $(this).css('background', '#f0f0f0') },
+        function(){ $(this).css('background', 'white') }
+    ).click(function(e){
+        e.stopPropagation()
+        applyCascadeLayout()
+        menuDropdown.hide()
+    })
+
+    menuDropdown.append(optCascade)
+    layoutMenu.append(menuBtn).append(menuDropdown)
+
+    menuBtn.click(function(e){
+        e.stopPropagation()
+        $('.layout-dropdown').not(menuDropdown).hide()
+        menuDropdown.toggle()
+    })
+
+    new_pic.append(layoutMenu)
+
     //--- Slider
 
     var inp_slider = $('<input>').attr('id','imslider_'+ idpic)
@@ -248,7 +301,60 @@ function save_pos_drag(){
 
 }
 
+// Disposition en cascade
+function applyCascadeLayout(){
+    var pics = $('.bigpic:visible')
+    if (pics.length === 0) return
+
+    // Réduire toutes les photos à 1/3 de la taille max (slider à -0.33)
+    var sliderVal = -0.33
+
+    // Obtenir la taille de la première photo pour calculer le décalage
+    var firstPic = pics.first()
+    var firstImg = firstPic.find('img')
+
+    // Appliquer la taille réduite à toutes les photos
+    pics.each(function(){
+        var picId = $(this).attr('id')
+        var img = $('#imbp_' + picId)
+        if (img.attr('w')) {
+            change_dim_with_slider(img, sliderVal)
+        }
+    })
+
+    // Calculer le décalage (1/5 de la taille de la première photo)
+    var baseW = parseInt(firstImg.attr('w')) || 300
+    var baseH = parseInt(firstImg.attr('h')) || 400
+    var offsetX = Math.round(baseW * (1 + sliderVal) / 5)
+    var offsetY = Math.round(baseH * (1 + sliderVal) / 5)
+
+    // Position de départ (en haut à gauche, 200px du bord gauche)
+    var startTop = 100
+    var startLeft = 200
+
+    // Disposer les photos en cascade diagonale (haut-gauche vers bas-droite)
+    // Première derrière, dernière devant
+    pics.each(function(index){
+        var zIndex = 20 + index
+        $(this).css({
+            'top': (startTop + index * offsetY) + 'px',
+            'left': (startLeft + index * offsetX) + 'px',
+            'right': 'auto',
+            'z-index': zIndex
+        })
+        // Mettre à jour les attributs pour le slider
+        var img = $(this).find('img')
+        img.attr('y', startTop + index * offsetY)
+        img.attr('x', startLeft + index * offsetX)
+    })
+}
+
 // click on the figure to open a new photo
+
+// Fermer les menus dropdown au clic ailleurs
+$(document).click(function(){
+    $('.layout-dropdown').hide()
+})
 
 $('figure').click(function(){
     if ($(this).parent().hasClass('thumbnail')){
