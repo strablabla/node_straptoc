@@ -16,6 +16,11 @@ var nb_bpics = 0 // nb of bg pics
 var pic_yet_open = []
 var one_img = false
 var targetMaxDim = 500 // Taille cible pour la plus grande dimension
+var oneByOneMode = false
+var oneByOneIndex = 0
+var oneByOnePhotos = [] // List of portfolio photo src
+var oneByOnePosition = null // Saved position for navigation
+var oneByOneMaxDim = null // Saved max dimension for navigation
 
 function make_big_pic(wpic, hpic, idpic){
 
@@ -27,8 +32,8 @@ function make_big_pic(wpic, hpic, idpic){
                                       'box-shadow': '0.1em 0.1em 1.2em',
                                       'top':110 + 10*nb_bpics+'px',
                                       'right':200 + 10*nb_bpics+'px',
-                                      'width': wpic + 10 + 'px',
-                                      'height': hpic + 10 + 'px',
+                                      'width': wpic + 20 + 'px',
+                                      'height': hpic + 20 + 'px',
                                       'z-index': 20 + nb_bpics
                                     })
     //--- Menu de disposition
@@ -45,7 +50,8 @@ function make_big_pic(wpic, hpic, idpic){
         'padding': '3px 8px',
         'cursor': 'pointer',
         'border-radius': '3px',
-        'font-size': '14px'
+        'font-size': '14px',
+        'display': 'none'
     })
 
     var menuDropdown = $('<div/>').addClass('layout-dropdown').css({
@@ -58,6 +64,36 @@ function make_big_pic(wpic, hpic, idpic){
         'border-radius': '3px',
         'box-shadow': '2px 2px 5px rgba(0,0,0,0.3)',
         'min-width': '150px'
+    })
+
+    // Rubrique Layout avec sous-menu
+    var optLayout = $('<div/>').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer',
+        'border-bottom': '1px solid #eee',
+        'position': 'relative'
+    }).hover(
+        function(){
+            $(this).css('background', '#f0f0f0')
+            $(this).find('.layout-submenu').show()
+        },
+        function(){
+            $(this).css('background', 'white')
+            $(this).find('.layout-submenu').hide()
+        }
+    )
+    optLayout.append($('<span/>').text('Layout ').append($('<span/>').html('&#9654;').css({'font-size': '10px', 'position': 'relative', 'top': '-3px'})))
+
+    var layoutSubmenu = $('<div/>').addClass('layout-submenu').css({
+        'display': 'none',
+        'position': 'absolute',
+        'top': '0',
+        'left': '100%',
+        'background': 'white',
+        'border': '1px solid #ccc',
+        'border-radius': '3px',
+        'box-shadow': '2px 2px 5px rgba(0,0,0,0.3)',
+        'min-width': '120px'
     })
 
     var optCascade = $('<div/>').text('Cascade').css({
@@ -86,6 +122,66 @@ function make_big_pic(wpic, hpic, idpic){
         menuDropdown.hide()
     })
 
+    var optOneByOne = $('<div/>').text('One by one').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer'
+    }).hover(
+        function(){ $(this).css('background', '#f0f0f0') },
+        function(){ $(this).css('background', 'white') }
+    ).click(function(e){
+        e.stopPropagation()
+        applyOneByOneLayout($(this).closest('.bigpic'))
+        menuDropdown.hide()
+    })
+
+    layoutSubmenu.append(optCascade).append(optCircle).append(optOneByOne)
+    optLayout.append(layoutSubmenu)
+
+    // Rubrique Size avec sous-menu
+    var optSize = $('<div/>').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer',
+        'border-bottom': '1px solid #eee',
+        'position': 'relative'
+    }).hover(
+        function(){
+            $(this).css('background', '#f0f0f0')
+            $(this).find('.size-submenu').show()
+        },
+        function(){
+            $(this).css('background', 'white')
+            $(this).find('.size-submenu').hide()
+        }
+    )
+    optSize.append($('<span/>').text('Size ').append($('<span/>').html('&#9654;').css({'font-size': '10px', 'position': 'relative', 'top': '-3px'})))
+
+    var sizeSubmenu = $('<div/>').addClass('size-submenu').css({
+        'display': 'none',
+        'position': 'absolute',
+        'top': '0',
+        'left': '100%',
+        'background': 'white',
+        'border': '1px solid #ccc',
+        'border-radius': '3px',
+        'box-shadow': '2px 2px 5px rgba(0,0,0,0.3)',
+        'min-width': '120px'
+    })
+
+    var optStandard = $('<div/>').text('Standard').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer'
+    }).hover(
+        function(){ $(this).css('background', '#f0f0f0') },
+        function(){ $(this).css('background', 'white') }
+    ).click(function(e){
+        e.stopPropagation()
+        applyStandardSize($(this).closest('.bigpic'))
+        menuDropdown.hide()
+    })
+
+    sizeSubmenu.append(optStandard)
+    optSize.append(sizeSubmenu)
+
     var optCloseAll = $('<div/>').text('Close all').css({
         'padding': '8px 12px',
         'cursor': 'pointer'
@@ -98,9 +194,10 @@ function make_big_pic(wpic, hpic, idpic){
         menuDropdown.hide()
     })
 
-    menuDropdown.append(optCascade).append(optCircle).append(optCloseAll)
+    menuDropdown.append(optLayout).append(optSize).append(optCloseAll)
     layoutMenu.append(menuBtn).append(menuDropdown)
 
+    // Show menu on button click
     menuBtn.click(function(e){
         e.stopPropagation()
         $('.layout-dropdown').not(menuDropdown).hide()
@@ -109,12 +206,23 @@ function make_big_pic(wpic, hpic, idpic){
 
     new_pic.append(layoutMenu)
 
+    // Afficher/cacher le bouton menu au survol de la photo
+    new_pic.hover(
+        function(){
+            $(this).find('.layout-menu > div').first().show()
+        },
+        function(){
+            $(this).find('.layout-menu > div').first().hide()
+            $(this).find('.layout-dropdown').hide()
+        }
+    )
+
     //--- Slider
 
     var inp_slider = $('<input>').attr('id','imslider_'+ idpic)
                                  .attr('data-slider-id','slider_'+ idpic)
                                  .attr('data-slider-min',"-1")
-                                 .attr('data-slider-max',"1")
+                                 .attr('data-slider-max',"3")
                                  .attr('data-slider-step',"0.01")
                                  .attr('data-slider-value',"0")
                                  .attr('data-provide',"slider")
@@ -156,6 +264,8 @@ function make_big_pic(wpic, hpic, idpic){
           pic_yet_open.splice(ind,1)
           list_big_pics.splice(ind,1)
           //nb_bpics -= 1
+          // Exit one by one mode
+          exitOneByOneMode()
     })
 
     $('#content').append(new_pic) //
@@ -166,15 +276,7 @@ function make_big_pic(wpic, hpic, idpic){
 
 //var bigpic_panel = make_big_pic(wpic, hpic, "bigpic_panel")
 
-// option for watching only one photo at a time or many
-
-key('alt+i',function(){
-
-    one_img = !one_img
-
-})
-
-// reset all the parameters
+// Reset all the parameters
 
 function reset_bigpic(){
     $('.bigpic').remove()
@@ -182,7 +284,8 @@ function reset_bigpic(){
     list_big_pics = []
     nb_bpics = 0 // nb of bg pics
     pic_yet_open = []
-
+    // Exit one by one mode
+    exitOneByOneMode()
 }
 
 // Double click to close all the photos
@@ -227,7 +330,7 @@ function save_wh_xy(p){
 
       p.attr('w',p.width())
       p.attr('h',p.height())
-      // Sauvegarder les dimensions originales seulement la première fois
+      // Save original dimensions only the first time
       if (!p.attr('orig_w')) {
           p.attr('orig_w', p.width())
           p.attr('orig_h', p.height())
@@ -242,7 +345,7 @@ function adapt_pic_dim(new_pic){
       var w = new_pic.width()
       var h = new_pic.height()
 
-      // Calculer le facteur pour que la plus grande dimension fasse targetMaxDim (500px)
+      // Calculate scale factor so largest dimension equals targetMaxDim (500px)
       var maxDim = Math.max(w, h)
       var scaleFactor = targetMaxDim / maxDim
 
@@ -321,12 +424,57 @@ function hook_slider(picId){
 
         var currentId = picId || ('bp' + nb_bpics)
         var slider = $('#imslider_' + currentId)
-        slider.bootstrapSlider({                                                   // slider for opacity
+        slider.bootstrapSlider({
               formatter: function(val) {
                     var pic = $('#imbp_' + currentId)
                     change_dim_with_slider(pic,val)
                   }
               })
+
+        // Reposition arrows when slider is released (in one-by-one mode)
+        slider.on('slideStop', function() {
+            if (oneByOneMode) {
+                var pic = $('#' + currentId)
+                var img = pic.find('img')
+                var picLeft = pic.position().left
+                var picTop = pic.position().top
+                var picW = pic.outerWidth()
+                var picH = pic.outerHeight()
+                var picCenterX = picLeft + picW / 2
+                var picCenterY = picTop + picH / 2
+
+                // Update max dimension with new image size
+                oneByOneMaxDim = Math.max(img.width(), img.height())
+
+                // Use new max dimension + frame for arrow positioning
+                var refHalfWidth = (oneByOneMaxDim + 20) / 2
+                var arrowOffset = 50
+                var arrowWidth = 40
+
+                // Save new position for navigation
+                oneByOnePosition = {
+                    centerX: picCenterX,
+                    centerY: picCenterY
+                }
+
+                var prevArrow = $('#onebyone-prev')
+                var nextArrow = $('#onebyone-next')
+
+                if (prevArrow.length) {
+                    prevArrow.css({
+                        'left': (picCenterX - refHalfWidth - arrowOffset) + 'px',
+                        'top': picCenterY + 'px'
+                    })
+                }
+                if (nextArrow.length) {
+                    nextArrow.css({
+                        'left': (picCenterX + refHalfWidth + arrowOffset - arrowWidth) + 'px',
+                        'top': picCenterY + 'px'
+                    })
+                }
+            }
+        })
+
         act_deact_drag_slider()
 
 }
@@ -334,48 +482,97 @@ function hook_slider(picId){
 function save_pos_drag(){
 
       $( ".bigpic" ).draggable({
+       start: function( event, ui ) {
+            // Hide arrows at drag start
+            if (oneByOneMode) {
+                $('#onebyone-prev, #onebyone-next').hide()
+            }
+       },
        drag: function( event, ui ) {
             var img = $(this).find('img')
             save_wh_xy(img)
+       },
+       stop: function( event, ui ) {
+            // Reposition and show arrows at drag end
+            if (oneByOneMode) {
+                var pic = $(this)
+                var img = pic.find('img')
+                var picLeft = pic.position().left
+                var picTop = pic.position().top
+                var picW = pic.outerWidth()
+                var picH = pic.outerHeight()
+                var picCenterX = picLeft + picW / 2
+                var picCenterY = picTop + picH / 2
+
+                // Update max dimension with new image size
+                oneByOneMaxDim = Math.max(img.width(), img.height())
+
+                // Use new max dimension + frame for arrow positioning
+                var refHalfWidth = (oneByOneMaxDim + 20) / 2
+                var arrowOffset = 40
+                var arrowWidth = 40  // padding (10+10) + character (~20)
+
+                // Save new position for navigation
+                oneByOnePosition = {
+                    centerX: picCenterX,
+                    centerY: picCenterY
+                }
+
+                var prevArrow = $('#onebyone-prev')
+                var nextArrow = $('#onebyone-next')
+
+                if (prevArrow.length) {
+                    prevArrow.css({
+                        'left': (picCenterX - refHalfWidth - arrowOffset) + 'px',
+                        'top': picCenterY + 'px'
+                    }).show()
+                }
+                if (nextArrow.length) {
+                    nextArrow.css({
+                        'left': (picCenterX + refHalfWidth + arrowOffset - arrowWidth) + 'px',
+                        'top': picCenterY + 'px'
+                    }).show()
+                }
+            }
        }
       });
 
 }
 
-// Disposition en cascade
+// Cascade layout
 function applyCascadeLayout(){
     var pics = $('.bigpic:visible')
     if (pics.length === 0) return
 
-    // Calculer le décalage basé sur la taille cible (1/5 de 600px)
+    // Calculate offset based on target size (1/5 of 600px)
     var offsetX = Math.round(targetMaxDim / 5)
     var offsetY = Math.round(targetMaxDim / 5)
 
-    // Position de départ (en haut à gauche, 200px du bord gauche)
+    // Starting position (top left, 200px from left edge)
     var startTop = 100
     var startLeft = 200
 
-    // Appliquer la taille et position à toutes les photos
+    // Apply size and position to all photos
     pics.each(function(index){
         var img = $(this).find('img')
         var origW = parseInt(img.attr('orig_w')) || parseInt(img.attr('w')) || 300
         var origH = parseInt(img.attr('orig_h')) || parseInt(img.attr('h')) || 400
 
-        // Calculer le facteur pour que la plus grande dimension fasse 600px
+        // Calculate factor so largest dimension equals 600px
         var maxDim = Math.max(origW, origH)
         var scaleFactor = targetMaxDim / maxDim
 
-        // Calculer la nouvelle taille
+        // Calculate new size
         var newW = Math.round(origW * scaleFactor)
         var newH = Math.round(origH * scaleFactor)
 
-        // Appliquer la taille à l'image
+        // Apply size to image
         img.css({
             'width': newW + 'px',
             'height': newH + 'px'
         })
 
-        // Appliquer la taille au container (+ 20 pour le cadre blanc de 10px)
+        // Apply size to container (+ 20 for 10px white frame)
         $(this).css({
             'width': (newW + 20) + 'px',
             'height': (newH + 20) + 'px',
@@ -385,7 +582,7 @@ function applyCascadeLayout(){
             'z-index': 20 + index
         })
 
-        // Mettre à jour les attributs pour le slider (utiliser la nouvelle taille)
+        // Update slider attributes (use new size)
         img.attr('w', newW)
         img.attr('h', newH)
         img.attr('y', startTop + index * offsetY)
@@ -393,7 +590,7 @@ function applyCascadeLayout(){
     })
 }
 
-// Disposition en cercle
+// Circle layout
 function applyCircleLayout(){
     var pics = $('.bigpic:visible')
     if (pics.length === 0) return
@@ -401,41 +598,41 @@ function applyCircleLayout(){
     // Rayon = 1/3 de la taille cible (600px)
     var radius = Math.round(targetMaxDim / 3)
 
-    // Centre du cercle (au milieu de l'écran)
+    // Circle center (middle of screen)
     var centerX = $(window).width() / 2
     var centerY = $(window).height() / 2
 
-    // Angle entre chaque photo
+    // Angle between each photo
     var alpha = (2 * Math.PI) / pics.length
 
-    // Appliquer la taille et position à toutes les photos
+    // Apply size and position to all photos
     pics.each(function(index){
         var img = $(this).find('img')
         var origW = parseInt(img.attr('orig_w')) || parseInt(img.attr('w')) || 300
         var origH = parseInt(img.attr('orig_h')) || parseInt(img.attr('h')) || 400
 
-        // Calculer le facteur pour que la plus grande dimension fasse 600px
+        // Calculate factor so largest dimension equals 600px
         var maxDim = Math.max(origW, origH)
         var scaleFactor = targetMaxDim / maxDim
 
-        // Calculer la nouvelle taille
+        // Calculate new size
         var newW = Math.round(origW * scaleFactor)
         var newH = Math.round(origH * scaleFactor)
 
-        // Angle pour cette photo (-90° = en haut, puis sens horaire)
+        // Angle for this photo (-90° = top, then clockwise)
         var angle = (-Math.PI / 2) - (index * alpha)
 
-        // Position sur le cercle (centre de la photo)
+        // Position on circle (photo center)
         var posX = centerX + radius * Math.cos(angle) - (newW + 20) / 2
         var posY = centerY + radius * Math.sin(angle) - (newH + 20) / 2
 
-        // Appliquer la taille à l'image
+        // Apply size to image
         img.css({
             'width': newW + 'px',
             'height': newH + 'px'
         })
 
-        // Appliquer la taille et position au container
+        // Apply size and position to container
         $(this).css({
             'width': (newW + 20) + 'px',
             'height': (newH + 20) + 'px',
@@ -445,12 +642,289 @@ function applyCircleLayout(){
             'z-index': 20 + index
         })
 
-        // Mettre à jour les attributs pour le slider
+        // Update slider attributes
         img.attr('w', newW)
         img.attr('h', newH)
         img.attr('y', posY)
         img.attr('x', posX)
     })
+}
+
+// Taille standard (targetMaxDim)
+function applyStandardSize(pic){
+    if (!pic || pic.length === 0) return
+
+    var img = pic.find('img')
+    var origW = parseInt(img.attr('orig_w')) || parseInt(img.attr('w')) || 300
+    var origH = parseInt(img.attr('orig_h')) || parseInt(img.attr('h')) || 400
+
+    // Calculate factor so largest dimension equals targetMaxDim
+    var maxDim = Math.max(origW, origH)
+    var scaleFactor = targetMaxDim / maxDim
+
+    // Calculate new size
+    var newW = Math.round(origW * scaleFactor)
+    var newH = Math.round(origH * scaleFactor)
+
+    // Apply size to image
+    img.css({
+        'width': newW + 'px',
+        'height': newH + 'px'
+    })
+
+    // Apply size to container (+ 20 for 10px white frame)
+    pic.css({
+        'width': (newW + 20) + 'px',
+        'height': (newH + 20) + 'px'
+    })
+
+    // Don't update w/h to preserve slider range
+
+    // In one-by-one mode, update max dimension and reposition arrows
+    if (oneByOneMode) {
+        oneByOneMaxDim = Math.max(newW, newH)
+
+        var picLeft = pic.position().left
+        var picTop = pic.position().top
+        var picW = pic.outerWidth()
+        var picH = pic.outerHeight()
+        var picCenterX = picLeft + picW / 2
+        var picCenterY = picTop + picH / 2
+
+        var refHalfWidth = (oneByOneMaxDim + 20) / 2
+        var arrowOffset = 50
+        var arrowWidth = 40
+
+        oneByOnePosition = {
+            centerX: picCenterX,
+            centerY: picCenterY
+        }
+
+        var prevArrow = $('#onebyone-prev')
+        var nextArrow = $('#onebyone-next')
+
+        if (prevArrow.length) {
+            prevArrow.css({
+                'left': (picCenterX - refHalfWidth - arrowOffset) + 'px',
+                'top': picCenterY + 'px'
+            })
+        }
+        if (nextArrow.length) {
+            nextArrow.css({
+                'left': (picCenterX + refHalfWidth + arrowOffset - arrowWidth) + 'px',
+                'top': picCenterY + 'px'
+            })
+        }
+    }
+}
+
+// One by one layout
+function applyOneByOneLayout(currentPic){
+    // Get all portfolio photos (thumbnails)
+    oneByOnePhotos = []
+    $('.thumbnail figure img').each(function(){
+        oneByOnePhotos.push($(this).attr('src'))
+    })
+
+    if (oneByOnePhotos.length === 0) return
+
+    // Trouver l'index de la photo courante
+    var currentSrc = currentPic.find('img').attr('src')
+    oneByOneIndex = oneByOnePhotos.indexOf(currentSrc)
+    if (oneByOneIndex === -1) oneByOneIndex = 0
+
+    // Save current position and size of the photo
+    var picW = currentPic.outerWidth()
+    var picH = currentPic.outerHeight()
+    var picLeft = currentPic.position().left
+    var picTop = currentPic.position().top
+    var savedPosition = {
+        centerX: picLeft + picW / 2,
+        centerY: picTop + picH / 2
+    }
+    // Save max dimension of image (without frame)
+    var img = currentPic.find('img')
+    var savedMaxDim = Math.max(img.width(), img.height())
+
+    // Fermer toutes les photos ouvertes
+    reset_bigpic()
+
+    // Activate one by one mode and restore position and max dimension
+    oneByOneMode = true
+    oneByOnePosition = savedPosition
+    oneByOneMaxDim = savedMaxDim
+
+    // Open current photo
+    showOneByOnePhoto(oneByOneIndex)
+}
+
+function showOneByOnePhoto(index){
+    // Create overlay if it doesn't exist
+    if ($('#onebyone-overlay').length === 0) {
+        var overlay = $('<div/>').attr('id', 'onebyone-overlay').css({
+            'position': 'fixed',
+            'top': '0',
+            'left': '0',
+            'width': '100%',
+            'height': '100%',
+            'background': 'rgba(0, 0, 0, 0.5)',
+            'z-index': '15'
+        })
+        // Click on overlay to exit one-by-one mode but keep the photo
+        overlay.click(function(){
+            exitOneByOneMode()
+        })
+        $('body').append(overlay)
+    }
+
+    // Close previous photo if exists
+    $('.bigpic').remove()
+    list_big_pics = []
+    nb_bpics = 0
+    pic_yet_open = []
+
+    // Remove existing arrows
+    $('#onebyone-prev, #onebyone-next').remove()
+
+    if (index < 0 || index >= oneByOnePhotos.length) return
+
+    var addr_pic = oneByOnePhotos[index]
+    oneByOneIndex = index
+
+    // Open new photo
+    add_new_bigpic(addr_pic)
+    hook_slider('bp' + nb_bpics)
+    save_pos_drag()
+
+    // Temporarily hide to avoid visual jump
+    var pic = $('.bigpic').first()
+    pic.css('visibility', 'hidden')
+
+    // Position photo (use saved position or center)
+    setTimeout(function(){
+        if (pic.length === 0) return
+
+        // Apply saved max dimension if it exists
+        if (oneByOneMaxDim) {
+            var img = pic.find('img')
+            var origW = img[0].naturalWidth || img.width()
+            var origH = img[0].naturalHeight || img.height()
+            var maxDim = Math.max(origW, origH)
+            var scaleFactor = oneByOneMaxDim / maxDim
+            var newW = Math.round(origW * scaleFactor)
+            var newH = Math.round(origH * scaleFactor)
+            img.css({
+                'width': newW + 'px',
+                'height': newH + 'px'
+            })
+            pic.css({
+                'width': (newW + 20) + 'px',
+                'height': (newH + 20) + 'px'
+            })
+        }
+
+        var picW = pic.outerWidth()
+        var picH = pic.outerHeight()
+
+        var posX, posY
+        if (oneByOnePosition) {
+            // Use saved position (center of previous photo)
+            posX = oneByOnePosition.centerX - picW / 2
+            posY = oneByOnePosition.centerY - picH / 2
+        } else {
+            // First time: center in window
+            posX = ($(window).width() - picW) / 2
+            posY = ($(window).height() - picH) / 2
+        }
+
+        pic.css({
+            'left': posX + 'px',
+            'top': posY + 'px',
+            'right': 'auto'
+        })
+
+        // Add navigation arrows (based on saved max dimension)
+        var picCenterX = posX + picW / 2
+        var picCenterY = posY + picH / 2
+        // Use max dimension + frame for arrow positioning (horizontal case)
+        var refHalfWidth = oneByOneMaxDim ? (oneByOneMaxDim + 20) / 2 : picW / 2
+        var arrowOffset = 50
+        var arrowWidth = 40  // padding (10+10) + caractère (~20)
+
+        var arrowStyle = {
+            'position': 'fixed',
+            'font-size': '25px',
+            'color': '#bbb',
+            'cursor': 'pointer',
+            'z-index': '1000',
+            'user-select': 'none',
+            'padding': '10px',
+            'transform': 'translateY(-50%)'
+        }
+
+        if (index > 0) {
+            var prevArrow = $('<div/>').attr('id', 'onebyone-prev').html('&#10094;').css(arrowStyle)
+                .css('left', (picCenterX - refHalfWidth - arrowOffset) + 'px')
+                .css('top', picCenterY + 'px')
+            prevArrow.hover(
+                function(){ $(this).css('color', '#888') },
+                function(){ $(this).css('color', '#bbb') }
+            ).click(function(e){
+                e.stopPropagation()
+                // Sauvegarder la position actuelle avant de changer
+                var currentPic = $('.bigpic').first()
+                var currentW = currentPic.outerWidth()
+                var currentH = currentPic.outerHeight()
+                var currentLeft = currentPic.position().left
+                var currentTop = currentPic.position().top
+                oneByOnePosition = {
+                    centerX: currentLeft + currentW / 2,
+                    centerY: currentTop + currentH / 2
+                }
+                showOneByOnePhoto(oneByOneIndex - 1)
+            })
+            $('body').append(prevArrow)
+        }
+
+        if (index < oneByOnePhotos.length - 1) {
+            var nextArrow = $('<div/>').attr('id', 'onebyone-next').html('&#10095;').css(arrowStyle)
+                .css('left', (picCenterX + refHalfWidth + arrowOffset - arrowWidth) + 'px')
+                .css('top', picCenterY + 'px')
+            nextArrow.hover(
+                function(){ $(this).css('color', '#888') },
+                function(){ $(this).css('color', '#bbb') }
+            ).click(function(e){
+                e.stopPropagation()
+                // Sauvegarder la position actuelle avant de changer
+                var currentPic = $('.bigpic').first()
+                var currentW = currentPic.outerWidth()
+                var currentH = currentPic.outerHeight()
+                var currentLeft = currentPic.position().left
+                var currentTop = currentPic.position().top
+                oneByOnePosition = {
+                    centerX: currentLeft + currentW / 2,
+                    centerY: currentTop + currentH / 2
+                }
+                showOneByOnePhoto(oneByOneIndex + 1)
+            })
+            $('body').append(nextArrow)
+        }
+
+        // Update slider attributes
+        var img = pic.find('img')
+        img.attr('x', posX)
+        img.attr('y', posY)
+
+        // Afficher la photo une fois positionnée
+        pic.css('visibility', 'visible')
+    }, 100)
+}
+
+function exitOneByOneMode(){
+    oneByOneMode = false
+    oneByOnePosition = null
+    oneByOneMaxDim = null
+    $('#onebyone-prev, #onebyone-next, #onebyone-overlay').remove()
 }
 
 // click on the figure to open a new photo
