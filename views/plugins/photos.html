@@ -15,6 +15,7 @@ var list_big_pics = []
 var nb_bpics = 0 // nb of bg pics
 var pic_yet_open = []
 var one_img = false
+var targetMaxDim = 500 // Taille cible pour la plus grande dimension
 
 function make_big_pic(wpic, hpic, idpic){
 
@@ -72,7 +73,32 @@ function make_big_pic(wpic, hpic, idpic){
         menuDropdown.hide()
     })
 
-    menuDropdown.append(optCascade)
+    var optCircle = $('<div/>').text('Circle').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer',
+        'border-bottom': '1px solid #eee'
+    }).hover(
+        function(){ $(this).css('background', '#f0f0f0') },
+        function(){ $(this).css('background', 'white') }
+    ).click(function(e){
+        e.stopPropagation()
+        applyCircleLayout()
+        menuDropdown.hide()
+    })
+
+    var optCloseAll = $('<div/>').text('Close all').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer'
+    }).hover(
+        function(){ $(this).css('background', '#f0f0f0') },
+        function(){ $(this).css('background', 'white') }
+    ).click(function(e){
+        e.stopPropagation()
+        reset_bigpic()
+        menuDropdown.hide()
+    })
+
+    menuDropdown.append(optCascade).append(optCircle).append(optCloseAll)
     layoutMenu.append(menuBtn).append(menuDropdown)
 
     menuBtn.click(function(e){
@@ -201,23 +227,38 @@ function save_wh_xy(p){
 
       p.attr('w',p.width())
       p.attr('h',p.height())
-      p.attr('x',parseInt(p.parent().css('right')))
+      // Sauvegarder les dimensions originales seulement la première fois
+      if (!p.attr('orig_w')) {
+          p.attr('orig_w', p.width())
+          p.attr('orig_h', p.height())
+      }
+      p.attr('x',parseInt(p.parent().css('right')) || parseInt(p.parent().css('left')))
       p.attr('y',parseInt(p.parent().css('top')))
 
 }
 
-function adapt_pic_dim(new_pic,wpic,hpic){
+function adapt_pic_dim(new_pic){
 
-      //alert(wpic)
       var w = new_pic.width()
       var h = new_pic.height()
 
-      var ratio_hw = h/w
-      if (new_pic.width < new_pic.height){
-                vertical_with_ratio(new_pic,ratio_hw,wpic)
-         }else{
-                horizontal_with_ratio(new_pic,ratio_hw,hpic)
-              }
+      // Calculer le facteur pour que la plus grande dimension fasse targetMaxDim (500px)
+      var maxDim = Math.max(w, h)
+      var scaleFactor = targetMaxDim / maxDim
+
+      var newW = Math.round(w * scaleFactor)
+      var newH = Math.round(h * scaleFactor)
+
+      new_pic.parent().css({
+        'width': (newW + 20) + 'px',
+        'height': (newH + 20) + 'px',
+      })
+      new_pic.css({
+        'width': newW + 'px',
+        'height': newH + 'px',
+        'margin': '0px'
+      })
+
       save_wh_xy(new_pic)
 }
 
@@ -238,7 +279,7 @@ function add_new_bigpic(addr_pic){
 
     $(modif_img).load(function() {
 
-          adapt_pic_dim(new_pic,wpic,hpic)
+          adapt_pic_dim(new_pic)
 
       })
 
@@ -306,46 +347,109 @@ function applyCascadeLayout(){
     var pics = $('.bigpic:visible')
     if (pics.length === 0) return
 
-    // Réduire toutes les photos à 1/3 de la taille max (slider à -0.33)
-    var sliderVal = -0.33
-
-    // Obtenir la taille de la première photo pour calculer le décalage
-    var firstPic = pics.first()
-    var firstImg = firstPic.find('img')
-
-    // Appliquer la taille réduite à toutes les photos
-    pics.each(function(){
-        var picId = $(this).attr('id')
-        var img = $('#imbp_' + picId)
-        if (img.attr('w')) {
-            change_dim_with_slider(img, sliderVal)
-        }
-    })
-
-    // Calculer le décalage (1/5 de la taille de la première photo)
-    var baseW = parseInt(firstImg.attr('w')) || 300
-    var baseH = parseInt(firstImg.attr('h')) || 400
-    var offsetX = Math.round(baseW * (1 + sliderVal) / 5)
-    var offsetY = Math.round(baseH * (1 + sliderVal) / 5)
+    // Calculer le décalage basé sur la taille cible (1/5 de 600px)
+    var offsetX = Math.round(targetMaxDim / 5)
+    var offsetY = Math.round(targetMaxDim / 5)
 
     // Position de départ (en haut à gauche, 200px du bord gauche)
     var startTop = 100
     var startLeft = 200
 
-    // Disposer les photos en cascade diagonale (haut-gauche vers bas-droite)
-    // Première derrière, dernière devant
+    // Appliquer la taille et position à toutes les photos
     pics.each(function(index){
-        var zIndex = 20 + index
+        var img = $(this).find('img')
+        var origW = parseInt(img.attr('orig_w')) || parseInt(img.attr('w')) || 300
+        var origH = parseInt(img.attr('orig_h')) || parseInt(img.attr('h')) || 400
+
+        // Calculer le facteur pour que la plus grande dimension fasse 600px
+        var maxDim = Math.max(origW, origH)
+        var scaleFactor = targetMaxDim / maxDim
+
+        // Calculer la nouvelle taille
+        var newW = Math.round(origW * scaleFactor)
+        var newH = Math.round(origH * scaleFactor)
+
+        // Appliquer la taille à l'image
+        img.css({
+            'width': newW + 'px',
+            'height': newH + 'px'
+        })
+
+        // Appliquer la taille au container (+ 20 pour le cadre blanc de 10px)
         $(this).css({
+            'width': (newW + 20) + 'px',
+            'height': (newH + 20) + 'px',
             'top': (startTop + index * offsetY) + 'px',
             'left': (startLeft + index * offsetX) + 'px',
             'right': 'auto',
-            'z-index': zIndex
+            'z-index': 20 + index
         })
-        // Mettre à jour les attributs pour le slider
-        var img = $(this).find('img')
+
+        // Mettre à jour les attributs pour le slider (utiliser la nouvelle taille)
+        img.attr('w', newW)
+        img.attr('h', newH)
         img.attr('y', startTop + index * offsetY)
         img.attr('x', startLeft + index * offsetX)
+    })
+}
+
+// Disposition en cercle
+function applyCircleLayout(){
+    var pics = $('.bigpic:visible')
+    if (pics.length === 0) return
+
+    // Rayon = 1/3 de la taille cible (600px)
+    var radius = Math.round(targetMaxDim / 3)
+
+    // Centre du cercle (au milieu de l'écran)
+    var centerX = $(window).width() / 2
+    var centerY = $(window).height() / 2
+
+    // Angle entre chaque photo
+    var alpha = (2 * Math.PI) / pics.length
+
+    // Appliquer la taille et position à toutes les photos
+    pics.each(function(index){
+        var img = $(this).find('img')
+        var origW = parseInt(img.attr('orig_w')) || parseInt(img.attr('w')) || 300
+        var origH = parseInt(img.attr('orig_h')) || parseInt(img.attr('h')) || 400
+
+        // Calculer le facteur pour que la plus grande dimension fasse 600px
+        var maxDim = Math.max(origW, origH)
+        var scaleFactor = targetMaxDim / maxDim
+
+        // Calculer la nouvelle taille
+        var newW = Math.round(origW * scaleFactor)
+        var newH = Math.round(origH * scaleFactor)
+
+        // Angle pour cette photo (-90° = en haut, puis sens horaire)
+        var angle = (-Math.PI / 2) - (index * alpha)
+
+        // Position sur le cercle (centre de la photo)
+        var posX = centerX + radius * Math.cos(angle) - (newW + 20) / 2
+        var posY = centerY + radius * Math.sin(angle) - (newH + 20) / 2
+
+        // Appliquer la taille à l'image
+        img.css({
+            'width': newW + 'px',
+            'height': newH + 'px'
+        })
+
+        // Appliquer la taille et position au container
+        $(this).css({
+            'width': (newW + 20) + 'px',
+            'height': (newH + 20) + 'px',
+            'top': posY + 'px',
+            'left': posX + 'px',
+            'right': 'auto',
+            'z-index': 20 + index
+        })
+
+        // Mettre à jour les attributs pour le slider
+        img.attr('w', newW)
+        img.attr('h', newH)
+        img.attr('y', posY)
+        img.attr('x', posX)
     })
 }
 
