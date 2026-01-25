@@ -122,9 +122,23 @@ function make_big_pic(wpic, hpic, idpic){
         menuDropdown.hide()
     })
 
+    var optCarousel = $('<div/>').text('Carousel').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer',
+        'border-bottom': '1px solid #eee'
+    }).hover(
+        function(){ $(this).css('background', '#f0f0f0') },
+        function(){ $(this).css('background', 'white') }
+    ).click(function(e){
+        e.stopPropagation()
+        applyCarouselLayout()
+        menuDropdown.hide()
+    })
+
     var optOneByOne = $('<div/>').text('One by one').css({
         'padding': '8px 12px',
-        'cursor': 'pointer'
+        'cursor': 'pointer',
+        'border-bottom': '1px solid #eee'
     }).hover(
         function(){ $(this).css('background', '#f0f0f0') },
         function(){ $(this).css('background', 'white') }
@@ -134,7 +148,19 @@ function make_big_pic(wpic, hpic, idpic){
         menuDropdown.hide()
     })
 
-    layoutSubmenu.append(optCascade).append(optCircle).append(optOneByOne)
+    var optKeepThis = $('<div/>').text('Keep it').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer'
+    }).hover(
+        function(){ $(this).css('background', '#f0f0f0') },
+        function(){ $(this).css('background', 'white') }
+    ).click(function(e){
+        e.stopPropagation()
+        keepThisImage($(this).closest('.bigpic'))
+        menuDropdown.hide()
+    })
+
+    layoutSubmenu.append(optCascade).append(optCircle).append(optCarousel).append(optOneByOne).append(optKeepThis)
     optLayout.append(layoutSubmenu)
 
     // Rubrique Size avec sous-menu
@@ -182,6 +208,48 @@ function make_big_pic(wpic, hpic, idpic){
     sizeSubmenu.append(optStandard)
     optSize.append(sizeSubmenu)
 
+    // Rubrique All avec sous-menu
+    var optAll = $('<div/>').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer',
+        'position': 'relative'
+    }).hover(
+        function(){
+            $(this).css('background', '#f0f0f0')
+            $(this).find('.all-submenu').show()
+        },
+        function(){
+            $(this).css('background', 'white')
+            $(this).find('.all-submenu').hide()
+        }
+    )
+    optAll.append($('<span/>').text('All ').append($('<span/>').html('&#9654;').css({'font-size': '10px', 'position': 'relative', 'top': '-3px'})))
+
+    var allSubmenu = $('<div/>').addClass('all-submenu').css({
+        'display': 'none',
+        'position': 'absolute',
+        'top': '0',
+        'left': '100%',
+        'background': 'white',
+        'border': '1px solid #ccc',
+        'border-radius': '3px',
+        'box-shadow': '2px 2px 5px rgba(0,0,0,0.3)',
+        'min-width': '120px'
+    })
+
+    var optOpenAll = $('<div/>').text('Open all').css({
+        'padding': '8px 12px',
+        'cursor': 'pointer',
+        'border-bottom': '1px solid #eee'
+    }).hover(
+        function(){ $(this).css('background', '#f0f0f0') },
+        function(){ $(this).css('background', 'white') }
+    ).click(function(e){
+        e.stopPropagation()
+        openAllPhotos()
+        menuDropdown.hide()
+    })
+
     var optCloseAll = $('<div/>').text('Close all').css({
         'padding': '8px 12px',
         'cursor': 'pointer'
@@ -194,7 +262,10 @@ function make_big_pic(wpic, hpic, idpic){
         menuDropdown.hide()
     })
 
-    menuDropdown.append(optLayout).append(optSize).append(optCloseAll)
+    allSubmenu.append(optOpenAll).append(optCloseAll)
+    optAll.append(allSubmenu)
+
+    menuDropdown.append(optLayout).append(optSize).append(optAll)
     layoutMenu.append(menuBtn).append(menuDropdown)
 
     // Show menu on button click
@@ -279,6 +350,8 @@ function make_big_pic(wpic, hpic, idpic){
 // Reset all the parameters
 
 function reset_bigpic(){
+    // Exit carousel mode first (moves pics back to content)
+    exitCarouselMode()
     $('.bigpic').remove()
     //$('.bigpic').hide()
     list_big_pics = []
@@ -539,6 +612,56 @@ function save_pos_drag(){
 
 }
 
+// Open all photos from the portfolio
+function openAllPhotos(){
+    // Get all portfolio photos (thumbnails)
+    var thumbnails = $('.thumbnail figure img')
+    if (thumbnails.length === 0) return
+
+    var photosToOpen = []
+    thumbnails.each(function(){
+        var addr_pic = $(this).attr('src')
+        if (pic_yet_open.indexOf(addr_pic) === -1) {
+            photosToOpen.push(addr_pic)
+        }
+    })
+
+    if (photosToOpen.length === 0) {
+        // All photos already open, just apply layout
+        applyCascadeLayout()
+        return
+    }
+
+    var loadedCount = 0
+    var totalToLoad = photosToOpen.length
+
+    // Open each photo and wait for all to load
+    photosToOpen.forEach(function(addr_pic){
+        add_new_bigpic(addr_pic)
+        hook_slider('bp' + nb_bpics)
+        save_pos_drag()
+
+        // Wait for image to load before counting
+        var pic = $('.bigpic').last()
+        var img = pic.find('img')
+        if (img[0].complete) {
+            loadedCount++
+            if (loadedCount === totalToLoad) {
+                // All images loaded, apply cascade layout
+                setTimeout(function(){ applyCascadeLayout() }, 50)
+            }
+        } else {
+            img.on('load', function(){
+                loadedCount++
+                if (loadedCount === totalToLoad) {
+                    // All images loaded, apply cascade layout
+                    setTimeout(function(){ applyCascadeLayout() }, 50)
+                }
+            })
+        }
+    })
+}
+
 // Cascade layout
 function applyCascadeLayout(){
     var pics = $('.bigpic:visible')
@@ -648,6 +771,259 @@ function applyCircleLayout(){
         img.attr('y', posY)
         img.attr('x', posX)
     })
+}
+
+// Carousel layout - horizontal scrollable with fade effect
+var carouselContainer = null
+var carouselDragStartX = 0
+var carouselScrollStartX = 0
+
+function applyCarouselLayout(){
+    var pics = $('.bigpic:visible')
+    if (pics.length === 0) return
+
+    // Remove existing carousel container if any
+    if (carouselContainer) {
+        // Move pics back to content before removing container
+        pics.appendTo('#content')
+        carouselContainer.remove()
+        carouselContainer = null
+    }
+
+    // Create overlay
+    var overlay = $('<div/>').attr('id', 'carousel-overlay').css({
+        'position': 'fixed',
+        'top': '0',
+        'left': '0',
+        'width': '100%',
+        'height': '100%',
+        'background': 'rgba(0, 0, 0, 0.5)',
+        'z-index': '18'
+    })
+    // Click on overlay to exit carousel and return to cascade
+    overlay.click(function(){
+        exitCarouselMode()
+        applyCascadeLayout()
+    })
+    $('body').append(overlay)
+
+    // Create carousel container
+    carouselContainer = $('<div/>').attr('id', 'carousel-container').css({
+        'position': 'fixed',
+        'top': '0',
+        'left': '0',
+        'width': '100%',
+        'height': '100%',
+        'overflow': 'hidden',
+        'z-index': '19',
+        'cursor': 'grab'
+    })
+    $('body').append(carouselContainer)
+
+    // Create inner wrapper for photos
+    var wrapper = $('<div/>').attr('id', 'carousel-wrapper').css({
+        'position': 'absolute',
+        'display': 'flex',
+        'align-items': 'center',
+        'height': '100%',
+        'padding': '0 ' + ($(window).width() / 2 - targetMaxDim / 2) + 'px'
+    })
+    carouselContainer.append(wrapper)
+
+    // Calculate vertical center
+    var windowHeight = $(window).height()
+
+    // Move and resize all photos into carousel
+    var currentX = 0
+    var spacing = 30
+
+    pics.each(function(index){
+        var pic = $(this)
+        var img = pic.find('img')
+        var origW = parseInt(img.attr('orig_w')) || parseInt(img.attr('w')) || 300
+        var origH = parseInt(img.attr('orig_h')) || parseInt(img.attr('h')) || 400
+
+        // Calculate factor so largest dimension equals targetMaxDim
+        var maxDim = Math.max(origW, origH)
+        var scaleFactor = targetMaxDim / maxDim
+
+        // Calculate new size
+        var newW = Math.round(origW * scaleFactor)
+        var newH = Math.round(origH * scaleFactor)
+
+        // Apply size to image
+        img.css({
+            'width': newW + 'px',
+            'height': newH + 'px'
+        })
+
+        // Position photo in carousel
+        pic.css({
+            'position': 'relative',
+            'width': (newW + 20) + 'px',
+            'height': (newH + 20) + 'px',
+            'top': 'auto',
+            'left': 'auto',
+            'right': 'auto',
+            'margin-right': spacing + 'px',
+            'flex-shrink': '0',
+            'z-index': 20,
+            'cursor': 'grab'
+        })
+
+        // Update slider attributes
+        img.attr('w', newW)
+        img.attr('h', newH)
+
+        // Move to wrapper
+        pic.appendTo(wrapper)
+    })
+
+    // Apply fade effect based on position
+    function updateFadeEffect() {
+        var fadeDistance = 300
+        var windowWidth = $(window).width()
+
+        wrapper.find('.bigpic').each(function(){
+            var pic = $(this)
+            var rect = pic[0].getBoundingClientRect()
+            var picCenterX = rect.left + rect.width / 2
+
+            // Calculate opacity based on distance from edges
+            var opacity = 1
+            if (picCenterX < fadeDistance) {
+                opacity = Math.max(0, picCenterX / fadeDistance)
+            } else if (picCenterX > windowWidth - fadeDistance) {
+                opacity = Math.max(0, (windowWidth - picCenterX) / fadeDistance)
+            }
+
+            pic.css('opacity', opacity)
+        })
+    }
+
+    // Initial fade effect
+    updateFadeEffect()
+
+    // Drag to scroll
+    var isDragging = false
+
+    carouselContainer.on('mousedown', function(e){
+        var target = $(e.target)
+        // Allow drag on container, wrapper, bigpic, or images
+        // But block drag on controls like sliders
+        if (target.closest('.bigpic').length) {
+            // Inside a bigpic - only allow if clicking on img or bigpic itself
+            if (!target.is('img') && !target.hasClass('bigpic')) {
+                return
+            }
+        }
+        isDragging = true
+        carouselDragStartX = e.clientX
+        carouselScrollStartX = parseInt(wrapper.css('left')) || 0
+        carouselContainer.css('cursor', 'grabbing')
+        wrapper.find('.bigpic').css('cursor', 'grabbing')
+        e.preventDefault()
+    })
+
+    $(document).on('mousemove.carousel', function(e){
+        if (!isDragging) return
+        var deltaX = e.clientX - carouselDragStartX
+        wrapper.css('left', (carouselScrollStartX + deltaX) + 'px')
+        updateFadeEffect()
+    })
+
+    $(document).on('mouseup.carousel', function(){
+        if (isDragging) {
+            isDragging = false
+            carouselContainer.css('cursor', 'grab')
+            wrapper.find('.bigpic').css('cursor', 'grab')
+        }
+    })
+
+    // Double-click on container background to exit carousel and return to cascade
+    carouselContainer.on('dblclick', function(e){
+        if ($(e.target).attr('id') === 'carousel-container' || $(e.target).attr('id') === 'carousel-wrapper') {
+            exitCarouselMode()
+            applyCascadeLayout()
+        }
+    })
+}
+
+function exitCarouselMode(){
+    if (!carouselContainer) return
+
+    // Move photos back to content
+    var pics = carouselContainer.find('.bigpic')
+    pics.each(function(index){
+        var pic = $(this)
+        pic.css({
+            'position': 'fixed',
+            'margin-right': '0',
+            'flex-shrink': '',
+            'opacity': '1',
+            'top': (100 + index * 100) + 'px',
+            'left': (200 + index * 100) + 'px'
+        })
+        pic.appendTo('#content')
+    })
+
+    // Remove event handlers
+    $(document).off('mousemove.carousel')
+    $(document).off('mouseup.carousel')
+
+    // Remove overlay
+    $('#carousel-overlay').remove()
+
+    // Remove container
+    carouselContainer.remove()
+    carouselContainer = null
+}
+
+// Keep only this image and close all others
+function keepThisImage(pic){
+    if (!pic || pic.length === 0) return
+
+    // Get current image source
+    var img = pic.find('img')
+    var addr_pic = img.attr('src')
+
+    // Completely reset everything (equivalent to closing all)
+    exitCarouselMode()
+    $('.bigpic').remove()
+    list_big_pics = []
+    nb_bpics = 0
+    pic_yet_open = []
+    exitOneByOneMode()
+
+    // Reopen only this image fresh
+    add_new_bigpic(addr_pic)
+    hook_slider('bp' + nb_bpics)
+    save_pos_drag()
+
+    // Center the image after it loads
+    var newPic = $('.bigpic').last()
+    var newImg = newPic.find('img')
+
+    function centerImage() {
+        var picW = newPic.outerWidth()
+        var picH = newPic.outerHeight()
+        var posX = ($(window).width() - picW) / 2
+        var posY = ($(window).height() - picH) / 2
+
+        newPic.css({
+            'left': posX + 'px',
+            'top': posY + 'px',
+            'right': 'auto'
+        })
+    }
+
+    if (newImg[0].complete) {
+        setTimeout(centerImage, 50)
+    } else {
+        newImg.on('load', function() {
+            setTimeout(centerImage, 50)
+        })
+    }
 }
 
 // Taille standard (targetMaxDim)

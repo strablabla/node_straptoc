@@ -20,7 +20,7 @@ Node Straptoc is a sophisticated personal information management system that com
 - **PDF Viewer**: Built-in PDF document viewer
 - **DJVU Reader**: View DJVU format documents
 - **EPUB Reader**: Read e-books in EPUB format
-- **Image Galleries**: Portfolio management with carousels
+- **Image Galleries**: Portfolio management with carousels and multiple visualization modes (cascade, circle, one-by-one navigation)
 - **Audio Playback**: Integrated audio player
 
 ### Organizational Tools
@@ -237,6 +237,28 @@ The core [lib/straptoc.js](lib/straptoc.js) library extends markdown with:
 - Tooltips and text hiding
 - Image sizing and captions
 - Copy/paste list items
+
+### Portfolio Photo Visualization Modes
+When viewing photos from a portfolio ([views/plugins/photos.html](views/plugins/photos.html)), click on a thumbnail to open the photo. Each opened photo has a menu button (☰) in the top-left corner with multiple visualization options:
+
+#### Layout Options
+- **Cascade**: Arranges all open photos in a diagonal stack from top-left, with each photo offset by 100px (1/5 of standard size). Photos overlap like a deck of cards, useful for comparing multiple images.
+- **Circle**: Positions all open photos in a circular arrangement around the center of the screen. Photos are evenly distributed around the circle, starting from the top position.
+- **One by One**: Full-screen navigation mode for browsing through all portfolio photos sequentially:
+  - Displays navigation arrows (◄ ►) on either side of the current photo
+  - Semi-transparent overlay (50% opacity) hides the rest of the page for focused viewing
+  - Preserves the current photo size when navigating between images
+  - Click on the overlay background to exit the mode while keeping the current photo open
+  - Double-click on the photo to close it and exit the mode
+
+#### Size Options
+- **Standard**: Resets the photo to the target maximum dimension (500px), maintaining aspect ratio. The largest dimension (width or height) will be scaled to 500px.
+- **Zoom Slider**: Each photo has a zoom slider at the bottom allowing up to 4x zoom (from 0.5x to 4x). In one-by-one mode, the arrows automatically reposition when you release the slider.
+
+#### Photo Interactions
+- **Drag**: Photos can be dragged anywhere on the screen. In one-by-one mode, arrows follow the photo position.
+- **Double-click**: Closes the photo (and exits one-by-one mode if active)
+- **Close All**: Menu option to close all open photos at once
 
 ### Global Search System
 The search functionality ([views/basics/search.html](views/basics/search.html), [lib/config.js](lib/config.js)) provides:
