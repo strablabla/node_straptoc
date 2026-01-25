@@ -105,8 +105,16 @@ function make_big_pic(wpic, hpic, idpic){
         function(){ $(this).css('background', 'white') }
     ).click(function(e){
         e.stopPropagation()
-        applyCascadeLayout()
         menuDropdown.hide()
+        if (oneByOneMode) {
+            exitOneByOneMode()
+            openAllPhotosWithLayout(applyCascadeLayout)
+        } else if (carouselContainer) {
+            exitCarouselMode()
+            applyCascadeLayout()
+        } else {
+            applyCascadeLayout()
+        }
     })
 
     var optCircle = $('<div/>').text('Circle').css({
@@ -118,8 +126,16 @@ function make_big_pic(wpic, hpic, idpic){
         function(){ $(this).css('background', 'white') }
     ).click(function(e){
         e.stopPropagation()
-        applyCircleLayout()
         menuDropdown.hide()
+        if (oneByOneMode) {
+            exitOneByOneMode()
+            openAllPhotosWithLayout(applyCircleLayout)
+        } else if (carouselContainer) {
+            exitCarouselMode()
+            applyCircleLayout()
+        } else {
+            applyCircleLayout()
+        }
     })
 
     var optCarousel = $('<div/>').text('Carousel').css({
@@ -131,8 +147,13 @@ function make_big_pic(wpic, hpic, idpic){
         function(){ $(this).css('background', 'white') }
     ).click(function(e){
         e.stopPropagation()
-        applyCarouselLayout()
         menuDropdown.hide()
+        if (oneByOneMode) {
+            exitOneByOneMode()
+            openAllPhotosWithLayout(applyCarouselLayout)
+        } else {
+            applyCarouselLayout()
+        }
     })
 
     var optOneByOne = $('<div/>').text('One by one').css({
@@ -144,8 +165,17 @@ function make_big_pic(wpic, hpic, idpic){
         function(){ $(this).css('background', 'white') }
     ).click(function(e){
         e.stopPropagation()
-        applyOneByOneLayout($(this).closest('.bigpic'))
         menuDropdown.hide()
+        var currentPic = $(this).closest('.bigpic')
+        var currentSrc = currentPic.find('img').attr('src')
+        if (carouselContainer) {
+            // Exit carousel mode and enter one-by-one mode
+            exitCarouselMode()
+            // Start one-by-one mode from the current image
+            startOneByOneFromSrc(currentSrc)
+        } else {
+            applyOneByOneLayout(currentPic)
+        }
     })
 
     var optKeepThis = $('<div/>').text('Keep it').css({
@@ -328,15 +358,26 @@ function make_big_pic(wpic, hpic, idpic){
     // close the current open photo
 
     new_pic.dblclick(function(){
-          //alert( $(this).attr('id') )
-          $(this).hide()
-          var addr_pic = $(this).find('img').attr('src')
+          var pic = $(this)
+          var addr_pic = pic.find('img').attr('src')
           var ind = pic_yet_open.indexOf(addr_pic)
-          pic_yet_open.splice(ind,1)
-          list_big_pics.splice(ind,1)
-          //nb_bpics -= 1
-          // Exit one by one mode
-          exitOneByOneMode()
+
+          if (oneByOneMode) {
+              // In one-by-one mode, fully remove the image and exit the mode
+              pic.remove()
+              if (ind !== -1) {
+                  pic_yet_open.splice(ind, 1)
+                  list_big_pics.splice(ind, 1)
+              }
+              exitOneByOneMode()
+          } else {
+              // Normal mode: just hide the image
+              pic.hide()
+              if (ind !== -1) {
+                  pic_yet_open.splice(ind, 1)
+                  list_big_pics.splice(ind, 1)
+              }
+          }
     })
 
     $('#content').append(new_pic) //
@@ -359,6 +400,8 @@ function reset_bigpic(){
     pic_yet_open = []
     // Exit one by one mode
     exitOneByOneMode()
+    // Ensure all photo overlays are removed
+    $('#carousel-overlay, #onebyone-overlay, #onebyone-prev, #onebyone-next').remove()
 }
 
 // Double click to close all the photos
@@ -610,6 +653,50 @@ function save_pos_drag(){
        }
       });
 
+}
+
+// Open all photos from the portfolio with a specific layout callback
+function openAllPhotosWithLayout(layoutCallback){
+    // Reset everything first
+    reset_bigpic()
+
+    // Get all portfolio photos (thumbnails)
+    var thumbnails = $('.thumbnail figure img')
+    if (thumbnails.length === 0) return
+
+    var photosToOpen = []
+    thumbnails.each(function(){
+        photosToOpen.push($(this).attr('src'))
+    })
+
+    if (photosToOpen.length === 0) return
+
+    var loadedCount = 0
+    var totalToLoad = photosToOpen.length
+
+    // Open each photo and wait for all to load
+    photosToOpen.forEach(function(addr_pic){
+        add_new_bigpic(addr_pic)
+        hook_slider('bp' + nb_bpics)
+        save_pos_drag()
+
+        // Wait for image to load before counting
+        var pic = $('.bigpic').last()
+        var img = pic.find('img')
+        if (img[0].complete) {
+            loadedCount++
+            if (loadedCount === totalToLoad) {
+                setTimeout(function(){ layoutCallback() }, 50)
+            }
+        } else {
+            img.on('load', function(){
+                loadedCount++
+                if (loadedCount === totalToLoad) {
+                    setTimeout(function(){ layoutCallback() }, 50)
+                }
+            })
+        }
+    })
 }
 
 // Open all photos from the portfolio
@@ -1301,6 +1388,32 @@ function exitOneByOneMode(){
     oneByOnePosition = null
     oneByOneMaxDim = null
     $('#onebyone-prev, #onebyone-next, #onebyone-overlay').remove()
+}
+
+// Start one-by-one mode from a specific image source
+function startOneByOneFromSrc(src){
+    // Get all portfolio photos (thumbnails)
+    oneByOnePhotos = []
+    $('.thumbnail figure img').each(function(){
+        oneByOnePhotos.push($(this).attr('src'))
+    })
+
+    if (oneByOnePhotos.length === 0) return
+
+    // Find index of the image
+    oneByOneIndex = oneByOnePhotos.indexOf(src)
+    if (oneByOneIndex === -1) oneByOneIndex = 0
+
+    // Reset everything
+    reset_bigpic()
+
+    // Activate one by one mode (centered, standard size)
+    oneByOneMode = true
+    oneByOnePosition = null  // Will center
+    oneByOneMaxDim = targetMaxDim  // Standard size
+
+    // Open current photo
+    showOneByOnePhoto(oneByOneIndex)
 }
 
 // click on the figure to open a new photo
