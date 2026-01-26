@@ -90,6 +90,60 @@ page_main = { 'path': '/', 'name': 'main' }
 init.feed_page(app, page_main);
 app.get('/text', function(req, res){ res.render('struct/text.html'); });
 
+// Route proxy pour PDFs externes (contournement CORS)
+app.get('/proxy-pdf', async (req, res) => {
+    const pdfUrl = req.query.url;
+    if (!pdfUrl) {
+        return res.status(400).send('URL manquante');
+    }
+
+    // Validation basique de l'URL
+    try {
+        new URL(pdfUrl);
+    } catch (e) {
+        return res.status(400).send('URL invalide');
+    }
+
+    try {
+        const response = await fetch(pdfUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; PDFProxy/1.0)'
+            }
+        });
+
+        if (!response.ok) {
+            return res.status(response.status).send('Erreur fetch PDF: ' + response.statusText);
+        }
+
+        // Vérifier que c'est bien un PDF
+        const contentType = response.headers.get('content-type');
+        if (contentType) {
+            res.setHeader('Content-Type', contentType);
+        } else {
+            res.setHeader('Content-Type', 'application/pdf');
+        }
+
+        // Headers pour le téléchargement et CORS
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        // Stream la réponse vers le client
+        const reader = response.body.getReader();
+        const pump = async () => {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                res.write(Buffer.from(value));
+            }
+            res.end();
+        };
+        await pump();
+
+    } catch (err) {
+        console.error('Erreur proxy PDF:', err.message);
+        res.status(500).send('Erreur proxy: ' + err.message);
+    }
+});
+
 db = init.data_base()
 
 db.run(

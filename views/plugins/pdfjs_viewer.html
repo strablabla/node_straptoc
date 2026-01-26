@@ -183,6 +183,31 @@ window.PDFViewer = {
     currentPdfPath: null
 };
 
+// Détecte si une URL est externe (cross-origin)
+function isExternalUrl(url) {
+    if (!url) return false;
+    // URLs relatives ou commençant par / sont locales
+    if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
+        return false;
+    }
+    // Vérifie si c'est une URL absolue vers un autre domaine
+    try {
+        const urlObj = new URL(url, window.location.origin);
+        return urlObj.origin !== window.location.origin;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Retourne l'URL à utiliser (proxy si externe)
+function getPdfUrl(pdfPath) {
+    if (isExternalUrl(pdfPath)) {
+        console.log('URL externe détectée, utilisation du proxy:', pdfPath);
+        return `/proxy-pdf?url=${encodeURIComponent(pdfPath)}`;
+    }
+    return pdfPath;
+}
+
 // Initialize PDF viewer
 async function initPDFViewer(pdfPath, containerId) {
 
@@ -191,8 +216,9 @@ async function initPDFViewer(pdfPath, containerId) {
     console.log('Container ID:', containerId);
 
     try {
-        // Load the PDF document
-        const loadingTask = pdfjsLib.getDocument(pdfPath);
+        // Load the PDF document (via proxy si URL externe)
+        const actualUrl = getPdfUrl(pdfPath);
+        const loadingTask = pdfjsLib.getDocument(actualUrl);
 
         const container = document.getElementById(containerId);
         if (!container) {
