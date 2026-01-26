@@ -6,6 +6,51 @@ Handle folders.
 
 
 var fs = require('fs');
+var path = require('path');
+var yaml = require('js-yaml');
+
+// Load registered addresses from config.yaml
+var registered_addresses = [];
+
+function load_registered_addresses() {
+    try {
+        const text = fs.readFileSync('static/config.yaml', 'utf8');
+        const config = yaml.load(text);
+        if (config.addresses && Array.isArray(config.addresses)) {
+            registered_addresses = config.addresses;
+            console.log('[folders] Loaded registered addresses:', registered_addresses);
+        }
+    } catch (e) {
+        console.error('[folders] Error loading config.yaml:', e);
+    }
+}
+
+// Load addresses at module initialization
+load_registered_addresses();
+
+function resolve_folder_path(folder_path) {
+    /*
+    Resolve folder path:
+    - If absolute, return as-is
+    - If relative, search in registered addresses
+    */
+    if (path.isAbsolute(folder_path)) {
+        return folder_path;
+    }
+
+    // Search in registered addresses
+    for (var addr of registered_addresses) {
+        var full_path = path.join(addr, folder_path);
+        if (fs.existsSync(full_path)) {
+            console.log('[folders] Resolved "' + folder_path + '" to "' + full_path + '"');
+            return full_path;
+        }
+    }
+
+    // Fallback: return as-is
+    console.log('[folders] Could not resolve "' + folder_path + '", using as-is');
+    return folder_path;
+}
 
 function deals_with_folder(socket, name_folder){
 
@@ -18,9 +63,12 @@ function deals_with_folder(socket, name_folder){
       var count_pdf = name_folder.split('§§')[1]
       var name_folder = name_folder.split('§§')[0]
 
+      // Resolve relative paths using registered addresses
+      var resolved_path = resolve_folder_path(name_folder);
+
       var strap_addr = ''
-      console.log('folder is : ' + name_folder);
-      fs.readdir(name_folder, (err, files) => {
+      console.log('folder is : ' + resolved_path + ' (original: ' + name_folder + ')');
+      fs.readdir(resolved_path, (err, files) => {
           strap_addr +=  count_pdf + '§§'
           files.forEach(file => {
              console.log(file);
@@ -45,10 +93,14 @@ function deals_with_list_folders(socket, name_folder){
 
       var count_pdf = name_folder.split('§§')[1]
       var name_folder = name_folder.split('§§')[0]
+
+      // Resolve relative paths using registered addresses
+      var resolved_path = resolve_folder_path(name_folder);
+
       console.log('######################################')
       var strap_addr = ''
-      console.log('current folder is : ' + name_folder)
-      fs.readdir(name_folder, (err, files) => {
+      console.log('current folder is : ' + resolved_path + ' (original: ' + name_folder + ')')
+      fs.readdir(resolved_path, (err, files) => {
           strap_addr +=  count_pdf + '§§'
           //if(err) return console.error(err);
           try {
