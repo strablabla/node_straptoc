@@ -17,7 +17,16 @@ function load_registered_addresses() {
         const text = fs.readFileSync('static/config.yaml', 'utf8');
         const config = yaml.load(text);
         if (config.addresses && Array.isArray(config.addresses)) {
-            registered_addresses = config.addresses;
+            // Extract paths from addresses - can be strings or objects with path as key
+            registered_addresses = config.addresses.map(addr => {
+                if (typeof addr === 'string') {
+                    return addr;
+                } else if (typeof addr === 'object' && addr !== null) {
+                    // If it's an object, the path is the first key
+                    return Object.keys(addr)[0];
+                }
+                return null;
+            }).filter(addr => addr !== null);
             console.log('[folders] Loaded registered addresses:', registered_addresses);
         }
     } catch (e) {
