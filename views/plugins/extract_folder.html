@@ -262,8 +262,14 @@ function handle_docs(sorted_list, new_ul, current_count){
                          })
           }
           //alert(sorted_list)
-          // Don't hide - show the content by default for lazy loading
-          // new_ul.hide()
+          // Check if this is inside a !fold...!inside structure (has .funf sibling with [+])
+          var parentLi = extract_folder_current_li[current_count].parent().parent()
+          var funfSpan = parentLi.find('> a > .funf')
+          if (funfSpan.length > 0 && funfSpan.text().trim() === '[+]') {
+              // This is a closed subfolder, keep it hidden
+              new_ul.hide()
+              console.log('[extract_folder] Hiding new_ul because parent has [+]')
+          }
           // replace the tag with the list of li embed..
           extract_folder_current_li[current_count].parent().replaceWith(new_ul)
           if ( current_count == Object.keys(extract_folder_current_li).length-1 & !extract_folder_toggle_elem_ok){
@@ -291,20 +297,9 @@ function handle_docs(sorted_list, new_ul, current_count){
           })
 
 
-          setTimeout(function(){
-
-              // djvu case
-              if (!extract_folder_trig_djvu){
-                      open_djvu()
-                      extract_folder_trig_djvu = true
-                }
-              // epub case
-              if (!extract_folder_trig_epub){
-                      open_epub()
-                      extract_folder_trig_epub = true
-                }
-
-          }, 2000)
+          // Note: epub and djvu handling is now integrated into toggle_elem()
+          // The old open_epub() and open_djvu() functions are kept for backwards compatibility
+          // but are no longer needed for !fold extracted files
 
 } // end handle_docs
 
@@ -333,15 +328,20 @@ function relative_addr(addr, addr_short){
           /*
 
           Absolute address, address used in the html code
-          Returns the web-accessible path (relative to static root)
+          Returns the web-accessible path (absolute URL starting with /)
 
           */
+
+          // Helper to ensure leading slash
+          function ensureLeadingSlash(path) {
+              return path.startsWith('/') ? path : '/' + path
+          }
 
           // For sdata pattern - keep full path after sdata/
           var reg_sdata = /sdata\/\w+.+/     // pattern /sdata/balblabla
           var match = addr.match(reg_sdata)
           if (match) {
-              return match[0]
+              return ensureLeadingSlash(match[0])
           }
 
           // For public pattern - remove "public/" prefix since Express serves public/ at root
@@ -350,11 +350,11 @@ function relative_addr(addr, addr_short){
           match = addr.match(reg_public)
           if (match) {
               console.log('[extract_folder] absolute_addr: matched public/, returning:', match[1])
-              return match[1]  // Return just the path after "public/" (e.g., "pdfs")
+              return ensureLeadingSlash(match[1])
           }
 
-          // Fallback: return the address as-is
-          return addr
+          // Fallback: return the address with leading slash
+          return ensureLeadingSlash(addr)
     }
 
 
@@ -369,26 +369,41 @@ function relative_addr(addr, addr_short){
           console.log('[extract_folder] make_li_embed - addr:', addr, 'elem:', elem)
           var full_path = addr + '/' + elem
           console.log('[extract_folder] make_li_embed - full_path:', full_path)
-          var obj = embed_elem(full_path)
 
-          var div_format = $('<div/>').text(elem.split('.pdf')[0]).addClass('embed_pdf')
-          var a_deploy = $('<a/>').text(' [+]')  // Start with [+] since PDF is hidden
+          // Extract name without extension for any ebook type
+          var display_name = elem.replace(/\.(pdf|epub|djvu)$/i, '')
+
+          var div_format = $('<div/>').text(display_name).addClass('embed_pdf')
+          var a_deploy = $('<a/>').text(' [+]')  // Start with [+] since content is hidden
           var span_tog = $('<span/>').addClass('tog_elem').append(a_deploy)
 
+          var obj_html = ''
+
           // case epub
-
-          if ( elem.search(/\.epub/ ) != -1){
+          if ( elem.search(/\.epub$/i ) != -1){
               a_deploy.addClass('fold_epub')
-            }
-
+              // Create epub-specific container
+              var viewerId = 'epub-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
+              obj_html = '<br><div class="lazy-epub-container" id="' + viewerId + '" data-epub-path="' + full_path + '" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
+                        '<div class="lazy-epub-viewer" style="display: none;"></div>' +
+                        '</div><br>'
+          }
           // case djvu
-
-          if ( elem.search(/\.djvu/ ) != -1){
+          else if ( elem.search(/\.djvu$/i ) != -1){
               a_deploy.addClass('fold_djvu')
-            }
+              // Create djvu-specific container
+              var viewerId = 'djvu-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
+              obj_html = '<br><div class="lazy-djvu-container" id="' + viewerId + '" data-djvu-path="' + full_path + '" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
+                        '<div class="lazy-djvu-viewer" style="display: none;"></div>' +
+                        '</div><br>'
+          }
+          // case pdf (default)
+          else {
+              obj_html = embed_elem(full_path)
+          }
 
           var divformat_plus = div_format.append(span_tog)
-          var div_obj = $('<div/>').html(obj).hide()
+          var div_obj = $('<div/>').html(obj_html).hide()
           var curr_li = $('<li/>').addClass('fold_li')
           new_ul.append( curr_li.append( divformat_plus.append( div_obj ) ) )
 
@@ -431,17 +446,19 @@ function relative_addr(addr, addr_short){
 
         /*
 
-        Code for closing, opening the pdfs and videos.
-        Lazy loading: PDF/Video is loaded when user clicks [+] to open
-        Note: We use <object> for PDFs and <video> for videos.
+        Code for closing, opening the pdfs, videos, epubs and djvus.
+        Lazy loading: content is loaded when user clicks [+] to open
+        Note: We use <object> for PDFs, <video> for videos, and call make_epub/make_djvu for epubs/djvus.
 
         */
 
-        $('.tog_elem').click(function(){
+        $('.tog_elem').off('click').on('click', function(){
 
                 var taga = $(this).find('a')
                 var $pdfContainer = $(this).next().find('.lazy-pdfjs-container')
                 var $videoContainer = $(this).next().find('.lazy-video-container')
+                var $epubContainer = $(this).next().find('.lazy-epub-container')
+                var $djvuContainer = $(this).next().find('.lazy-djvu-container')
 
                 if (taga.text() == ' [-]'){
                     // Closing - just hide
@@ -484,6 +501,89 @@ function relative_addr(addr, addr_short){
                             $viewer.empty().append(video)
                             $viewer.show()
                             $videoContainer.data('loaded', 'true')
+                        }
+                    }
+
+                    // Lazy load EPUB
+                    if ($epubContainer.length > 0) {
+                        var isLoaded = $epubContainer.data('loaded')
+                        if (!isLoaded || isLoaded === 'false') {
+                            var epubPath = $epubContainer.data('epub-path')
+                            var $viewer = $epubContainer.find('.lazy-epub-viewer')
+
+                            // Create epub content inline (don't use make_epub which replaces the li)
+                            var epub_id = epubPath.split('/').at(-1).split('.epub')[0]
+                            var block_epub = $('<div/>')
+                            block_epub.append($('<div/>').attr('id', epubPath))
+                                      .append($('<span/>').text('page 0 ').attr('id','first_page'+epub_id))
+                                      .append($('<span/>').text('< prev').attr('id','prev_page'+epub_id))
+                                      .append($('<span/>').text('.    .'))
+                                      .append($('<span/>').text('next >').attr('id','next_page'+epub_id))
+                                      .append($('<span/>').text('   '))
+                                      .append($('<input/>').text('').attr('id','num_page'+epub_id).css({'width':'30px'}))
+                                      .append($('<button/>').text('go').attr('id','go_page'+epub_id))
+                                      .append($('<span/>').text('   curr page: '))
+                                      .append($('<span/>').text('').attr('id','curr_page'+epub_id))
+                                      .append($('<div/>'))
+                                      .append($('<span/>').text('< ').attr('id','font_down'+epub_id))
+                                      .append($('<span/>').text('> ').attr('id','font_up'+epub_id))
+                                      .append($('<span/>').text('font percent: '))
+                                      .append($('<span/>').text('').attr('id','font_percent'+epub_id))
+
+                            $viewer.empty().append(block_epub)
+                            $viewer.show()
+
+                            // Initialize epub.js
+                            if (typeof ePub !== 'undefined') {
+                                var book = ePub(epubPath)
+                                var rendition = book.renderTo(epubPath, {
+                                    flow: "scrolled-doc",
+                                    width: 600,
+                                    height: 660
+                                })
+                                rendition.display()
+
+                                // Navigation handlers
+                                $('#first_page' + epub_id).click(function(){ rendition.display(0) })
+                                $('#next_page' + epub_id).click(function(){ rendition.next() })
+                                $('#prev_page' + epub_id).click(function(){ rendition.prev() })
+                                $('#go_page' + epub_id).click(function(){
+                                    var num = parseInt($('#num_page'+epub_id).val())
+                                    rendition.display(num)
+                                })
+                                $('#font_up' + epub_id).click(function(){
+                                    if (typeof incrFont === 'function') incrFont(rendition)
+                                })
+                                $('#font_down' + epub_id).click(function(){
+                                    if (typeof decrFont === 'function') decrFont(rendition)
+                                })
+                            }
+
+                            $epubContainer.data('loaded', 'true')
+                        }
+                    }
+
+                    // Lazy load DJVU
+                    if ($djvuContainer.length > 0) {
+                        var isLoaded = $djvuContainer.data('loaded')
+                        if (!isLoaded || isLoaded === 'false') {
+                            var djvuPath = $djvuContainer.data('djvu-path')
+                            var $viewer = $djvuContainer.find('.lazy-djvu-viewer')
+
+                            // Create djvu content inline (don't use make_djvu which replaces the li)
+                            var djvu_id = 'djvu-' + Date.now()
+                            var djvuDiv = $('<div/>').attr('id', djvu_id)
+                            $viewer.empty().append(djvuDiv)
+                            $viewer.show()
+
+                            // Initialize DjVu viewer
+                            if (typeof DjVu !== 'undefined' && DjVu.Viewer) {
+                                var viewer_instance = new DjVu.Viewer()
+                                viewer_instance.render(document.getElementById(djvu_id))
+                                viewer_instance.loadDocumentByUrl(djvuPath)
+                            }
+
+                            $djvuContainer.data('loaded', 'true')
                         }
                     }
                 }

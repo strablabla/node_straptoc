@@ -79,13 +79,19 @@ function deals_with_folder(socket, name_folder){
       console.log('folder is : ' + resolved_path + ' (original: ' + name_folder + ')');
       fs.readdir(resolved_path, (err, files) => {
           strap_addr +=  count_pdf + '§§'
+          if (err) {
+              console.error('[folders] Error reading directory:', resolved_path, err.message);
+              // Send empty response to unblock client
+              socket.emit('folder_extract', strap_addr)
+              return;
+          }
           files.forEach(file => {
              console.log(file);
              strap_addr += file + '\n'
-        });
+          });
 
-        console.log('######### sending ' + strap_addr)
-        socket.emit('folder_extract', strap_addr)
+          console.log('######### sending ' + strap_addr)
+          socket.emit('folder_extract', strap_addr)
 
       });
 
