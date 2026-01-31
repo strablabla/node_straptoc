@@ -89,20 +89,16 @@ var extract_folder_processed_counts = {}
 
 socket.on('folder_extract', function( strap_addr ){
 
-    console.log('[extract_folder] Received folder_extract response:', strap_addr.substring(0, 200))
     var current_count = parseInt( strap_addr.split('§§')[0] )
     strap_addr = strap_addr.split('§§')[1]
-    console.log('[extract_folder] current_count:', current_count, 'files:', strap_addr)
 
     // Guard: check if this count was already processed
     if (extract_folder_processed_counts[current_count]) {
-        console.log('[extract_folder] Count', current_count, 'already processed, skipping')
         return
     }
 
     // Guard: check if the li element exists
     if (!extract_folder_current_li[current_count]) {
-        console.log('[extract_folder] No li element for count', current_count, ', skipping')
         return
     }
 
@@ -113,11 +109,9 @@ socket.on('folder_extract', function( strap_addr ){
     extract_folder_current_li[current_count].parent().find('ul, .tog_elem, .fold_epub, .fold_djvu').remove();
 
     var list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
-    console.log('[extract_folder] list_pdf:', list_pdf)
 
     // sorted list
     var sorted_list = sort_list_pattern(list_pdf, pdf_months)
-    console.log('[extract_folder] sorted_list:', sorted_list)
 
     handle_docs(sorted_list, new_ul, current_count)
 
@@ -156,17 +150,13 @@ function open_djvu(){
 
 socket.on('make_elems', function(){
 
-    console.log('[extract_folder] Received make_elems signal')
-
     // Guard: only run once per page load
     if (extract_folder_initialized) {
-        console.log('[extract_folder] Already initialized, skipping')
         return
     }
     extract_folder_initialized = true
 
     var all_li = $('li');
-    console.log('[extract_folder] Scanning', all_li.length, 'li elements for !fold pattern')
 
     all_li.each(function(){
 
@@ -185,23 +175,18 @@ socket.on('make_elems', function(){
 
         // Skip if this is a !fold...!inside pattern (handled by list_folders_for_extract)
         if ( txt.match(reg_inside) ){
-            console.log('[extract_folder] Skipping !fold...!inside pattern:', txt.substring(0, 100))
             return true  // continue to next iteration
         }
 
         if ( txt.match(reg) ){
 
-            console.log('[extract_folder] Found !fold in:', txt.substring(0, 100))
             extract_folder_current_li[extract_folder_count_pdf] = $(this)
             var addr = txt.split('!fold')[1].trim()
-            console.log('[extract_folder] Extracted address:', addr)
             addr_short = addr.split('/').slice(1).join('/')
             extract_folder_addr_relat[extract_folder_count_pdf] = relative_addr(addr, addr_short)
             extract_folder_addr_abs[extract_folder_count_pdf] = absolute_addr(addr)
             extract_folder_count_pdf += 1
             var count = extract_folder_count_pdf-1
-            addr_sent = addr + '§§' + count
-            console.log('[extract_folder] Emitting folder_extract:', addr_sent)
             socket.emit('folder_extract', addr + '§§' + count)
 
 
@@ -222,18 +207,11 @@ function handle_docs(sorted_list, new_ul, current_count){
           */
 
           var first_elem = sorted_list[0]
-          console.log('[extract_folder] handle_docs - first_elem:', first_elem)
-          console.log('[extract_folder] handle_docs - ebook_ext result:', ebook_ext(first_elem))
-          console.log('[extract_folder] handle_docs - addr_relat[current_count]:', extract_folder_addr_relat[current_count])
-          console.log('[extract_folder] handle_docs - addr_abs[current_count]:', extract_folder_addr_abs[current_count])
 
           // detect ebook
 
           if ( ebook_ext(first_elem) ){
-              console.log('[extract_folder] Processing as ebook, calling make_li_embed for each file')
-              // Use addr_abs instead of addr_relat for web-accessible paths
               var web_path = extract_folder_addr_abs[current_count]
-              console.log('[extract_folder] Using web_path:', web_path)
               sorted_list.forEach( function(elem){
                               make_li_embed(web_path, elem, new_ul)
                          })
@@ -254,9 +232,7 @@ function handle_docs(sorted_list, new_ul, current_count){
           // detect video
 
           else if ( video_ext(first_elem) ){
-              console.log('[extract_folder] Processing as video, calling make_li_video for each file')
               var web_path = extract_folder_addr_abs[current_count]
-              console.log('[extract_folder] Using web_path for videos:', web_path)
               sorted_list.forEach( function(elem){
                               make_li_video(web_path, elem, new_ul)
                          })
@@ -268,7 +244,6 @@ function handle_docs(sorted_list, new_ul, current_count){
           if (funfSpan.length > 0 && funfSpan.text().trim() === '[+]') {
               // This is a closed subfolder, keep it hidden
               new_ul.hide()
-              console.log('[extract_folder] Hiding new_ul because parent has [+]')
           }
           // replace the tag with the list of li embed..
           extract_folder_current_li[current_count].parent().replaceWith(new_ul)
@@ -349,7 +324,6 @@ function relative_addr(addr, addr_short){
           var reg_public = /public\/(.+)/   // capture everything after public/
           match = addr.match(reg_public)
           if (match) {
-              console.log('[extract_folder] absolute_addr: matched public/, returning:', match[1])
               return ensureLeadingSlash(match[1])
           }
 
@@ -366,9 +340,7 @@ function relative_addr(addr, addr_short){
           Full address is addr + '/' + elem
 
           */
-          console.log('[extract_folder] make_li_embed - addr:', addr, 'elem:', elem)
           var full_path = addr + '/' + elem
-          console.log('[extract_folder] make_li_embed - full_path:', full_path)
 
           // Extract name without extension for any ebook type
           var display_name = elem.replace(/\.(pdf|epub|djvu)$/i, '')

@@ -25,35 +25,27 @@ var list_folders_initialized = false  // Guard to prevent multiple runs
 
 var list_li = $('body').find('li');
 var length_list_li = list_li.length;
-console.log('[list_folders_for_extract] Total li elements:', length_list_li)
 var num_li = 0
 
 socket.on('list_folders', function(strap_addr){
-      console.log('[list_folders_for_extract] Received list_folders response:', strap_addr)
       var current_count = parseInt(strap_addr.split('§§')[0])
 
       // Guard: check if this count was already processed
       if (list_folders_processed_counts[current_count]) {
-          console.log('[list_folders_for_extract] Count', current_count, 'already processed, skipping')
           return
       }
       list_folders_processed_counts[current_count] = true
 
       strap_addr = strap_addr.split('§§')[1]
       var list_folders = strap_addr.split('\n').slice(0,-1) // list of the folders..
-      console.log('[list_folders_for_extract] list_folders:', list_folders)
       // code for a given folder
       make_code_folder(strap_addr, addr_relat, list_folders, current_count)
-      console.log('[list_folders_for_extract] make_code_folder called for count:', current_count)
       if ( current_count == Object.keys(addr_relat).length-1 & !toggle_pdf_ok){
           toggle_pdf()            // when clicking on - or + open or close..
           toggle_pdf_ok = true
-          //css({'color':'#ffe6f2'})
-          //$('.funf').parent().parent().parent().css({'color':'#ffe6f2'})
           $('.funf').off('click').on('click', function() {
               // Find the ul that is a direct child of the parent li
               var sublist = $(this).closest('li').children('ul')
-              console.log('[funf click] sublist found:', sublist.length, 'visible:', sublist.is(':visible'))
               if ($(this).text() == ' [+]'){
                   // [+] = fermé, on ouvre
                   $(this).text(' [-]')
@@ -72,7 +64,7 @@ socket.on('list_folders', function(strap_addr){
 
 // Guard: only run once
 if (list_folders_initialized) {
-    console.log('[list_folders_for_extract] Already initialized, skipping li scan')
+    // Already initialized
 } else {
     list_folders_initialized = true
 
@@ -90,20 +82,10 @@ $('li').each(function(){
     var fullreg = /\!fold.+\!inside/
     var txt = $(this).html().split('\n')[0]
 
-    // Debug: log all li elements that contain !fold
-    if (txt.indexOf('!fold') !== -1) {
-        console.log('[list_folders_for_extract] DEBUG li with !fold:', txt.substring(0, 100))
-        console.log('[list_folders_for_extract] DEBUG fullreg match:', txt.match(fullreg))
-    }
-
-    //if ( txt.match(reg) ){  socket.emit('make_elems', '')  } // alert('founnnndddd !fold !!!!')
     if ( txt.match(fullreg) ){
-          console.log('[list_folders_for_extract] Found !fold...!inside pattern:', txt.substring(0, 80))
-          //$(this).css({'color':'#ffb3d9'})
           current_li[count_pdf] = $(this)
           // folder address
           var addr = txt.split('!fold')[1].split('!inside')[0].trim()
-          console.log('[list_folders_for_extract] Extracted addr:', addr)
           addroot = addr
           addr_short = addr.split('/').slice(1).join('/')
           // relative address
@@ -125,7 +107,6 @@ $('li').each(function(){
             // no need to go inside folder..
             num_li += 1
             if (num_li == length_list_li){      // if no !fold inside found, emit make_elems
-                console.log('[list_folders_for_extract] Emitting make_elems signal')
                 socket.emit('make_elems', '')
                 // use extract_folder..
             }
@@ -163,8 +144,6 @@ function make_code_folder(strap_addr,
       // Insert folder list directly (no wrapper toggle)
       originalUl.before(ul_folders)
       originalUl.remove()
-
-      console.log('[list_folders_for_extract] Folder structure inserted at correct position')
 
 }
 
