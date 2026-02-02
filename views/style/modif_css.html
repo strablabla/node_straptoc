@@ -309,6 +309,8 @@ function color_tags_under_date(dic_li){
             var elem = $(this).parent().prev()
             if ( elem.hasClass('date') ){
                 var rubr = $(this).text().split('[-]')[0].trim().split('\n')[0].trim()
+                // Clean :: and [+] from the text for matching
+                rubr = rubr.replace(/\s*::\s*/g, '').replace(/\s*\[\+\]\s*/g, '').trim()
             for (const [key, dic_style] of Object.entries(dic_li)) {
                  if( rubr == key ){
                         color_tags_with_borders($(this), dic_style)
