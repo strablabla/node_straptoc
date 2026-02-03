@@ -838,12 +838,43 @@ div.syntax h1 {
  * Fix spacing for code blocks inside list items
  * ===============================================*/
 
-/* Reduce pre margin when inside a list item to maintain consistent line spacing */
-li pre {
-    margin: 5px 0;
+/* Remove margin from <p> inside list items (created by markdown with code blocks) */
+li > p {
+    margin-bottom: 0 !important;
 }
 
-/* Even less margin for deeply nested lists */
-li li pre {
-    margin: 3px 0;
+/* Reduce pre margin when inside a list item to maintain consistent line spacing */
+li pre {
+    margin: 2px 0 !important;
+    padding: 5px 10px !important;
+}
+
+/* Also target pre > code inside lists */
+li pre code {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Reduce margin of nested ul/ol that contain code blocks */
+li ul:has(pre),
+li ol:has(pre) {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+}
+
+/* List items containing only a pre should have minimal spacing */
+li:has(> pre) {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Remove extra margin from ul/ol that directly follow a pre inside li */
+li pre + ul,
+li pre + ol {
+    margin-top: 0;
+}
+
+/* Ensure li containing pre has consistent line-height */
+li:has(pre) {
+    line-height: normal;
 }
