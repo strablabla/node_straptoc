@@ -833,3 +833,17 @@ div.syntax h1 {
 .fold_video {
     list-style-type: none;
 }
+
+/*==================================================
+ * Fix spacing for code blocks inside list items
+ * ===============================================*/
+
+/* Reduce pre margin when inside a list item to maintain consistent line spacing */
+li pre {
+    margin: 5px 0;
+}
+
+/* Even less margin for deeply nested lists */
+li li pre {
+    margin: 3px 0;
+}
