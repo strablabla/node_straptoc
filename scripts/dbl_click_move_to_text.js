@@ -74,7 +74,7 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
     if (elem.is('li')){
         // Clone element and remove lazy video lists to get clean text
         var elemClone = elem.clone()
-        elemClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid').remove()
+        elemClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove()
         var patt = elemClone.text().split('\n')[0]
         console.log('[pattern_and_flip] Element is <li>, pattern:', patt);
 
@@ -90,14 +90,14 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
 
         if (prevElem.length > 0) {
             var prevClone = prevElem.clone()
-            prevClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid').remove()
+            prevClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove()
             patt_prev = prevClone.text().split('\n')[0];
             console.log('[pattern_and_flip] Previous sibling pattern:', patt_prev);
         }
 
         if (nextElem.length > 0) {
             var nextClone = nextElem.clone()
-            nextClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid').remove()
+            nextClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove()
             patt_next = nextClone.text().split('\n')[0];
             console.log('[pattern_and_flip] Next sibling pattern:', patt_next);
         }
