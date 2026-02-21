@@ -71,10 +71,142 @@ $('#content').append(manuscript_state) // 266, 353, 354
 
 toggle_panel('manuscript')
 
+// Hide palette and subpanels when the drawing panel is toggled
+$('#manuscript_state, #icon_manuscript').on('click', function(){
+    palette.hide()
+    linewidth_choices.hide()
+    $('#panel_geom_shapes').hide()
+})
+
 //---------------
 
 // gomme 263, pointe stylo 260, disquette 226
 // avion envoyer 224, plume 218
+
+// ============= Tool state management
+
+var currentTool = 'pen'  // 'pen', 'eraser' or 'pointer'
+var colstroke = "#0000a0"
+var linewidth = 7
+var penWidth = 7
+var eraserWidth = 20
+var zoomLevel = 1
+var panX = 0
+var panY = 0
+
+function updateToolSelection(tool) {
+    currentTool = tool
+    // Reset all tool icon backgrounds and borders
+    $('#manuscript_icon_pen, #manuscript_icon_rubber, #manuscript_icon_pointer, #manuscript_icon_drag').css({
+        'background-color': '#ffffff',
+        'border-radius': '0px',
+        'border': '2px solid transparent'
+    })
+    // Highlight selected tool with background and border
+    if (tool === 'pen') {
+        $('#manuscript_icon_pen').css({
+            'background-color': '#cce0ff',
+            'border-radius': '4px',
+            'border': '2px solid #3366cc'
+        })
+    } else if (tool === 'eraser') {
+        $('#manuscript_icon_rubber').css({
+            'background-color': '#cce0ff',
+            'border-radius': '4px',
+            'border': '2px solid #3366cc'
+        })
+    } else if (tool === 'pointer') {
+        $('#manuscript_icon_pointer').css({
+            'background-color': '#cce0ff',
+            'border-radius': '4px',
+            'border': '2px solid #3366cc'
+        })
+    } else if (tool === 'drag') {
+        $('#manuscript_icon_drag').css({
+            'background-color': '#cce0ff',
+            'border-radius': '4px',
+            'border': '2px solid #3366cc'
+        })
+    }
+    // Update active linewidth from tool-specific size
+    if (tool === 'pen') {
+        linewidth = penWidth
+    } else if (tool === 'eraser') {
+        linewidth = eraserWidth
+    }
+    if (tool !== 'pointer' && tool !== 'drag') {
+        list_moves_col.push([moves.length, colstroke, linewidth])
+        // Update slider to reflect current tool size
+        $('#size_slider').val(linewidth)
+        $('#size_slider_value').text(linewidth + 'px')
+        // Update indicator
+        $('#control_size_color').css({'height': linewidth, 'margin-bottom': -linewidth/2})
+    }
+    updateCursor()
+}
+
+// ============= Size preview circle
+
+function showSizePreview() {
+    var el = document.getElementById('size_preview')
+    if (!el) return
+    var displaySize = Math.max(4, Math.round(linewidth * zoomLevel))
+    el.style.width = displaySize + 'px'
+    el.style.height = displaySize + 'px'
+    el.style.background = (currentTool === 'eraser') ? 'rgba(0,0,0,0.15)' : colstroke
+    el.style.opacity = '0.7'
+    el.style.display = 'block'
+}
+
+function hideSizePreview() {
+    var el = document.getElementById('size_preview')
+    if (el) el.style.display = 'none'
+}
+
+// ============= Wrapper border (visible when zoomed/panned)
+
+function updateWrapperBorder() {
+    var wrapper = document.getElementById('canvas_wrapper')
+    if (!wrapper) return
+    if (zoomLevel !== 1 || panX !== 0 || panY !== 0) {
+        wrapper.style.border = '1px dashed #888'
+    } else {
+        wrapper.style.border = '1px dashed transparent'
+    }
+}
+
+// ============= Custom cursor
+
+function updateCursor() {
+    if (currentTool === 'pointer') {
+        $('#canvas').css('cursor', 'crosshair')
+        return
+    }
+    if (currentTool === 'drag') {
+        $('#canvas').css('cursor', 'grab')
+        return
+    }
+    var size = Math.max(6, Math.min(Math.round(linewidth * zoomLevel), 128))
+    // Ensure even size for centered hotspot
+    if (size % 2 !== 0) size += 1
+    var half = size / 2
+    var svg
+    if (currentTool === 'pen') {
+        // Round cursor for pen
+        svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '">' +
+              '<circle cx="' + half + '" cy="' + half + '" r="' + (half - 1) + '" fill="rgba(0,0,0,0.15)" stroke="black" stroke-width="1"/>' +
+              '</svg>'
+    } else {
+        // Square cursor for eraser
+        svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '">' +
+              '<rect x="1" y="1" width="' + (size - 2) + '" height="' + (size - 2) + '" fill="rgba(0,0,0,0.15)" stroke="black" stroke-width="1"/>' +
+              '</svg>'
+    }
+    var encoded = 'data:image/svg+xml;base64,' + btoa(svg)
+    $('#canvas').css('cursor', 'url(' + encoded + ') ' + half + ' ' + half + ', crosshair')
+}
+
+// =============
 
 var manuscript_icon_bin = $('<img/>').attr('src',"capicon/svg/030.svg")
                                      .attr('id', 'manuscript_icon_bin')
@@ -93,12 +225,16 @@ manuscript_icon_bin.css({
                         })
 $('#manuscript_panel').append(manuscript_icon_bin)
 $('#manuscript_icon_bin').click(function(){           // refresh the canvas
-      erase(canvas)
+      erase()
 })
 
-function erase(canvas) {
-      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-      moves = new Array()
+function erase() {
+      var layer = getActiveLayer()
+      layer.context.clearRect(0, 0, layer.canvas.width, layer.canvas.height)
+      layer.moves = []
+      layer.list_moves_col = [[0, colstroke, linewidth]]
+      moves = layer.moves
+      list_moves_col = layer.list_moves_col
 }
 
 //------------- Save
@@ -120,26 +256,169 @@ manuscript_icon_save.css({
                         })
 $('#manuscript_panel').append(manuscript_icon_save)
 
-$('#manuscript_icon_save').click(function(){     // convert the canvas drawing to picture..
-     convertCanvasToImage($('#canvas'))
+// Save dialog div
+var save_dialog = $('<div/>').attr('id', 'manuscript_save_dialog')
+                              .css({
+                                  'display': 'none',
+                                  'position': 'absolute',
+                                  'top': '50%',
+                                  'left': '50%',
+                                  'transform': 'translate(-50%, -50%)',
+                                  'background': '#fff',
+                                  'border': '1px solid #999',
+                                  'box-shadow': '0.3em 0.3em 1em rgba(0,0,0,0.3)',
+                                  'padding': '20px',
+                                  'z-index': '10',
+                                  'text-align': 'center'
+                              })
+
+var save_label = $('<div/>').text('Titre du dessin :').css({'margin-bottom': '10px', 'font-size': '14px'})
+var save_input = $('<input/>').attr('type', 'text').attr('id', 'manuscript_save_title')
+                               .css({'width': '200px', 'padding': '5px', 'border': '1px solid #ccc', 'font-size': '14px'})
+var save_btn_ok = $('<button/>').text('Sauver').css({'margin': '10px 5px 0', 'padding': '5px 15px', 'cursor': 'pointer'})
+var save_btn_cancel = $('<button/>').text('Annuler').css({'margin': '10px 5px 0', 'padding': '5px 15px', 'cursor': 'pointer'})
+
+save_dialog.append(save_label).append(save_input).append($('<div/>').append(save_btn_ok).append(save_btn_cancel))
+$('#manuscript_panel').append(save_dialog)
+
+function openSaveDialog() {
+    save_input.val('')
+    save_dialog.show()
+    save_input.focus()
+}
+
+function closeSaveDialog() {
+    save_dialog.hide()
+}
+
+save_btn_ok.click(function(){
+    var title = save_input.val().trim()
+    if (title !== '') {
+        saveCanvasAsImage(title)
+    }
+    closeSaveDialog()
 })
 
-//------------- Palette
+save_btn_cancel.click(function(){
+    closeSaveDialog()
+})
+
+save_input.keypress(function(e){
+    if (e.which === 13) { save_btn_ok.click() }  // Enter
+})
+
+$('#manuscript_icon_save').click(function(){
+    openSaveDialog()
+})
+
+//------------- Home (reset zoom)
+
+var manuscript_icon_home = $('<img/>').attr('src',"capicon/svg/001.svg")
+                                     .attr('id', 'manuscript_icon_home')
+manuscript_icon_home.css({
+                          'background-color': '#ffffff',
+                          'padding': '2px',
+                          'position': 'absolute',
+                          'right': '18px',
+                          'top':'315px',
+                          'width': '20px',
+                          'z-index': '3',
+                          'cursor': 'pointer'
+                        })
+$('#manuscript_panel').append(manuscript_icon_home)
+
+$('#manuscript_icon_home').click(function(){
+     zoomLevel = 1
+     panX = 0
+     panY = 0
+     var wrapper = document.getElementById('canvas_wrapper')
+     wrapper.style.transformOrigin = '0 0'
+     wrapper.style.transform = 'translate(0px,0px) scale(1)'
+     updateCursor()
+     updateWrapperBorder()
+})
+
+//------------- Drag tool icon
+
+var manuscript_icon_drag = $('<img/>').attr('src',"capicon/svg/249.svg")
+                                     .attr('id', 'manuscript_icon_drag')
+manuscript_icon_drag.css({
+                          'background-color': '#ffffff',
+                          'border': '2px solid transparent',
+                          'border-radius': '0px',
+                          'padding': '2px',
+                          'position': 'absolute',
+                          'right': '18px',
+                          'top':'350px',
+                          'width': '20px',
+                          'z-index': '3'
+                        })
+$('#manuscript_panel').append(manuscript_icon_drag)
+
+$('#manuscript_icon_drag').click(function(){
+     updateToolSelection('drag')
+})
+
+//------------- Pointer tool icon
+
+var manuscript_icon_pointer = $('<img/>').attr('src',"capicon/svg/087.svg")
+                                     .attr('id', 'manuscript_icon_pointer')
+manuscript_icon_pointer.css({
+                          'background-color': '#ffffff',
+                          'border': '2px solid transparent',
+                          'border-radius': '0px',
+                          'padding': '2px',
+                          'position': 'absolute',
+                          'right': '18px',
+                          'top':'190px',
+                          'width': '20px',
+                          'z-index': '3'
+                        })
+$('#manuscript_panel').append(manuscript_icon_pointer)
+
+$('#manuscript_icon_pointer').click(function(){
+     updateToolSelection('pointer')
+})
+
+//------------- Pen tool icon
+
+var manuscript_icon_pen = $('<img/>').attr('src',"capicon/svg/260.svg")
+                                     .attr('id', 'manuscript_icon_pen')
+manuscript_icon_pen.css({
+                          'background-color': '#cce0ff', // pen selected by default
+                          'border-radius': '4px',
+                          'border': '2px solid #3366cc',
+                          'padding': '2px',
+                          'position': 'absolute',
+                          'right': '18px',
+                          'top':'220px',
+                          'width': '20px',
+                          'z-index': '3'
+                        })
+$('#manuscript_panel').append(manuscript_icon_pen)
+
+$('#manuscript_icon_pen').click(function(){
+     // Switch to pen tool
+     if (currentTool === 'eraser') {
+         colstroke = $('.inp').val() || "#0000a0"
+         list_moves_col.push([moves.length, colstroke, linewidth])
+         $('#control_size_color').css({'background-color': colstroke, 'border': 'none'})
+     }
+     updateToolSelection('pen')
+})
+
+//------------- Palette (color picker only)
 
 var manuscript_icon_palette = $('<img/>').attr('src',"capicon/svg/039.svg")
                                      .attr('id', 'manuscript_icon_palette')
 manuscript_icon_palette.css({
-                          'background-color': '#ffffff', //
-                          'padding-bottom': '0px',
-                          'padding-top': '0px',
-                          'padding-left': '0px',
-                          'padding-right': '0px',
+                          'background-color': '#ffffff',
+                          'padding': '2px',
                           'position': 'absolute',
-                          'right': '20px',
+                          'right': '18px',
                           'top':'250px',
-                          'width': '15px',
+                          'width': '20px',
                           'z-index': '3'
-
                         })
 $('#manuscript_panel').append(manuscript_icon_palette)
 
@@ -153,18 +432,23 @@ var input_color = $('<input/>').addClass("inp")
 $('#manuscript_panel').append(palette)
 $('#manuscript_panel').append(input_color)
 
-$('#manuscript_icon_palette').click(function(){     // convert the canvas drawing to picture..
+// Palette color selection handler (bind once)
+palette.on('click', function(){
+    colstroke = $('.inp').val()
+    list_moves_col.push([moves.length, colstroke, linewidth])
+    $('#control_size_color').css({'background-color': colstroke, 'border': 'none'})
+    // Also switch to pen if eraser was active
+    if (currentTool === 'eraser') {
+        updateToolSelection('pen')
+    }
+})
 
+$('#manuscript_icon_palette').click(function(){
+     // Toggle palette only (does not change tool)
      if (palette.css('display') == 'none'){
         input_color.click()
      }
      else{ palette.hide() }
-     palette.click(function(){
-         colstroke = $('.inp').val()
-         list_moves_col.push([moves.length, colstroke, linewidth])
-         $('#control_size_color').css({'background-color': colstroke, 'border': 'none'})
-     })
-
 })
 
 //------------- Rubber
@@ -173,105 +457,95 @@ var manuscript_icon_rubber = $('<img/>').attr('src',"capicon/svg/263.svg")
                                      .attr('id', 'manuscript_icon_rubber')
 manuscript_icon_rubber.css({
                           'background-color': '#ffffff', //
-                          'padding-bottom': '0px',
-                          'padding-top': '0px',
-                          'padding-left': '0px',
-                          'padding-right': '0px',
+                          'border': '2px solid transparent',
+                          'padding': '2px',
                           'position': 'absolute',
-                          'right': '20px',
+                          'right': '18px',
                           'top':'280px',
-                          'width': '15px',
+                          'width': '20px',
                           'z-index': '3'
 
                         })
 $('#manuscript_panel').append(manuscript_icon_rubber)
 $('#manuscript_icon_rubber').click(function(){
-     //alert($('#canvas_manuscript').css('background-color'))
      colstroke = manuscript_canvas_color
      list_moves_col.push([moves.length, colstroke, linewidth])  // change color
      $('#control_size_color').css({'background-color': '#ffffff','border': '3px solid black'}) // change color of indicator
-     //alert(colstroke)
+     updateToolSelection('eraser')
 })
 
-//-----------  line width
-
-var manuscript_icon_linewidth = $('<img/>').attr('src',"capicon/svg/217.svg")
-                                     .attr('id', 'manuscript_icon_linewidth')
-manuscript_icon_linewidth.css({
-                          'background-color': '#ffffff', //
-                          'padding-bottom': '0px',
-                          'padding-top': '0px',
-                          'padding-left': '0px',
-                          'padding-right': '0px',
-                          'position': 'absolute',
-                          'right': '20px',
-                          'top':'310px',
-                          'width': '15px',
-                          'z-index': '3'
-
-                        })
-$('#manuscript_panel').append(manuscript_icon_linewidth)
+//-----------  line width (slider)
 
 var linewidth_choices = $('<div/>').addClass("linewidth")
                          .attr('id',"linewidth_choices")
                          .css({
                                 'z-index':'6',
-                                'background-color': '#ffffff', //
-                                'box-shadow': '0.5em 0.5em 2.7em',
+                                'background-color': '#ffffff',
+                                'box-shadow': '0.3em 0.3em 1em rgba(0,0,0,0.3)',
                                 'position':'absolute',
-                                'right':'60px',
-                                'width': '70px',
-                                'height': '120px',
-                                'padding-left':'25px'
+                                'right':'50%',
+                                'bottom': '50px',
+                                'transform': 'translateX(50%)',
+                                'width': '180px',
+                                'height': '45px',
+                                'padding': '10px 15px',
+                                'display': 'flex',
+                                'align-items': 'center',
+                                'gap': '8px'
                               })
 
-all_sizes = {}
-var list_tool_sizes = {'small':[10,5],'medium':[13,13], 'big':[16,20]}
-for (tool_size of Object.keys(list_tool_sizes)) {
-    var curr_size = list_tool_sizes[tool_size][1]
-    var size_icon = list_tool_sizes[tool_size][0]
-    all_sizes[tool_size] = $('<div/>').addClass('tool_size')
-                                      .attr('size', curr_size)
-    all_sizes[tool_size].append($('<img/>').attr('src',"capicon/svg/260.svg").css({'width': size_icon + 'px'}))
-    all_sizes[tool_size].click(function(){
-         //alert('changing the size !!')
-         linewidth = $(this).attr('size')
-         list_moves_col.push([moves.length, colstroke, linewidth])  // change linewidth value..
-         $('#control_size_color').css({'height': linewidth, 'margin-bottom':-linewidth/2}) // change linewisth indicator
-    })
+var size_slider = $('<input/>').attr('type', 'range')
+                               .attr('id', 'size_slider')
+                               .attr('min', '1')
+                               .attr('max', '40')
+                               .attr('value', linewidth)
+                               .css({'width': '120px', 'cursor': 'pointer'})
 
-    linewidth_choices.append(all_sizes[tool_size])
-}
+var size_slider_value = $('<span/>').attr('id', 'size_slider_value')
+                                    .text(linewidth + 'px')
+                                    .css({'font-size': '12px', 'min-width': '30px'})
+
+size_slider.on('input', function(){
+    var newSize = parseInt($(this).val())
+    linewidth = newSize
+    // Save size for the current tool
+    if (currentTool === 'pen') { penWidth = newSize }
+    else { eraserWidth = newSize }
+    list_moves_col.push([moves.length, colstroke, linewidth])
+    $('#control_size_color').css({'height': linewidth, 'margin-bottom': -linewidth/2})
+    $('#size_slider_value').text(newSize + 'px')
+    updateCursor()
+    showSizePreview()
+})
+
+linewidth_choices.append(size_slider).append(size_slider_value)
 
 linewidth_choices.hide()
 $('#manuscript_panel').append(linewidth_choices)
-
-$('#manuscript_icon_linewidth').click(function(){
-          //alert('I am here !!!!')
-          linewidth_choices.toggle()
-       })
 
 // ------------- Control current size and color..
 
 var control_size_color = $('<div/>').attr('id',"control_size_color")
                          .css({
                                 'z-index':'6',
-                                'background-color': '#0000a0', //
-                                //'box-shadow': '0.5em 0.5em 2.7em',
+                                'background-color': '#0000a0',
                                 'padding-top':'3px',
                                 'position':'absolute',
                                 'right':'50%',
                                 'bottom': '25px',
                                 'width': '50px',
-                                'height': '5px',
+                                'height': '7px',
                                 'padding-left':'25px',
                                 'color': colstroke,
-                                //'font-size': '20px',
-
+                                'cursor': 'pointer'
                               })
 
 $('#manuscript_panel').append(control_size_color)
-//control_size_color.text('---')
+
+// Click on control_size_color toggles the linewidth slider
+$('#control_size_color').click(function(){
+    linewidth_choices.toggle()
+})
 
 // ------------- Geometric shapes
 
@@ -297,22 +571,63 @@ $('#manuscript_panel').append(panel_geom_shapes)
 var geom_shapes_icon = $('<img/>').attr('src',"various_icon/compas.svg")
                                      .attr('id', 'geom_shapes_icon')
 geom_shapes_icon.css({
-                          'background-color': '#ffffff', //
-                          'padding-bottom': '0px',
-                          'padding-top': '0px',
-                          'padding-left': '0px',
-                          'padding-right': '0px',
+                          'background-color': '#ffffff',
+                          'padding': '2px',
                           'position': 'absolute',
-                          'right': '20px',
-                          'top':'350px',
-                          'width': '15px',
+                          'right': '18px',
+                          'top':'385px',
+                          'width': '20px',
                           'z-index': '3'
-
                         })
 $('#manuscript_panel').append(geom_shapes_icon)
 $('#geom_shapes_icon').click(function(){
      $('#panel_geom_shapes').toggle()
 })
+
+// ------------- Layer management
+
+var layer_panel = $('<div/>').attr('id', 'layer_panel')
+                              .css({
+                                  'position': 'absolute',
+                                  'right': '14px',
+                                  'top': '435px',
+                                  'width': '32px',
+                                  'z-index': '3',
+                                  'font-size': '10px',
+                                  'text-align': 'center'
+                              })
+
+var layer_add_btn = $('<div/>').text('+')
+                                .css({
+                                    'cursor': 'pointer',
+                                    'background': '#e8e8e8',
+                                    'border': '1px solid #ccc',
+                                    'border-radius': '3px',
+                                    'margin-bottom': '3px',
+                                    'padding': '2px',
+                                    'font-weight': 'bold',
+                                    'font-size': '14px'
+                                })
+
+var layer_remove_btn = $('<div/>').text('-')
+                                  .css({
+                                      'cursor': 'pointer',
+                                      'background': '#e8e8e8',
+                                      'border': '1px solid #ccc',
+                                      'border-radius': '3px',
+                                      'margin-top': '3px',
+                                      'padding': '2px',
+                                      'font-weight': 'bold',
+                                      'font-size': '14px'
+                                  })
+
+var layer_list = $('<div/>').attr('id', 'layer_list')
+
+layer_panel.append(layer_add_btn).append(layer_list).append(layer_remove_btn)
+$('#manuscript_panel').append(layer_panel)
+
+layer_add_btn.click(function(){ addLayer() })
+layer_remove_btn.click(function(){ if (layers.length > 1) removeLayer(activeLayerIndex) })
 
 //-----------   canvas
 
@@ -321,7 +636,9 @@ var canvas_width = manuscript_panel_width - 100
 var canvas_manuscript = $('<div/>').css({
                                       'width': canvas_width + 'px',
                                       'height':'450px',
-                                      'background-color': manuscript_canvas_color
+                                      'background-color': manuscript_canvas_color,
+                                      'position': 'relative',
+                                      'overflow': 'hidden'
                                       })
                                     .attr('id','canvas_manuscript')
 
@@ -329,35 +646,203 @@ $('#manuscript_panel').append(canvas_manuscript)
 var moves = new Array();
 var pressed;
 
+// ============= Layer system
+
+var layers = []
+var activeLayerIndex = 0
+var layerCounter = 0
+
+function getActiveLayer() {
+    return layers[activeLayerIndex]
+}
+
+function createLayerCanvas(name) {
+    layerCounter++
+    var layerCanvas = document.createElement('canvas')
+    layerCanvas.setAttribute('width', canvas_width)
+    layerCanvas.setAttribute('height', 450)
+    layerCanvas.style.position = 'absolute'
+    layerCanvas.style.left = '0'
+    layerCanvas.style.top = '0'
+    layerCanvas.className = 'layer-canvas'
+    var layerContext = layerCanvas.getContext('2d')
+    layerContext.lineJoin = 'round'
+    return {
+        canvas: layerCanvas,
+        context: layerContext,
+        moves: [],
+        list_moves_col: [[0, colstroke, linewidth]],
+        visible: true,
+        name: name || ('Calque ' + layerCounter)
+    }
+}
+
+function addLayer(name) {
+    if (layers.length > 0) {
+        layers[activeLayerIndex].moves = moves
+        layers[activeLayerIndex].list_moves_col = list_moves_col
+    }
+    var layer = createLayerCanvas(name)
+    layers.push(layer)
+    var wrapper = document.getElementById('canvas_wrapper')
+    var inputCanvas = document.getElementById('canvas')
+    if (inputCanvas) {
+        wrapper.insertBefore(layer.canvas, inputCanvas)
+    } else {
+        wrapper.appendChild(layer.canvas)
+    }
+    activeLayerIndex = layers.length - 1
+    context = layer.context
+    moves = layer.moves
+    list_moves_col = layer.list_moves_col
+    updateLayerPanel()
+    return layer
+}
+
+function removeLayer(index) {
+    if (layers.length <= 1) return
+    layers[index].canvas.parentNode.removeChild(layers[index].canvas)
+    layers.splice(index, 1)
+    if (activeLayerIndex >= layers.length) {
+        activeLayerIndex = layers.length - 1
+    }
+    context = layers[activeLayerIndex].context
+    moves = layers[activeLayerIndex].moves
+    list_moves_col = layers[activeLayerIndex].list_moves_col
+    updateLayerPanel()
+}
+
+function setActiveLayer(index) {
+    if (index === activeLayerIndex) { updateLayerPanel(); return }
+    if (layers.length > 0 && activeLayerIndex < layers.length) {
+        layers[activeLayerIndex].moves = moves
+        layers[activeLayerIndex].list_moves_col = list_moves_col
+    }
+    activeLayerIndex = index
+    context = layers[index].context
+    moves = layers[index].moves
+    list_moves_col = layers[index].list_moves_col
+    updateLayerPanel()
+}
+
+function toggleLayerVisibility(index) {
+    layers[index].visible = !layers[index].visible
+    layers[index].canvas.style.display = layers[index].visible ? 'block' : 'none'
+    updateLayerPanel()
+}
+
+function updateLayerPanel() {
+    var listDiv = $('#layer_list')
+    if (!listDiv.length) return
+    listDiv.empty()
+    for (var i = layers.length - 1; i >= 0; i--) {
+        (function(idx) {
+            var item = $('<div/>').css({
+                'padding': '2px',
+                'margin': '1px 0',
+                'cursor': 'pointer',
+                'background': idx === activeLayerIndex ? '#cce0ff' : '#f5f5f5',
+                'border': idx === activeLayerIndex ? '1px solid #3366cc' : '1px solid #ddd',
+                'border-radius': '2px',
+                'font-size': '9px',
+                'display': 'flex',
+                'align-items': 'center',
+                'gap': '2px'
+            })
+            var eye = $('<span/>').html(layers[idx].visible ? '&#9679;' : '&#9675;')
+                                   .css({'cursor': 'pointer', 'font-size': '10px', 'width': '12px'})
+            eye.click(function(e) { e.stopPropagation(); toggleLayerVisibility(idx) })
+            var nm = $('<span/>').text(idx + 1).css({'flex': '1', 'overflow': 'hidden'})
+            item.append(eye).append(nm)
+            item.click(function() { setActiveLayer(idx) })
+            listDiv.append(item)
+        })(i)
+    }
+}
+
+// =============
+
 function canvas_actions(){
 
-    context = canvas.getContext("2d");
-
-    var offset = $('#canvas').offset()
+    var dragStartX, dragStartY, dragPanX, dragPanY
 
     $('#canvas').mousedown(function(e){
-          var offset = $('#canvas').offset()
+          if (currentTool === 'pointer') return;
+          if (currentTool === 'drag') {
+              pressed = true;
+              dragStartX = e.clientX
+              dragStartY = e.clientY
+              dragPanX = panX
+              dragPanY = panY
+              $('#canvas').css('cursor', 'grabbing')
+              return;
+          }
           pressed= true;
-          save_pixel(e, moves, offset, false)
+          linewidth_choices.hide()
+          hideSizePreview()
+          save_pixel(e, false)
           redraw();
 
     });
 
     $('#canvas').mousemove(function(e){
-          var offset = $('#canvas').offset()
+          if (currentTool === 'pointer') return;
+          if (currentTool === 'drag') {
+              if (pressed) {
+                  panX = dragPanX + (e.clientX - dragStartX)
+                  panY = dragPanY + (e.clientY - dragStartY)
+                  var wrapper = document.getElementById('canvas_wrapper')
+                  wrapper.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + zoomLevel + ')'
+                  updateWrapperBorder()
+              }
+              return;
+          }
           if(pressed){
-             save_pixel(e, moves, offset, true)
+             save_pixel(e, true)
              redraw();
       }
     });
 
     $('#canvas').mouseup(function(e){
+      if (currentTool === 'drag' && pressed) {
+          $('#canvas').css('cursor', 'grab')
+      }
       pressed = false;
     });
 
     $('#canvas').mouseleave(function(e){
+      if (currentTool === 'drag' && pressed) {
+          $('#canvas').css('cursor', 'grab')
+      }
       pressed = false;
     });
+
+    // Ctrl+wheel zoom (translate+scale to keep point under cursor in place)
+    document.getElementById('canvas').addEventListener('wheel', function(e){
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        var oldZoom = zoomLevel
+        var factor = e.deltaY > 0 ? 0.9 : 1.1
+        zoomLevel *= factor
+        zoomLevel = Math.max(0.3, Math.min(zoomLevel, 5))
+        var wrapper = document.getElementById('canvas_wrapper')
+        var cm = document.getElementById('canvas_manuscript')
+        var cmRect = cm.getBoundingClientRect()
+        // Mouse position relative to canvas_manuscript
+        var mouseX = e.clientX - cmRect.left
+        var mouseY = e.clientY - cmRect.top
+        // Canvas coordinate under cursor
+        var cx = (mouseX - panX) / oldZoom
+        var cy = (mouseY - panY) / oldZoom
+        // Adjust pan so this point stays under cursor
+        panX = mouseX - cx * zoomLevel
+        panY = mouseY - cy * zoomLevel
+        wrapper.style.transformOrigin = '0 0'
+        wrapper.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + zoomLevel + ')'
+        updateCursor()
+        updateWrapperBorder()
+    }, {passive: false});
+
     redraw();
 
 }
@@ -367,65 +852,123 @@ var canvas, context = false
 function initCanvas() {
 
       var canvasDiv = document.getElementById('canvas_manuscript');
+
+      // Create wrapper for zoom transform (canvas_manuscript clips overflow)
+      var wrapper = document.createElement('div')
+      wrapper.setAttribute('id', 'canvas_wrapper')
+      wrapper.style.position = 'absolute'
+      wrapper.style.left = '0'
+      wrapper.style.top = '0'
+      wrapper.style.width = canvas_width + 'px'
+      wrapper.style.height = '450px'
+      wrapper.style.border = '1px dashed transparent'
+      wrapper.style.boxSizing = 'border-box'
+      canvasDiv.appendChild(wrapper)
+
+      // Create first layer
+      var firstLayer = createLayerCanvas('Calque 1')
+      layers.push(firstLayer)
+      wrapper.appendChild(firstLayer.canvas)
+      activeLayerIndex = 0
+      context = firstLayer.context
+      moves = firstLayer.moves
+      list_moves_col = firstLayer.list_moves_col
+
+      // Create input overlay canvas (transparent, captures mouse events)
       canvas = document.createElement('canvas');
       canvas.setAttribute('width', canvas_width);
       canvas.setAttribute('height', 450);
       canvas.setAttribute('id', 'canvas');
-      canvasDiv.appendChild(canvas);
-      if(typeof G_vmlCanvasManager != 'undefined') {
-          canvas = G_vmlCanvasManager.initElement(canvas);
-      }
+      canvas.style.position = 'absolute'
+      canvas.style.left = '0'
+      canvas.style.top = '0'
+      canvas.style.zIndex = '2'
+      wrapper.appendChild(canvas);
+
+      // Size preview circle (top-left corner, outside wrapper so always visible)
+      var preview = document.createElement('div')
+      preview.setAttribute('id', 'size_preview')
+      preview.style.position = 'absolute'
+      preview.style.left = '15px'
+      preview.style.top = '15px'
+      preview.style.borderRadius = '50%'
+      preview.style.pointerEvents = 'none'
+      preview.style.zIndex = '10'
+      preview.style.display = 'none'
+      canvasDiv.appendChild(preview)
 
       canvas_actions()
+      updateCursor()
+      updateLayerPanel()
 
 }
 
 
-function draw_one_color(i){
+function draw_one_color(i, ctx){
 
-      context.beginPath();
-      if(moves[i][2] && i){ context.moveTo(moves[i-1][0], moves[i-1][1]);
-      }else{ context.moveTo(moves[i][0], moves[i][1]); }
-      context.lineTo(moves[i][0], moves[i][1]);
-      context.closePath();
-      context.stroke();
+      ctx.beginPath();
+      if(moves[i][2] && i){ ctx.moveTo(moves[i-1][0], moves[i-1][1]);
+      }else{ ctx.moveTo(moves[i][0], moves[i][1]); }
+      ctx.lineTo(moves[i][0], moves[i][1]);
+      ctx.closePath();
+      ctx.stroke();
 
 }
 
-var colstroke = "#0000a0"
-var linewidth = 5
 var list_moves_col = [[0, colstroke, linewidth]]  // initialisation
 function redraw(){
-      canvas.width = canvas.width; //
+      var layer = getActiveLayer()
+      var lcanvas = layer.canvas
+      var lcontext = layer.context
+      lcanvas.width = lcanvas.width; //
 
-      context.lineJoin = "round";
-
+      lcontext.lineJoin = "round";
 
       list_moves_col.push([moves.length, colstroke, linewidth]) // adding last element..
       for(var j = 0; j < list_moves_col.length-1; j++){
-            context.lineWidth = list_moves_col[j][2];
-            context.strokeStyle = list_moves_col[j][1];
+            lcontext.lineWidth = list_moves_col[j][2];
+            lcontext.strokeStyle = list_moves_col[j][1];
             for(var i = list_moves_col[j][0]; i < list_moves_col[j+1][0]; i++)
               {
-                draw_one_color(i)
+                draw_one_color(i, lcontext)
               }
       }
       list_moves_col.pop() // removing last element..
 
 }
 
-function save_pixel(e, moves, offset, state){
+function save_pixel(e, state){
 
-  moves.push([e.pageX - parseInt(offset.left),
-      e.pageY - parseInt(offset.top),
-      state]);
+  var al = getActiveLayer()
+  var rect = document.getElementById('canvas').getBoundingClientRect()
+  var x = (e.clientX - rect.left) * (canvas_width / rect.width)
+  var y = (e.clientY - rect.top) * (450 / rect.height)
+  al.moves.push([x, y, state]);
+  moves = al.moves
 
 }
 
-function convertCanvasToImage(canvas) {   // Convert canvas drawing to png image..
+function saveCanvasAsImage(title) {   // Flatten all visible layers and save as png
+       var tempCanvas = document.createElement('canvas')
+       tempCanvas.width = canvas_width
+       tempCanvas.height = 450
+       var tempCtx = tempCanvas.getContext('2d')
+       tempCtx.fillStyle = manuscript_canvas_color
+       tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+       for (var i = 0; i < layers.length; i++) {
+           if (layers[i].visible) {
+               tempCtx.drawImage(layers[i].canvas, 0, 0)
+           }
+       }
+       var link = document.createElement('a')
+       link.download = title + '.png'
+       link.href = tempCanvas.toDataURL('image/png')
+       link.click()
+}
+
+function convertCanvasToImage(canvas) {   // Convert canvas drawing to png image (legacy)
        var image = new Image();
-       image.src = canvas[0].toDataURL("image/png"); // png
-        alert(image);
+       image.src = canvas[0].toDataURL("image/png");
        return image;
 }
 
