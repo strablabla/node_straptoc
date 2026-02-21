@@ -93,6 +93,16 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
             prevClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove()
             patt_prev = prevClone.text().split('\n')[0];
             console.log('[pattern_and_flip] Previous sibling pattern:', patt_prev);
+        } else {
+            // No previous sibling - use parent li as context
+            var parentLi = elem.closest('ul').closest('li');
+            if (parentLi.length > 0) {
+                var parentClone = parentLi.clone();
+                parentClone.children('ul').remove();
+                parentClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove();
+                patt_prev = parentClone.text().split('\n')[0].trim();
+                console.log('[pattern_and_flip] Parent li pattern as prev context:', patt_prev);
+            }
         }
 
         if (nextElem.length > 0) {
@@ -100,6 +110,16 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
             nextClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove()
             patt_next = nextClone.text().split('\n')[0];
             console.log('[pattern_and_flip] Next sibling pattern:', patt_next);
+        } else {
+            // No next sibling - use first child li as context
+            var firstChildLi = elem.find('li').first();
+            if (firstChildLi.length > 0) {
+                var childClone = firstChildLi.clone();
+                childClone.children('ul').remove();
+                childClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove();
+                patt_next = childClone.text().split('\n')[0].trim();
+                console.log('[pattern_and_flip] First child li pattern as next context:', patt_next);
+            }
         }
 
         console.log('[pattern_and_flip] Final pattern for <li>:', patt);
