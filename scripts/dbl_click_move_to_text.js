@@ -84,15 +84,24 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
             console.log('[pattern_and_flip] Found deleted text, added %%% to pattern');
         }
 
-        // Get context: previous and next sibling elements
+        // Get context: previous and next elements in source order
         var prevElem = elem.prev('li');
+        var firstChildLi = elem.children('ul').find('li').first();
         var nextElem = elem.next('li');
 
+        // PREV: if previous sibling exists, use its last deepest descendant (= actual previous line in source); else use parent li
         if (prevElem.length > 0) {
-            var prevClone = prevElem.clone()
+            // Find the last deepest descendant li of the previous sibling
+            var prevTarget = prevElem;
+            var lastDesc = prevTarget.find('li').last();
+            if (lastDesc.length > 0) {
+                prevTarget = lastDesc;
+            }
+            var prevClone = prevTarget.clone()
+            prevClone.children('ul').remove();
             prevClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove()
-            patt_prev = prevClone.text().split('\n')[0];
-            console.log('[pattern_and_flip] Previous sibling pattern:', patt_prev);
+            patt_prev = prevClone.text().split('\n')[0].trim();
+            console.log('[pattern_and_flip] Previous context (last descendant of prev sibling):', patt_prev);
         } else {
             // No previous sibling - use parent li as context
             var parentLi = elem.closest('ul').closest('li');
@@ -105,21 +114,29 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
             }
         }
 
-        if (nextElem.length > 0) {
-            var nextClone = nextElem.clone()
-            nextClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove()
-            patt_next = nextClone.text().split('\n')[0];
-            console.log('[pattern_and_flip] Next sibling pattern:', patt_next);
+        // NEXT: find the next line in source order
+        // 1) first child li, 2) next sibling li, 3) next sibling of parent, 4) next sibling of grandparent, etc.
+        var nextTarget = null;
+        if (firstChildLi.length > 0) {
+            nextTarget = firstChildLi;
         } else {
-            // No next sibling - use first child li as context
-            var firstChildLi = elem.find('li').first();
-            if (firstChildLi.length > 0) {
-                var childClone = firstChildLi.clone();
-                childClone.children('ul').remove();
-                childClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove();
-                patt_next = childClone.text().split('\n')[0].trim();
-                console.log('[pattern_and_flip] First child li pattern as next context:', patt_next);
+            // Walk up the tree looking for a next sibling li
+            var cur = elem;
+            while (cur.length > 0 && !nextTarget) {
+                var nxt = cur.next('li');
+                if (nxt.length > 0) {
+                    nextTarget = nxt;
+                } else {
+                    cur = cur.closest('ul').closest('li');
+                }
             }
+        }
+        if (nextTarget) {
+            var nextClone = nextTarget.clone();
+            nextClone.children('ul').remove();
+            nextClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove();
+            patt_next = nextClone.text().split('\n')[0].trim();
+            console.log('[pattern_and_flip] Next context in source order:', patt_next);
         }
 
         console.log('[pattern_and_flip] Final pattern for <li>:', patt);
