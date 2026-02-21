@@ -22,6 +22,17 @@ var config = require('./lib/config');
 var annotations = require('./lib/annotations');
 var reminders = require('./lib/reminders');
 
+//--------------  Global error handlers (prevent server crash)
+
+process.on('uncaughtException', function(err) {
+    console.error('[UNCAUGHT EXCEPTION]', err.message);
+    console.error(err.stack);
+});
+
+process.on('unhandledRejection', function(reason, promise) {
+    console.error('[UNHANDLED REJECTION]', reason);
+});
+
 //--------------  Load configuration
 
 // Load server configuration from config.yaml
@@ -186,37 +197,26 @@ var originalConsole = {
 };
 
 // Intercept console methods and broadcast to clients
-console.log = function() {
-  originalConsole.log.apply(console, arguments);
-  var message = Array.prototype.slice.call(arguments).map(function(arg) {
-    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
-  }).join(' ');
-  io.sockets.emit('terminal_output', '[LOG] ' + message);
-};
+function safeStringify(arg) {
+  if (typeof arg !== 'object' || arg === null) return String(arg);
+  try { return JSON.stringify(arg); }
+  catch(e) { return '[Object]'; }
+}
 
-console.warn = function() {
-  originalConsole.warn.apply(console, arguments);
-  var message = Array.prototype.slice.call(arguments).map(function(arg) {
-    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
-  }).join(' ');
-  io.sockets.emit('terminal_output', '[WARN] ' + message);
-};
+function interceptConsole(original, prefix) {
+  return function() {
+    original.apply(console, arguments);
+    try {
+      var message = Array.prototype.slice.call(arguments).map(safeStringify).join(' ');
+      io.sockets.emit('terminal_output', prefix + message);
+    } catch(e) { /* ignore broadcast errors */ }
+  };
+}
 
-console.error = function() {
-  originalConsole.error.apply(console, arguments);
-  var message = Array.prototype.slice.call(arguments).map(function(arg) {
-    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
-  }).join(' ');
-  io.sockets.emit('terminal_output', '[ERROR] ' + message);
-};
-
-console.info = function() {
-  originalConsole.info.apply(console, arguments);
-  var message = Array.prototype.slice.call(arguments).map(function(arg) {
-    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
-  }).join(' ');
-  io.sockets.emit('terminal_output', '[INFO] ' + message);
-};
+console.log = interceptConsole(originalConsole.log, '[LOG] ');
+console.warn = interceptConsole(originalConsole.warn, '[WARN] ');
+console.error = interceptConsole(originalConsole.error, '[ERROR] ');
+console.info = interceptConsole(originalConsole.info, '[INFO] ');
 
 //----------- format strings..
 
@@ -344,10 +344,15 @@ io.sockets.on('connection', function (socket) {
           init.pages_data(io)
       })
 
+      socket.on('reminders_config_changed_internal', function(data) {
+          try { var conf = JSON.parse(data); }
+          catch(e) { console.error('[html_app] Invalid JSON in reminders_config_changed_internal:', e.message); return; }
+          reminders.restart(io, conf);
+      });
+
       socket.on('disconnect', () => {
         console.log('Client disconnected');
         delete users[socket.id];
-        socket.removeAllListeners(); //
       });
 
 
@@ -356,19 +361,15 @@ io.sockets.on('connection', function (socket) {
 // Use configuration from config.yaml
 var port = serverConfig.port;
 var host = serverConfig.host;
-server.listen(port, host);
-var addr = 'https://{}'.format(host) + ':{}/'.format(port) // access through 192.168.0.13..
-console.log('Server running at {}'.format(addr));
-console.log('Port: {} | Host: {}'.format(port, host));
-open(addr,"node-strap");
+server.listen(port, host, function() {
+    var addr = 'https://{}'.format(host) + ':{}/'.format(port)
+    console.log('Server running at {}'.format(addr));
+    console.log('Port: {} | Host: {}'.format(port, host));
+    open(addr,"node-strap");
+});
+server.on('error', function(err) {
+    console.error('[server] Server error:', err.message);
+});
 
 // Start reminder system
 reminders.start(io);
-
-// Listen for reminders config changes to restart the system
-io.sockets.on('connection', function(socket) {
-    socket.on('reminders_config_changed_internal', function(data) {
-        var config = JSON.parse(data);
-        reminders.restart(io, config);
-    });
-});
