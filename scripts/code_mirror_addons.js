@@ -38,6 +38,20 @@ function code_mirror_add_func(editor, socket){
 
         editor.setSize('80%',500);
 
+        // Tab → indent, Shift+Tab → dedent (fonctionne aussi sur une sélection multi-lignes)
+        editor.setOption('extraKeys', {
+            'Tab': function(cm) {
+                if (cm.somethingSelected()) {
+                    cm.indentSelection('add');
+                } else {
+                    cm.replaceSelection('    ', 'end');
+                }
+            },
+            'Shift-Tab': function(cm) {
+                cm.indentSelection('subtract');
+            }
+        });
+
         editor.on('gutterClick', function(editor, line, gutter) {
 
            if (gutter === 'CodeMirror-linenumbers') {
