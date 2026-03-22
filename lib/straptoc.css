@@ -814,7 +814,7 @@ div.syntax h1 {
 /* Lazy loading styles for videos */
 .embed_video {
     color: rgb(102, 204, 102);
-    margin: 5px 0;
+    margin: 0;
     display: inline-block;
 }
 
