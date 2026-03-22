@@ -428,7 +428,8 @@ function fill_play_list(elem_li, vid_id, numsel){
                  var tit_index_sel = '.ul_selected[index="'+ currindex + '"]'
                  // ul_selected
                  var tit = $(tit_index_sel)
-                 tit.next().find('.icon_title').remove()
+                 // Remove helmet icon - search in parent li (icon can be before or after the ul)
+                 tit.parent().find('.icon_title').remove()
                  var addr = tit.find('a').attr('href')
                  index_addr = list_vid.indexOf(addr)
 
