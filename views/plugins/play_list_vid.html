@@ -531,28 +531,18 @@ var list_vid = []      // list of videos fingerprint..
 var list_icons = []
 var numsel = 0
 
-// action when clicking on a green video name
+// action when clicking on a green video name (single video)
 
 $("li").click( function(e){
-    // Only process if playlist is visible - don't interfere with double-click to text mode
+    // Only process if playlist is visible
     if (!$('#vid_play_list').is(':visible')){
-        return  // Let other handlers (like dblclick to text) work
+        return
     }
 
-    // Only trigger when clicking on the text itself, not on empty space beside it
+    // Only trigger when clicking on the text element itself (.embed_video / .vid-lazy-title)
     var $target = $(e.target)
-    if (!$target.closest('.embed_video, .vid-lazy-title, .fold_li > a, .fold_li > span').length
-        && !$target.hasClass('embed_video') && !$target.hasClass('vid-lazy-title')
-        && e.target.tagName !== 'A' && e.target.tagName !== 'SPAN') {
-        // Check if click is on direct text content of the li
-        if (!$target.is('li') || !$target.children('ul').hasClass('strapvid')) {
-            return
-        }
-        // For direct li clicks, check click position is within text bounds
-        var textWidth = $target.find('.embed_video').length ? $target.find('.embed_video').outerWidth() : 0
-        if (textWidth > 0 && e.offsetX > textWidth + 30) {
-            return  // Clicked too far to the right of the text
-        }
+    if (!$target.closest('.embed_video').length && !$target.hasClass('embed_video')) {
+        return  // Clicked outside the video title text
     }
 
     var elem_li = $(this)
@@ -584,15 +574,6 @@ $("li").dblclick( function(e){
         return  // Let dblclick_to_text handler work
     }
 
-    // Only trigger when double-clicking on the text itself
-    var $target = $(e.target)
-    if (!$target.closest('.embed_video, .vid-lazy-title, a, span').length
-        && !$target.hasClass('embed_video') && !$target.hasClass('vid-lazy-title')
-        && e.target.tagName !== 'A' && e.target.tagName !== 'SPAN'
-        && !$target.is('li.strapvid_inside')) {
-        return
-    }
-
     var elem_li_grp = $(this)
     if (elem_li_grp.hasClass('strapvid_inside')){
         // find each video..
@@ -614,18 +595,10 @@ $("li").dblclick( function(e){
     }
   })
 
-// Select all lazy videos by clicking on the parent container
+// Select all lazy videos by clicking on the parent container (list name)
 $("li").click( function(e){
-    // Only process if playlist is visible - don't interfere with double-click to text mode
+    // Only process if playlist is visible
     if (!$('#vid_play_list').is(':visible')){
-        return  // Let other handlers (like dblclick to text) work
-    }
-
-    // Only trigger when clicking on the text itself
-    var $target = $(e.target)
-    if (!$target.closest('.embed_video, .vid-lazy-title, a, span').length
-        && !$target.hasClass('embed_video') && !$target.hasClass('vid-lazy-title')
-        && e.target.tagName !== 'A' && e.target.tagName !== 'SPAN') {
         return
     }
 
@@ -633,9 +606,13 @@ $("li").click( function(e){
     // Check if this li contains a vid-lazy-list (parent of lazy videos)
     var lazyList = elem_li_parent.find('.vid-lazy-list')
     if (lazyList.length && !elem_li_parent.hasClass('vid-lazy-item')){
-        // Don't trigger if clicking directly on a vid-lazy-item
+        // Don't trigger if clicking directly on a vid-lazy-item child
         if ($(e.target).closest('.vid-lazy-item').length) {
             return  // Let the individual item handler deal with it
+        }
+        // Don't trigger if clicking on toggle [+]/[-] links
+        if ($(e.target).closest('.vid-lazy-toggle').length) {
+            return
         }
         // Add all lazy videos from this parent to the playlist
         lazyList.find('.vid-lazy-item').each(function(){
