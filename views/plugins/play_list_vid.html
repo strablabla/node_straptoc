@@ -681,12 +681,26 @@ function get_random_index(current){
     return candidates[Math.floor(Math.random() * candidates.length)]
 }
 
+function unfold_parents($elem){
+    // Unfold all ancestor lists that are hidden (:: folding mechanism)
+    $elem.parents('ul').each(function(){
+        var $ul = $(this)
+        if (!$ul.is(':visible')) {
+            $ul.show()
+            // Update the [+] toggle indicator to [-]
+            $ul.prev('a').find('span.\\:\\:').text(' [-]')
+        }
+    })
+}
+
 function open_vid_in_page(i){
     // Open the video container in the main page
     var $vid = $('#vid_num' + i)
     if (!$vid.length) return
     var $li = $vid.closest('.vid-lazy-item')
     if ($li.length) {
+        // Unfold any hidden parent lists first
+        unfold_parents($li)
         // Expand the strapvid ul
         var $strapvid = $li.find('.strapvid')
         $strapvid.slideDown(200)
@@ -702,8 +716,10 @@ function open_vid_in_page(i){
             $video.attr('src', videoPath)
             $container.attr('data-loaded', 'true')
         }
-        // Scroll to the video
-        $('html, body').animate({ scrollTop: $li.offset().top - 100 }, 300)
+        // Scroll to the video (after parents are unfolded so offset is correct)
+        setTimeout(function(){
+            $('html, body').animate({ scrollTop: $li.offset().top - 100 }, 300)
+        }, 50)
     }
 }
 
