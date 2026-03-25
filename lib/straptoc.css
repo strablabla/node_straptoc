@@ -818,6 +818,11 @@ div.syntax h1 {
     display: inline-block;
 }
 
+.vid-group-label {
+    display: inline-block;
+    cursor: pointer;
+}
+
 .lazy-video-container {
     margin: 10px 0;
 }

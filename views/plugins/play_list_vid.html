@@ -576,9 +576,9 @@ $("li").dblclick( function(e){
     }
 
     var elem_li_grp = $(this)
-    // Only trigger on the group name text (inside an <a>), not on empty space
+    // Only trigger on the group name text, not on empty space
     var $dblTarget = $(e.target)
-    if (!$dblTarget.closest('a').length || $dblTarget.closest('.embed_video').length) {
+    if (!$dblTarget.closest('.vid-group-label').length) {
         return
     }
     if (elem_li_grp.hasClass('strapvid_inside')){
@@ -612,10 +612,9 @@ $("li").click( function(e){
     // Check if this li contains a vid-lazy-list (parent of lazy videos)
     var lazyList = elem_li_parent.find('.vid-lazy-list')
     if (lazyList.length && !elem_li_parent.hasClass('vid-lazy-item')){
-        // Only trigger when clicking on the group name text (inside an <a> tag, outside the list)
-        // Clicking on empty space (target = li/ul) should NOT trigger "select all"
+        // Only trigger when clicking on the group name text, not on empty space
         var $clickTarget = $(e.target)
-        if (!$clickTarget.closest('a').length || $clickTarget.closest('.vid-lazy-list').length) {
+        if (!$clickTarget.closest('.vid-group-label').length) {
             return
         }
         // Add all lazy videos from this parent to the playlist
