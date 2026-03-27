@@ -14,7 +14,7 @@ div.onside {
    right: 50px;
    max-height: 500px;
    /*height: auto;*/
-   width:250px;
+   width: auto;
    background-color:#FFCC99; /*#FFF;*/
    font-size:85%;
    overflow-y: scroll;
