@@ -241,7 +241,7 @@ annotations.setupAnnotationHandlers(io)                              //---- anno
 // Set app instance for config module
 config.setApp(app)
 
-// socket system.. 
+// socket system... 
 io.sockets.on('connection', function (socket) {
       socket.on('new_user', function(name_user){
           users[socket.id] =  name_user        // parseInt((num_user-1)/2)
