@@ -226,7 +226,27 @@ update_button.hover(
     }
 );
 
+// Badge for pending commits count
+var update_badge = $('<span/>').attr('id','update_badge')
+    .css({
+        'position':'fixed',
+        'top':'-2px',
+        'right':'48px',
+        'width':'20px',
+        'text-align':'center',
+        'font-size':'9px',
+        'font-weight':'bold',
+        'color':'#fff',
+        'background-color':'#dc3545',
+        'border-radius':'8px',
+        'padding':'1px 4px',
+        'z-index': '11',
+        'pointer-events':'none',
+        'display':'none'
+    });
+
 $('#content').append(update_button)
+$('#content').append(update_badge)
 $('#content').append(shutdown_button)
 console.log('Update and Shutdown buttons created and appended to #content');
 
@@ -263,10 +283,29 @@ $('#update_confirm_modal').click(function(e) {
     }
 });
 
+// Check for pending commits
+function checkGitUpdates() {
+    if (typeof socket !== 'undefined' && socket.connected) {
+        socket.emit('git_check_updates');
+    }
+}
+
 // Listen for git pull result and server restart
 $(document).ready(function() {
     var registerUpdateListener = function() {
         if (typeof socket !== 'undefined') {
+            socket.on('git_update_count', function(data) {
+                if (data.count > 0) {
+                    $('#update_badge').text(data.count).show();
+                } else {
+                    $('#update_badge').hide();
+                }
+            });
+
+            // Check on connect and every 5 minutes
+            checkGitUpdates();
+            setInterval(checkGitUpdates, 5 * 60 * 1000);
+
             socket.on('git_pull_result', function(data) {
                 var $status = $('#update_status');
                 if (data.success) {
