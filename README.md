@@ -233,7 +233,7 @@ node_straptoc/
 The core [lib/straptoc.js](lib/straptoc.js) library extends markdown with:
 - Video and PDF embedding
 - Interactive portfolios and carousels
-- Folding lists
+- Folding lists (with deep fold mode via Alt+Q)
 - Tooltips and text hiding
 - Image sizing and captions
 - Copy/paste list items
