@@ -192,6 +192,25 @@ $('object').each(function(){
     }
 })
 
+//-------------------------- Aliases : replace @alias by their value
+
+socket.emit('ask_aliases','')
+
+socket.on('dic_aliases', function(text){
+    var aliases = JSON.parse(text)
+    if (Object.keys(aliases).length > 0){
+        $('li').each(function(){
+            $(this).contents().filter(function(){ return this.nodeType === 3 }).each(function(){
+                for (var name in aliases){
+                    if (this.nodeValue.indexOf(name) !== -1){
+                        this.nodeValue = this.nodeValue.split(name).join(aliases[name])
+                    }
+                }
+            })
+        })
+    }
+})
+
 //-------------------------- no bullet with vertical deco..
 
 $('li').each(function(){
