@@ -33,6 +33,7 @@ list_play_state.click(function(event) {     // click on the helmet..
       $('#toggle_play_list').toggle()                   // toggle play list
       if ($('#toggle_play_list').is(':visible')){
           $('#vid_play_list').show()
+          ensure_items_max_h()
       }
       else{
           $('#vid_play_list').hide()
@@ -276,6 +277,48 @@ $('#vid_play_list').append(img_helmet)    // pict helmet
                    .append(butt_loop)     // loop button
                    .append(pl_act_bin)    // bin
 
+// Scrollable items wrapper - holds the playlist entries
+var vid_play_list_items = $('<div/>').attr('id','vid_play_list_items')
+vid_play_list_items.css({
+          'overflow-y': 'auto',
+          'overflow-x': 'hidden',
+          'margin-top': '5px',
+          'padding-right': '5px'
+        })
+$('#vid_play_list').append(vid_play_list_items)
+
+// Delete-mode toggle button: click to enable, then click items to remove them
+var is_delete_mode = false
+var butt_delete_mode = $('<div/>').attr('id','butt_delete_mode')
+butt_delete_mode.css({'position':'absolute',
+                'bottom':'20px',
+                'right':'40px',
+                'cursor': 'pointer',
+                'font-size': '18px',
+                'color': '#999',
+                'user-select': 'none',
+                'font-weight': 'bold'
+              })
+butt_delete_mode.html('&#10005;')
+butt_delete_mode.attr('title', 'Mode suppression: cliquer pour activer, puis cliquer sur des éléments pour les retirer')
+$('#vid_play_list').append(butt_delete_mode)
+
+// When set, new items go into this container instead of the root items list
+var current_group_parent = null
+function get_playlist_items_parent(){
+      return current_group_parent || $('#vid_play_list_items')
+}
+
+// Measure empty playlist height once on first open and cap items wrapper to it
+var items_max_h_set = false
+function ensure_items_max_h(){
+      if (items_max_h_set) return
+      var empty_h = $('#vid_play_list').outerHeight()
+      if (!empty_h) return  // not visible yet, retry on next open
+      items_max_h_set = true
+      $('#vid_play_list_items').css('max-height', empty_h + 'px')
+}
+
 function reinit_act(selection, elem, action){
 
       /*
@@ -317,7 +360,12 @@ function selection_click(elem_li, selection, numsel){
 
       */
 
-      selection.click(function(){
+      selection.click(function(e){
+           if (is_delete_mode){
+                 e.stopPropagation()
+                 remove_playlist_item($(this))
+                 return false
+           }
            reinitialize($(this))
            var currid = $(this).attr('id').split('sel_')[1] // vid current id ..
            var currvidid = '#' + currid
@@ -402,7 +450,7 @@ function fill_play_list(elem_li, vid_id, numsel){
                      'overflow': 'hidden',
                      'text-overflow': 'ellipsis'})
 
-      $('#vid_play_list').append(selection)     // add media title to the play list..
+      get_playlist_items_parent().append(selection)     // add media title to the play list..
 
       selection_click(elem_li, selection, numsel)
 
@@ -415,52 +463,100 @@ function fill_play_list(elem_li, vid_id, numsel){
          $(this).find('.remove_vid').hide()
       })
 
-      // $('.remove_vid').click(function(e){
-      $('.remove_vid').one('click', function(){
-
-           //if(!e.detail || e.detail == 1){     // prevent multiple clicks
-
-                 var par = $(this).parent()
-                 var currindex = parseInt(par.attr('index'))
-                 //alert(currindex)
-                 $('#sel_vid_num' + currindex).remove()
-
-                 var tit_index_sel = '.ul_selected[index="'+ currindex + '"]'
-                 // ul_selected
-                 var tit = $(tit_index_sel)
-                 // Remove helmet icon - search in parent li (icon can be before or after the ul)
-                 tit.parent().find('.icon_title').remove()
-                 var addr = tit.find('a').attr('href')
-                 index_addr = list_vid.indexOf(addr)
-
-                 if (index_addr != -1){
-                    //alert(index_addr)
-                    list_vid.splice(index_addr,1)
-                 }
-
-                 //alert( tit.attr('index') )
-                 //numsel -= 1
-                 tit.parent().css({'color':'rgb(102, 204, 102)'})
-                 tit.removeAttr('index')
-                 tit.hide()
-                 tit.removeClass("ul_selected")
-                 tit.parent().removeClass("selected_title")
-                 var vid_sel = tit.find('.vid_selected')
-                 vid_sel.removeAttr('index')
-                 vid_sel.removeAttr('id')
-                 vid_sel.removeClass('vid_selected')
-
-              // }
-              // else { return false; }
+      $('.remove_vid').one('click', function(e){
+           e.stopPropagation()
+           remove_playlist_item($(this).parent())
+           return false
       })
 
 
+}
+
+function remove_playlist_item($elem){
+
+      /*
+
+      Remove a single item from the play list and clean up the doc state.
+
+      */
+
+      var currindex = parseInt($elem.attr('index'))
+      var $parent_group = $elem.closest('.playlist_group')
+      $elem.remove()
+
+      var tit_index_sel = '.ul_selected[index="'+ currindex + '"]'
+      var tit = $(tit_index_sel)
+      tit.parent().find('.icon_title').remove()
+      var addr = tit.find('a').attr('href')
+      var index_addr = list_vid.indexOf(addr)
+      if (index_addr != -1){
+            list_vid.splice(index_addr, 1)
+      }
+      tit.parent().css({'color':'rgb(102, 204, 102)'})
+      tit.removeAttr('index')
+      tit.hide()
+      tit.removeClass("ul_selected")
+      tit.parent().removeClass("selected_title")
+      var vid_sel = tit.find('.vid_selected')
+      vid_sel.removeAttr('index')
+      vid_sel.removeAttr('id')
+      vid_sel.removeClass('vid_selected')
+
+      // remove now-empty group container
+      if ($parent_group.length && $parent_group.find('.elem_list_play_selected').length === 0){
+            $parent_group.remove()
+      }
+}
+
+function make_playlist_group($source_li){
+
+      /*
+
+      Build a directory group container in the playlist with a header showing
+      the directory name. Returns { group, items } where group is the wrapper
+      and items is the indented child container that should receive entries.
+
+      */
+
+      var group_name = ''
+      var $label = $source_li.find('.vid-group-label').first()
+      if ($label.length){
+            group_name = $label.text().trim()
+      }
+      if (!group_name){
+            group_name = $source_li.children('a').first().text().trim() || 'dossier'
+      }
+      // strip trailing toggles like " [+]" / " [-]"
+      group_name = group_name.replace(/\s*\[[-+]\]\s*$/, '')
+
+      var $group = $('<div/>').addClass('playlist_group')
+                              .css({'margin-top':'8px'})
+      var $group_title = $('<div/>').addClass('playlist_group_title')
+                                    .text(group_name)
+                                    .css({
+                                          'font-size':'17px',
+                                          'font-weight':'bold',
+                                          'font-family':'apple_garamond',
+                                          'color':'#444',
+                                          'margin-top':'4px',
+                                          'margin-bottom':'2px',
+                                          'white-space':'nowrap',
+                                          'overflow':'hidden',
+                                          'text-overflow':'ellipsis'
+                                    })
+      var $group_items = $('<div/>').addClass('playlist_group_items')
+                                    .css({'padding-left':'20px'})
+      $group.append($group_title).append($group_items)
+      $('#vid_play_list_items').append($group)
+      return { group: $group, items: $group_items }
 }
 
 function clear_play_list(){
 
     // remove the titles in the playlist..
     $('.elem_list_play_selected').remove()
+    // remove any group containers (directory groupings)
+    $('.playlist_group').remove()
     // doublon list empty to permit to put again the same vids..
     list_vid = []
     // remove the icons after the titles..
@@ -582,6 +678,9 @@ $("li").dblclick( function(e){
         return
     }
     if (elem_li_grp.hasClass('strapvid_inside')){
+        var $grp = make_playlist_group(elem_li_grp)
+        current_group_parent = $grp.items
+        var added_count = 0
         // find each video..
         elem_li_grp.find('video').each( function(){
             // Support lazy loading: use data-src if src not yet set
@@ -596,8 +695,11 @@ $("li").dblclick( function(e){
                 }
                 add_vid(elem_li, $(this), vid_id, numsel, list_vid, list_icons)
                 numsel += 1
+                added_count += 1
             }
         })
+        current_group_parent = null
+        if (added_count === 0) $grp.group.remove()
     }
   })
 
@@ -617,7 +719,10 @@ $("li").click( function(e){
         if (!$clickTarget.closest('.vid-group-label').length) {
             return
         }
-        // Add all lazy videos from this parent to the playlist
+        // Add all lazy videos from this parent to the playlist (grouped by directory)
+        var $grp = make_playlist_group(elem_li_parent)
+        current_group_parent = $grp.items
+        var added_count = 0
         lazyList.find('.vid-lazy-item').each(function(){
             var elem_li = $(this)
             var vid = elem_li.find('video')
@@ -630,8 +735,11 @@ $("li").click( function(e){
                 }
                 add_vid(elem_li, vid, vid_id, numsel, list_vid, list_icons)
                 numsel += 1
+                added_count += 1
             }
         })
+        current_group_parent = null
+        if (added_count === 0) $grp.group.remove()
     }
 })
 
@@ -950,6 +1058,21 @@ $('#progress_container').click(function(e){
         var width = $(this).width()
         var pct = offset / width
         currvid.currentTime = pct * currvid.duration
+    }
+})
+
+// Toggle delete mode: click items to remove them
+
+$('#butt_delete_mode').click(function(){
+    is_delete_mode = !is_delete_mode
+    if (is_delete_mode){
+        $(this).css('color', '#c00')
+        $('#vid_play_list_items').css({'cursor':'not-allowed',
+                                        'background-color':'rgba(255, 200, 200, 0.25)'})
+    } else {
+        $(this).css('color', '#999')
+        $('#vid_play_list_items').css({'cursor':'default',
+                                        'background-color':'transparent'})
     }
 })
 
