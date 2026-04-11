@@ -1,3 +1,17 @@
 </xmp>
+<script>
+// Apply aliases on raw markdown before strapdown processes it
+var straptoc_aliases = {{ aliases | safe }};
+if (Object.keys(straptoc_aliases).length > 0){
+    var xmpEl = document.getElementsByTagName('xmp')[0];
+    if (xmpEl){
+        var md = xmpEl.textContent;
+        for (var name in straptoc_aliases){
+            md = md.split(name).join(straptoc_aliases[name]);
+        }
+        xmpEl.textContent = md;
+    }
+}
+</script>
 <script src="v/0.2/strapdown.js" ></script>
 <script> maketoc() </script>

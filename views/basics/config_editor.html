@@ -208,6 +208,97 @@
     margin-top: 5px;
 }
 
+/* Aliases */
+.alias_item {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.alias_item:hover {
+    background-color: #f0f0f0;
+}
+
+.alias_name {
+    font-weight: bold;
+    font-size: 14px;
+    color: #6a1b9a;
+    min-width: 80px;
+    margin-right: 10px;
+}
+
+.alias_arrow {
+    color: #999;
+    margin-right: 10px;
+}
+
+.alias_value {
+    font-family: monospace;
+    font-size: 12px;
+    color: #333;
+}
+
+.alias_delete {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    transition: color 0.2s;
+}
+
+.alias_item:hover .alias_delete {
+    color: #e74c3c;
+}
+
+.alias_delete:hover {
+    color: #c0392b !important;
+}
+
+#add_alias_section {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #f3e5f5;
+    border-radius: 5px;
+    border: 2px dashed #9c27b0;
+}
+
+#new_alias_name, #new_alias_value {
+    width: 35%;
+    padding: 9px;
+    margin-bottom: 8px;
+    margin-right: 5px;
+    border: 1px solid #9c27b0;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+#add_alias_button {
+    background-color: #9c27b0;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#add_alias_button:hover {
+    background-color: #7b1fa2;
+}
+
 /* Tabs */
 .tab-buttons {
     display: flex;
@@ -769,6 +860,7 @@
         <!-- Tab buttons -->
         <div class="tab-buttons">
             <button class="tab-button active" data-tab="color-tags">Color Tags</button>
+            <button class="tab-button" data-tab="style">Style</button>
             <button class="tab-button" data-tab="paths">Paths</button>
             <button class="tab-button" data-tab="pages">Pages</button>
             <button class="tab-button" data-tab="reminders">Reminders</button>
@@ -784,6 +876,19 @@
             <div id="add_color_tag_section">
                 <input type="text" id="new_tag_name" placeholder="Tag name (eg: science, travel, etc.)">
                 <button id="add_tag_button">Add tag</button>
+            </div>
+        </div>
+
+        <!-- Tab: Style (Aliases) -->
+        <div id="tab-style" class="tab-content">
+            <div id="aliases_list">
+                <!-- Aliases will be inserted here dynamically -->
+            </div>
+
+            <div id="add_alias_section">
+                <input type="text" id="new_alias_name" placeholder="Alias (eg: @bred)">
+                <input type="text" id="new_alias_value" placeholder="Value (eg: !box #ff0000)">
+                <button id="add_alias_button">Add alias</button>
             </div>
         </div>
 
@@ -1109,6 +1214,7 @@ function customPrompt(message, defaultValue, callback) {
 // Initialisation
 $(document).ready(function() {
     loadColorTags();
+    loadAliases();
     setupEventHandlers();
     setupKeyboardShortcuts();
 });
@@ -1183,6 +1289,51 @@ function createColorTagElement(tagName, tagData) {
 
     return item;
 }
+
+//===================================================================== Aliases
+
+var aliasesData = {};
+
+function loadAliases() {
+    socket.emit('get_aliases');
+}
+
+socket.on('aliases_data', function(data) {
+    aliasesData = JSON.parse(data);
+    renderAliases();
+});
+
+function renderAliases() {
+    var container = $('#aliases_list');
+    container.empty();
+    var names = Object.keys(aliasesData).sort();
+    for (var i = 0; i < names.length; i++) {
+        container.append(createAliasElement(names[i], aliasesData[names[i]]));
+    }
+}
+
+function createAliasElement(name, value) {
+    var item = $('<div>').addClass('alias_item').attr('data-alias', name);
+    var nameSpan = $('<span>').addClass('alias_name').text(name);
+    var arrow = $('<span>').addClass('alias_arrow').text('\u2192');
+    var valueSpan = $('<span>').addClass('alias_value').text(value);
+    var deleteBtn = $('<button>').addClass('alias_delete').text('\u2715').attr('data-alias', name);
+    item.append(nameSpan).append(arrow).append(valueSpan).append(deleteBtn);
+    return item;
+}
+
+function saveAliases() {
+    socket.emit('update_aliases', JSON.stringify(aliasesData));
+}
+
+socket.on('aliases_updated', function(success) {
+    if (success) {
+        console.log('Aliases updated successfully');
+        loadAliases();
+    } else {
+        showNotification('Error saving aliases', 'error');
+    }
+});
 
 // Gestion des événements
 function setupEventHandlers() {
@@ -1385,6 +1536,80 @@ function setupEventHandlers() {
         if (targetTab === 'server') {
             loadServerConfig();
         }
+
+        // Load aliases when switching to style tab
+        if (targetTab === 'style') {
+            loadAliases();
+        }
+    });
+
+    // Add alias button
+    $('#add_alias_button').click(function() {
+        var name = $('#new_alias_name').val().trim();
+        var value = $('#new_alias_value').val().trim();
+        if (name === '' || value === '') {
+            showNotification('Please enter both alias name and value', 'warning');
+            return;
+        }
+        if (!name.startsWith('@')) { name = '@' + name; }
+        if (aliasesData.hasOwnProperty(name)) {
+            showNotification('This alias already exists', 'warning');
+            return;
+        }
+        aliasesData[name] = value;
+        renderAliases();
+        saveAliases();
+        $('#new_alias_name').val('');
+        $('#new_alias_value').val('');
+    });
+
+    // Delete alias
+    $(document).on('click', '.alias_delete', function() {
+        var name = $(this).attr('data-alias');
+        delete aliasesData[name];
+        renderAliases();
+        saveAliases();
+    });
+
+    // Double-click on alias name to edit
+    $(document).on('dblclick', '.alias_name', function() {
+        var $span = $(this);
+        var oldName = $span.closest('.alias_item').attr('data-alias');
+        var $input = $('<input>').attr('type', 'text').val($span.text())
+            .css({'font-weight': 'bold', 'font-size': '14px', 'border': '1px solid #9c27b0',
+                  'border-radius': '3px', 'padding': '2px 4px', 'min-width': '80px', 'margin-right': '10px'});
+        $span.replaceWith($input);
+        $input.focus().select();
+        var finish = function() {
+            var newName = $input.val().trim();
+            if (!newName.startsWith('@')) newName = '@' + newName;
+            if (newName === '' || newName === oldName) { $input.replaceWith($span); return; }
+            if (aliasesData.hasOwnProperty(newName)) { $input.replaceWith($span); return; }
+            aliasesData[newName] = aliasesData[oldName];
+            delete aliasesData[oldName];
+            renderAliases();
+            saveAliases();
+        };
+        $input.on('blur', finish).on('keypress', function(e){ if (e.which === 13) finish(); });
+    });
+
+    // Double-click on alias value to edit
+    $(document).on('dblclick', '.alias_value', function() {
+        var $span = $(this);
+        var name = $span.closest('.alias_item').attr('data-alias');
+        var $input = $('<input>').attr('type', 'text').val($span.text())
+            .css({'font-family': 'monospace', 'font-size': '12px', 'border': '1px solid #9c27b0',
+                  'border-radius': '3px', 'padding': '2px 4px', 'min-width': '150px'});
+        $span.replaceWith($input);
+        $input.focus().select();
+        var finish = function() {
+            var newValue = $input.val().trim();
+            if (newValue === '') { $input.replaceWith($span); return; }
+            aliasesData[name] = newValue;
+            renderAliases();
+            saveAliases();
+        };
+        $input.on('blur', finish).on('keypress', function(e){ if (e.which === 13) finish(); });
     });
 
     // Add path button
@@ -1798,6 +2023,7 @@ function openModal() {
 function closeModal() {
     // Auto-save before closing
     saveColorTags();
+    saveAliases();
 
     $('#color_tags_modal').fadeOut(300);
     modalOpen = false;
