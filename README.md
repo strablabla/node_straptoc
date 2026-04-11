@@ -17,6 +17,10 @@ Node Straptoc is a sophisticated personal information management system that com
 
 ### Media Capabilities
 - **Video Player**: Support for YouTube and local video files
+  - **Playlist panel** (helmet icon): builds a playable list of selected videos with shuffle, loop, prev/next, progress bar and seek
+  - **Directory grouping**: clicking a directory name adds all its videos under an indented sub-list headed by the directory title
+  - **Bounded height with scroll**: the playlist window is capped at twice its empty size; extra entries are reachable via a side scroll bar
+  - **Selective delete mode** (✕ button): toggle on, then click any entry to remove it from the playlist; toggle off to resume playback; the bin icon still clears the whole list at once
 - **PDF Viewer**: Built-in PDF document viewer
 - **DJVU Reader**: View DJVU format documents
 - **EPUB Reader**: Read e-books in EPUB format
