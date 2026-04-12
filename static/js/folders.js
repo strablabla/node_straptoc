@@ -95,6 +95,46 @@ function deals_with_folder(socket, name_folder){
 
 }
 
+function deals_with_folder_scan(socket, data){
+
+      /*
+
+      Scan a folder and return entries with type info (f: for files, d: for directories).
+      Supports recursive !fold: the client can request any subfolder.
+
+      */
+
+      var count_pdf = data.split('§§')[1]
+      var folder_path = data.split('§§')[0]
+
+      // Resolve relative paths using registered addresses
+      var resolved_path = resolve_folder_path(folder_path);
+
+      var strap_addr = count_pdf + '§§'
+      fs.readdir(resolved_path, (err, files) => {
+          if (err) {
+              console.error('[folders] Error scanning directory:', resolved_path, err.message);
+              socket.emit('folder_scan', strap_addr)
+              return;
+          }
+          files.forEach(file => {
+              try {
+                  var full = path.join(resolved_path, file);
+                  var stat = fs.statSync(full);
+                  if (stat.isDirectory()) {
+                      strap_addr += 'd:' + file + '\n'
+                  } else {
+                      strap_addr += 'f:' + file + '\n'
+                  }
+              } catch(e) {
+                  // skip files we can't stat
+              }
+          });
+
+          socket.emit('folder_scan', strap_addr)
+      });
+}
+
 function deals_with_list_folders(socket, name_folder){
 
       /*
@@ -143,6 +183,10 @@ exports.deals_with_pdfs = function(socket){
 
       socket.on('make_elems', function(){             //---- pdf
             socket.emit('make_elems', '')
+        })
+
+      socket.on('folder_scan', function(data) {
+             deals_with_folder_scan(socket, data)
         })
 
 

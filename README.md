@@ -200,7 +200,7 @@ node_straptoc/
 │   │   ├── notes.js         # Note management
 │   │   ├── util.js          # Utility functions
 │   │   ├── modify_html.js   # HTML/Markdown sync
-│   │   ├── folders.js       # File system management
+│   │   ├── folders.js       # File system management (!fold recursive folder scanning)
 │   │   ├── make_subtit.js   # Subtitle processing
 │   │   └── ...
 │   ├── config.yaml          # Central configuration
@@ -221,6 +221,7 @@ node_straptoc/
 │   │   ├── voice.html
 │   │   └── ...
 │   └── plugins/             # Feature plugins
+│       ├── extract_folder.html  # Unified !fold handler (recursive folder extraction)
 │       ├── video.html
 │       ├── pdf.html
 │       ├── djvu.html
@@ -238,6 +239,7 @@ The core [lib/straptoc.js](lib/straptoc.js) library extends markdown with:
 - Video and PDF embedding
 - Interactive portfolios and carousels
 - Folding lists (with deep fold mode via Alt+Q)
+- `!fold` command for automatic folder content extraction (PDFs, EPUBs, DJVUs, images, videos) with recursive subfolder support
 - Tooltips and text hiding
 - Image sizing and captions
 - Copy/paste list items
@@ -498,6 +500,40 @@ Use the extended markdown syntax to embed:
   - Email service selection: Gmail, Outlook, Yahoo, or Custom SMTP
   - Email credentials: User/password with app password instructions
   - Real-time configuration updates without server restart
+
+### Folder Content Extraction (`!fold`)
+
+The `!fold` command automatically extracts and displays the content of a folder. It supports PDFs, EPUBs, DJVUs, images (PNG, JPG, WEBP), and videos (MP4, WEBM, OGG, MKV, AVI).
+
+#### Usage
+
+In your markdown, write a list item with `!fold` followed by a folder path:
+
+```markdown
+* !fold sdata/docs/langues/mandarin/Livres
+```
+
+#### Behavior
+
+- **Files** directly in the folder are displayed with their appropriate viewers (embed for PDFs, lazy-load for EPUBs/DJVUs, gallery for images, player for videos)
+- **Subfolders** appear as expandable items with `[+]`/`[-]` toggles
+- **Recursive**: clicking `[+]` on a subfolder lazily loads its content, which can itself contain files and further subfolders — works at any depth
+- All content is **lazy-loaded**: files and subfolders are only fetched from the server when the user expands them
+
+#### Examples
+
+```markdown
+##### PDFs from a folder
+* !fold pdfs
+
+##### Books with nested subfolders (e.g. by author, by topic)
+* !fold sdata/docs/langues/mandarin/Livres
+
+##### Mixed content (PDFs + EPUBs) in nested folders
+* !fold many_txt_types
+```
+
+> **Note**: The old `!fold path !inside` syntax is still accepted for backward compatibility, but `!inside` is no longer needed — `!fold` alone handles subfolders recursively.
 
 ## Security
 

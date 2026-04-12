@@ -3,7 +3,9 @@
 
 /*
 
-Deal with a given folder
+Deal with a given folder — unified !fold handler.
+Supports files (pdf, epub, djvu, images, videos) directly in folder,
+in subfolders, and recursively in sub-subfolders.
 
 */
 
@@ -30,6 +32,11 @@ function image_ext(name) {
 // video extension
 function video_ext(name) {
   return /\.(mp4|webm|ogg|mkv|avi)$/i.test(name);
+}
+
+// any supported file extension
+function supported_ext(name) {
+  return ebook_ext(name) || image_ext(name) || video_ext(name);
 }
 
 function sort_list_pattern(array, list){
@@ -73,261 +80,249 @@ function index_in_list(a, list){
     return ind
     }
 
-// Global state variables
-var extract_folder_count_pdf = 0;
-var extract_folder_current_li = {}
-var extract_folder_addr_relat = []
-var extract_folder_addr_abs = []
-var extract_folder_toggle_elem_ok = false
-var extract_folder_trig_epub = false
-var extract_folder_trig_djvu = false
-var extract_folder_initialized = false  // Guard to prevent multiple initializations
+// Global state for folder_scan
+var fold_scan_count = 0
+var fold_scan_data = {}       // count -> { li, addr, addr_abs }
+var fold_scan_initialized = false
+var fold_scan_processed = {}  // Guard against duplicates
 
-// Register folder_extract listener ONCE, outside of make_elems
-// Track which counts have been processed to avoid duplicates
-var extract_folder_processed_counts = {}
+// =====================================================================
+// folder_scan listener — handles typed entries (f: files, d: directories)
+// =====================================================================
 
-socket.on('folder_extract', function( strap_addr ){
+socket.on('folder_scan', function(strap_addr){
 
-    var current_count = parseInt( strap_addr.split('§§')[0] )
+    var current_count = parseInt(strap_addr.split('§§')[0])
     strap_addr = strap_addr.split('§§')[1]
 
-    // Guard: check if this count was already processed
-    if (extract_folder_processed_counts[current_count]) {
-        return
+    // Guard: duplicates
+    if (fold_scan_processed[current_count]) return
+    fold_scan_processed[current_count] = true
+
+    // Guard: check entry exists
+    if (!fold_scan_data[current_count]) return
+
+    var entry = fold_scan_data[current_count]
+    var entries = strap_addr ? strap_addr.split('\n').filter(function(e){ return e.length > 0 }) : []
+
+    // Separate files and directories
+    var files = []
+    var dirs = []
+    entries.forEach(function(e){
+        if (e.startsWith('d:')) {
+            dirs.push(e.substring(2))
+        } else if (e.startsWith('f:')) {
+            files.push(e.substring(2))
+        } else {
+            files.push(e)  // fallback: treat as file
+        }
+    })
+
+    // Filter only supported file types
+    var supported_files = files.filter(function(f){ return supported_ext(f) })
+
+    // Sort supported files
+    var sorted_files = sort_list_pattern(supported_files, pdf_months)
+
+    // Sort directories alphabetically
+    dirs.sort(function(a, b){ return a.localeCompare(b) })
+
+    // Build the content
+    var container_ul = $('<ul/>')
+
+    // --- Add directories as expandable items ---
+    dirs.forEach(function(dir_name){
+        var dir_li = $('<li/>')
+        var dir_addr = entry.addr + '/' + dir_name
+        var dir_addr_abs = entry.addr_abs + '/' + dir_name
+
+        // Title with [+] toggle
+        var title_span = $('<span/>').text(dir_name + ' ')
+        var toggle_a = $('<a/>').append($('<span/>').addClass('funf-scan').text('[+]'))
+        title_span.append(toggle_a)
+        dir_li.append(title_span)
+
+        // Hidden sub-container (will be filled on click)
+        var sub_ul = $('<ul/>').hide()
+        sub_ul.attr('data-fold-addr', dir_addr)
+        sub_ul.attr('data-fold-addr-abs', dir_addr_abs)
+        sub_ul.attr('data-fold-loaded', 'false')
+        dir_li.append(sub_ul)
+
+        container_ul.append(dir_li)
+    })
+
+    // --- Add files ---
+    if (sorted_files.length > 0) {
+        var first_file = sorted_files[0]
+        var web_path = entry.addr_abs
+
+        if (ebook_ext(first_file)) {
+            sorted_files.forEach(function(elem){
+                make_li_embed(web_path, elem, container_ul)
+            })
+        } else if (image_ext(first_file)) {
+            var divportf = $('<div/>').addClass("row")
+            sorted_files.forEach(function(elem){
+                divportf = make_li_imgs_scan(divportf, elem, web_path)
+            })
+            container_ul.append(divportf)
+        } else if (video_ext(first_file)) {
+            sorted_files.forEach(function(elem){
+                make_li_video(web_path, elem, container_ul)
+            })
+        }
     }
 
-    // Guard: check if the li element exists
-    if (!extract_folder_current_li[current_count]) {
-        return
+    // Replace the original element
+    var target_li = entry.li
+    if (target_li) {
+        target_li.parent().replaceWith(container_ul)
     }
 
-    extract_folder_processed_counts[current_count] = true
+    // Bind toggle for this batch
+    bind_fold_scan_toggles()
+    // Also bind file toggles
+    toggle_elem()
 
-    var new_ul = $('<ul/>')
+}) // socket.on folder_scan
 
-    extract_folder_current_li[current_count].parent().find('ul, .tog_elem, .fold_epub, .fold_djvu').remove();
+// =====================================================================
+// Click handler for directory toggles — lazy loads subdirectory content
+// =====================================================================
 
-    var list_pdf = strap_addr.split('\n').slice(0,-1) // list of pdfs..
+function bind_fold_scan_toggles(){
+    $('.funf-scan').off('click').on('click', function(e){
+        e.stopPropagation()
+        var toggle_span = $(this)
+        var sub_ul = toggle_span.closest('li').children('ul')
 
-    // sorted list
-    var sorted_list = sort_list_pattern(list_pdf, pdf_months)
+        if (toggle_span.text() === '[+]') {
+            toggle_span.text('[-]')
+            sub_ul.show()
 
-    handle_docs(sorted_list, new_ul, current_count)
+            // Lazy load if not yet loaded
+            if (sub_ul.attr('data-fold-loaded') === 'false') {
+                sub_ul.attr('data-fold-loaded', 'true')
+                var addr = sub_ul.attr('data-fold-addr')
+                var addr_abs = sub_ul.attr('data-fold-addr-abs')
 
-}) // socket on folder_extract
+                // Create a placeholder li and request scan
+                var placeholder_li = $('<li/>').text('...')
+                sub_ul.append(placeholder_li)
 
-// open_epub and open_djvu are defined outside make_elems since they're called from handle_docs
-function open_epub(){
-      /*
-      Open the epub file
-      */
-      $('.fold_epub').off('click').on('click', function(){
-          var disp = $(this).parent().next()
-          var obj = disp.find('object')
-          var addr = obj.attr('data').split('? ')[0]
-          var li = disp.parent().parent()
-          if ( addr.search(/\.epub/ ) != -1){
-                make_epub(li, addr)
-          }
-      }) // click
-}
-
-function open_djvu(){
-        /*
-        Open the djvu file
-        */
-        $('.fold_djvu').off('click').on('click', function(){
-            var disp = $(this).parent().next()
-            var obj = disp.find('object')
-            var addr = obj.attr('data').split('? ')[0]
-            var li = disp.parent().parent()
-            if ( addr.search(/\.djvu/) != -1 ){
-                  make_djvu(li, addr)
+                var count = fold_scan_count
+                fold_scan_data[count] = {
+                    li: placeholder_li,
+                    addr: addr,
+                    addr_abs: addr_abs
+                }
+                fold_scan_count++
+                socket.emit('folder_scan', addr + '§§' + count)
             }
-        }) // click
+        } else {
+            toggle_span.text('[+]')
+            sub_ul.hide()
+        }
+    })
 }
+
+// =====================================================================
+// make_elems — initial scan of !fold patterns in the document
+// =====================================================================
 
 socket.on('make_elems', function(){
 
     // Guard: only run once per page load
-    if (extract_folder_initialized) {
-        return
-    }
-    extract_folder_initialized = true
+    if (fold_scan_initialized) return
+    fold_scan_initialized = true
 
     var all_li = $('li');
 
     all_li.each(function(){
 
         /*
-
-        Make the list of pdfs..
-        Replace !fold by the list in question..
-        Skip if !fold is followed by !inside (handled by list_folders_for_extract)
-
+        Replace !fold by the folder content.
+        Now handles everything: files directly, subfolders, sub-subfolders (recursively).
+        !inside is no longer needed.
         */
 
         var reg = /\!fold/
-        var reg_inside = /\!fold.+\!inside/  // Skip patterns handled by list_folders_for_extract
-
         var txt = $(this).html().split('\n')[0]
-
-        // Skip if this is a !fold...!inside pattern (handled by list_folders_for_extract)
-        if ( txt.match(reg_inside) ){
-            return true  // continue to next iteration
-        }
 
         if ( txt.match(reg) ){
 
-            extract_folder_current_li[extract_folder_count_pdf] = $(this)
-            var addr = txt.split('!fold')[1].trim()
-            addr_short = addr.split('/').slice(1).join('/')
-            extract_folder_addr_relat[extract_folder_count_pdf] = relative_addr(addr, addr_short)
-            extract_folder_addr_abs[extract_folder_count_pdf] = absolute_addr(addr)
-            extract_folder_count_pdf += 1
-            var count = extract_folder_count_pdf-1
-            socket.emit('folder_extract', addr + '§§' + count)
+            // Extract path — strip !inside if present (backward compat)
+            var addr = txt.split('!fold')[1]
+            if (addr.indexOf('!inside') !== -1) {
+                addr = addr.split('!inside')[0]
+            }
+            addr = addr.trim()
 
+            var addr_short = addr.split('/').slice(1).join('/')
+            var addr_abs = absolute_addr(addr)
 
-            } // if text.match
+            var count = fold_scan_count
+            fold_scan_data[count] = {
+                li: $(this),
+                addr: addr,
+                addr_abs: addr_abs
+            }
+            fold_scan_count++
+            socket.emit('folder_scan', addr + '§§' + count)
 
-      }) // li each
+        } // if text.match
 
+    }) // li each
 
 }) // socket.on('make_elems')
 
-// handle_docs is now OUTSIDE socket.on('make_elems') to be accessible from folder_extract listener
+// =====================================================================
+// File display helpers
+// =====================================================================
+
 function handle_docs(sorted_list, new_ul, current_count){
-
-          /*
-
-          Deals with pdf, epub or djvu..
-
-          */
-
-          var first_elem = sorted_list[0]
-
-          // detect ebook
-
-          if ( ebook_ext(first_elem) ){
-              var web_path = extract_folder_addr_abs[current_count]
-              sorted_list.forEach( function(elem){
-                              make_li_embed(web_path, elem, new_ul)
-                         })
-              }
-
-          // detect image
-
-          else if ( image_ext(first_elem) ){
-
-              var divportf = $('<div/>').addClass("row")
-              sorted_list.forEach( function(elem){
-                              divportf = make_li_imgs(divportf, elem, current_count)
-                         })
-               new_ul.append( divportf )
-
-          }
-
-          // detect video
-
-          else if ( video_ext(first_elem) ){
-              var web_path = extract_folder_addr_abs[current_count]
-              sorted_list.forEach( function(elem){
-                              make_li_video(web_path, elem, new_ul)
-                         })
-          }
-          //alert(sorted_list)
-          // Check if this is inside a !fold...!inside structure (has .funf sibling with [+])
-          var parentLi = extract_folder_current_li[current_count].parent().parent()
-          var funfSpan = parentLi.find('> a > .funf')
-          if (funfSpan.length > 0 && funfSpan.text().trim() === '[+]') {
-              // This is a closed subfolder, keep it hidden
-              new_ul.hide()
-          }
-          // replace the tag with the list of li embed..
-          extract_folder_current_li[current_count].parent().replaceWith(new_ul)
-          if ( current_count == Object.keys(extract_folder_current_li).length-1 & !extract_folder_toggle_elem_ok){
-              toggle_elem()            // when clicking on - or + open or close..
-              extract_folder_toggle_elem_ok = true
-          }
-
-          $('figure').off('click').on('click', function(){
-              if ($(this).parent().hasClass('thumbnail')){
-                  //alert('figgg')
-                  var addr_pic = $(this).find('img').attr('src')
-                  if (one_img){
-
-                      reset_bigpic()
-
-                  }
-                  if ( pic_yet_open.indexOf(addr_pic) == -1 ){
-
-                      add_new_bigpic(addr_pic)
-                      hook_slider()
-                      save_pos_drag()
-
-                     }
-              }
-          })
-
-
-          // Note: epub and djvu handling is now integrated into toggle_elem()
-          // The old open_epub() and open_djvu() functions are kept for backwards compatibility
-          // but are no longer needed for !fold extracted files
-
-} // end handle_docs
+    // kept for backward compat if needed
+}
 
 function relative_addr(addr, addr_short){
-
-          /*
-
-          Relative address, address used in the html code
-
-          */
-
-          try {
-            var reg = /\.{2}\/\w+.+\//     // pattern ../aaa
-            root = addr.match(reg)[0]      // root
-            addr = addr.split(root)[1]     // remove the root
-          }
-          catch{
-            //alert('...nothing found...')
-            addr = addr_short
-          }
-          return addr
+      try {
+        var reg = /\.{2}\/\w+.+\//     // pattern ../aaa
+        root = addr.match(reg)[0]      // root
+        addr = addr.split(root)[1]     // remove the root
+      }
+      catch{
+        addr = addr_short
+      }
+      return addr
     }
 
     function absolute_addr(addr){
 
           /*
-
           Absolute address, address used in the html code
           Returns the web-accessible path (absolute URL starting with /)
-
           */
 
-          // Helper to ensure leading slash
           function ensureLeadingSlash(path) {
               return path.startsWith('/') ? path : '/' + path
           }
 
-          // For sdata pattern - keep full path after sdata/
-          var reg_sdata = /sdata\/\w+.+/     // pattern /sdata/balblabla
+          // For sdata pattern
+          var reg_sdata = /sdata\/\w+.+/
           var match = addr.match(reg_sdata)
           if (match) {
               return ensureLeadingSlash(match[0])
           }
 
-          // For public pattern - remove "public/" prefix since Express serves public/ at root
-          // /home/.../public/pdfs -> pdfs (accessible via /pdfs/)
-          var reg_public = /public\/(.+)/   // capture everything after public/
+          // For public pattern
+          var reg_public = /public\/(.+)/
           match = addr.match(reg_public)
           if (match) {
               return ensureLeadingSlash(match[1])
           }
 
-          // Fallback: return the address with leading slash
+          // Fallback
           return ensureLeadingSlash(addr)
     }
 
@@ -335,10 +330,8 @@ function relative_addr(addr, addr_short){
     function make_li_embed(addr, elem, new_ul){
 
           /*
-
           List of files with embedding..
           Full address is addr + '/' + elem
-
           */
           var full_path = addr + '/' + elem
 
@@ -346,7 +339,7 @@ function relative_addr(addr, addr_short){
           var display_name = elem.replace(/\.(pdf|epub|djvu)$/i, '')
 
           var div_format = $('<div/>').text(display_name).addClass('embed_pdf')
-          var a_deploy = $('<a/>').text(' [+]')  // Start with [+] since content is hidden
+          var a_deploy = $('<a/>').text(' [+]')
           var span_tog = $('<span/>').addClass('tog_elem').append(a_deploy)
 
           var obj_html = ''
@@ -354,7 +347,6 @@ function relative_addr(addr, addr_short){
           // case epub
           if ( elem.search(/\.epub$/i ) != -1){
               a_deploy.addClass('fold_epub')
-              // Create epub-specific container
               var viewerId = 'epub-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
               obj_html = '<br><div class="lazy-epub-container" id="' + viewerId + '" data-epub-path="' + full_path + '" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
                         '<div class="lazy-epub-viewer" style="display: none;"></div>' +
@@ -363,7 +355,6 @@ function relative_addr(addr, addr_short){
           // case djvu
           else if ( elem.search(/\.djvu$/i ) != -1){
               a_deploy.addClass('fold_djvu')
-              // Create djvu-specific container
               var viewerId = 'djvu-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
               obj_html = '<br><div class="lazy-djvu-container" id="' + viewerId + '" data-djvu-path="' + full_path + '" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
                         '<div class="lazy-djvu-viewer" style="display: none;"></div>' +
@@ -378,30 +369,22 @@ function relative_addr(addr, addr_short){
           var div_obj = $('<div/>').html(obj_html).hide()
           var curr_li = $('<li/>').addClass('fold_li')
           new_ul.append( curr_li.append( divformat_plus.append( div_obj ) ) )
-
-
     }
 
     function make_li_video(addr, elem, new_ul){
 
           /*
-
           List of video files with lazy loading.
           Full address is addr + '/' + elem
-
           */
-          console.log('[extract_folder] make_li_video - addr:', addr, 'elem:', elem)
           var full_path = addr + '/' + elem
-          console.log('[extract_folder] make_li_video - full_path:', full_path)
 
-          // Get video name without extension
           var video_name = elem.replace(/\.(mp4|webm|ogg|mkv|avi)$/i, '')
 
           var div_format = $('<div/>').text(video_name).addClass('embed_video')
-          var a_deploy = $('<a/>').text(' [+]')  // Start with [+] since video is hidden
+          var a_deploy = $('<a/>').text(' [+]')
           var span_tog = $('<span/>').addClass('tog_elem tog_video').append(a_deploy)
 
-          // Create lazy loading placeholder for video
           var viewerId = 'video-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
           var video_container = '<br><div class="lazy-video-container" id="' + viewerId + '" data-video-path="' + full_path + '" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
                     '<div class="lazy-video-viewer" style="display: none;"></div>' +
@@ -411,17 +394,13 @@ function relative_addr(addr, addr_short){
           var div_obj = $('<div/>').html(video_container).hide()
           var curr_li = $('<li/>').addClass('fold_li fold_video')
           new_ul.append( curr_li.append( divformat_plus.append( div_obj ) ) )
-
     }
 
     function toggle_elem(){
 
         /*
-
         Code for closing, opening the pdfs, videos, epubs and djvus.
         Lazy loading: content is loaded when user clicks [+] to open
-        Note: We use <object> for PDFs, <video> for videos, and call make_epub/make_djvu for epubs/djvus.
-
         */
 
         $('.tog_elem').off('click').on('click', function(){
@@ -433,22 +412,19 @@ function relative_addr(addr, addr_short){
                 var $djvuContainer = $(this).next().find('.lazy-djvu-container')
 
                 if (taga.text() == ' [-]'){
-                    // Closing - just hide
                     taga.text(' [+]')
                     $(this).next().hide()
 
                 } else {
-                    // Opening - show and lazy load content if not already loaded
                     taga.text(' [-]')
                     $(this).next().show()
 
-                    // Lazy load PDF with <object> tag
+                    // Lazy load PDF
                     if ($pdfContainer.length > 0) {
                         var isLoaded = $pdfContainer.data('loaded')
                         if (!isLoaded || isLoaded === 'false') {
                             var pdfPath = $pdfContainer.data('pdf-path')
                             var $viewer = $pdfContainer.find('.lazy-pdfjs-viewer')
-
                             var obj = $('<object/>').attr('data', pdfPath)
                                                     .attr('type', 'application/pdf')
                                                     .attr('width', '100%')
@@ -459,13 +435,12 @@ function relative_addr(addr, addr_short){
                         }
                     }
 
-                    // Lazy load Video with <video> tag
+                    // Lazy load Video
                     if ($videoContainer.length > 0) {
                         var isLoaded = $videoContainer.data('loaded')
                         if (!isLoaded || isLoaded === 'false') {
                             var videoPath = $videoContainer.data('video-path')
                             var $viewer = $videoContainer.find('.lazy-video-viewer')
-
                             var video = $('<video/>').attr('src', videoPath)
                                                      .attr('controls', true)
                                                      .attr('width', '100%')
@@ -482,8 +457,6 @@ function relative_addr(addr, addr_short){
                         if (!isLoaded || isLoaded === 'false') {
                             var epubPath = $epubContainer.data('epub-path')
                             var $viewer = $epubContainer.find('.lazy-epub-viewer')
-
-                            // Create epub content inline (don't use make_epub which replaces the li)
                             var epub_id = epubPath.split('/').at(-1).split('.epub')[0]
                             var block_epub = $('<div/>')
                             block_epub.append($('<div/>').attr('id', epubPath))
@@ -505,7 +478,6 @@ function relative_addr(addr, addr_short){
                             $viewer.empty().append(block_epub)
                             $viewer.show()
 
-                            // Initialize epub.js
                             if (typeof ePub !== 'undefined') {
                                 var book = ePub(epubPath)
                                 var rendition = book.renderTo(epubPath, {
@@ -514,8 +486,6 @@ function relative_addr(addr, addr_short){
                                     height: 660
                                 })
                                 rendition.display()
-
-                                // Navigation handlers
                                 $('#first_page' + epub_id).click(function(){ rendition.display(0) })
                                 $('#next_page' + epub_id).click(function(){ rendition.next() })
                                 $('#prev_page' + epub_id).click(function(){ rendition.prev() })
@@ -541,14 +511,11 @@ function relative_addr(addr, addr_short){
                         if (!isLoaded || isLoaded === 'false') {
                             var djvuPath = $djvuContainer.data('djvu-path')
                             var $viewer = $djvuContainer.find('.lazy-djvu-viewer')
-
-                            // Create djvu content inline (don't use make_djvu which replaces the li)
                             var djvu_id = 'djvu-' + Date.now()
                             var djvuDiv = $('<div/>').attr('id', djvu_id)
                             $viewer.empty().append(djvuDiv)
                             $viewer.show()
 
-                            // Initialize DjVu viewer
                             if (typeof DjVu !== 'undefined' && DjVu.Viewer) {
                                 var viewer_instance = new DjVu.Viewer()
                                 viewer_instance.render(document.getElementById(djvu_id))
@@ -562,27 +529,19 @@ function relative_addr(addr, addr_short){
             })
     }
 
-    function embed_elem(addr){         // embedded pdf..
+    function embed_elem(addr){
 
         /*
-
-        addr : folder + pdf name..
-
-        Lazy loading: creates a placeholder container. The PDF viewer will only be
-        initialized when the user clicks the [-]/[+] toggle button.
-
+        Lazy loading placeholder for PDF viewer.
         */
 
-        // Create unique ID for this PDF viewer
         var viewerId = 'pdf-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 
-        // Create lazy loading placeholder (no button - triggered by toggle click)
         var htm = '<br><div class="lazy-pdfjs-container" id="{}" data-pdf-path="{}" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
                   '<div class="lazy-pdfjs-viewer" style="display: none; min-height: 800px;"></div>' +
                   '</div><br>';
 
         return htm.format(viewerId, addr);
-
     }
 
     // Global function to lazy load PDF viewer
@@ -595,24 +554,17 @@ function relative_addr(addr, addr_short){
         var isLoaded = $container.data('loaded');
 
         if (!isLoaded || isLoaded === 'false') {
-            // First click: initialize the PDF viewer
             $btn.text('Chargement...');
             $btn.prop('disabled', true);
-
-            // Give the viewer div a unique ID for PDF.js
             var innerViewerId = viewerId + '-inner';
             $viewer.attr('id', innerViewerId);
-
-            // Show the viewer container
             $viewer.slideDown(300, function() {
-                // Initialize PDF.js viewer
                 if (pdfPath && window.initPDFViewer) {
                     window.initPDFViewer(pdfPath, innerViewerId);
                     $container.data('loaded', 'true');
                     $btn.text('Masquer le PDF');
                     $btn.prop('disabled', false);
                 } else {
-                    // Fallback to object tag if PDF.js not available
                     var obj = $('<object/>').attr('data', pdfPath)
                                             .attr('type', 'application/pdf')
                                             .attr('width', '100%')
@@ -624,26 +576,22 @@ function relative_addr(addr, addr_short){
                 }
             });
         } else if ($viewer.is(':visible')) {
-            // PDF loaded and visible: hide it
             $viewer.slideUp(300);
             $btn.text('Afficher le PDF');
         } else {
-            // PDF loaded but hidden: show it
             $viewer.slideDown(300);
             $btn.text('Masquer le PDF');
         }
     };
 
 
-function make_li_imgs(divportf, elem, current_count){
+function make_li_imgs_scan(divportf, elem, web_path){
 
       /*
-
       Portfolio
-
       */
       var $img = $("<img>", {
-                    src: extract_folder_addr_abs[current_count] + '/' + elem,
+                    src: web_path + '/' + elem,
                     alt: elem,
                   });
       var $caption = $("<figcaption>").text(elem);
@@ -654,11 +602,10 @@ function make_li_imgs(divportf, elem, current_count){
 
        var divportfinner = $('<div/>').addClass(classportf)
            .append(
-                 $('<div/>').addClass("thumbnail")   // class thumbnail
-                   .append($fig) // add image
-                  ) // end append thumbnail
+                 $('<div/>').addClass("thumbnail")
+                   .append($fig)
+                  )
         divportf.append(divportfinner)
-
 
         return divportf
       }
