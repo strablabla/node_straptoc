@@ -884,3 +884,68 @@ li pre + ol {
 li:has(pre) {
     line-height: normal;
 }
+
+/*==================================================
+ * Mini Tables
+ * Inline editable tables ($tab)
+ * ===============================================*/
+
+.mini-table-widget {
+    display: inline-block;
+    margin: 10px 0 10px 40px;
+}
+
+.mini-table-controls {
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mini-table-title {
+    font-weight: bold;
+    font-size: 12px;
+    color: #666;
+    margin-right: 10px;
+}
+
+.mini-table-btn-inline {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 0;
+    text-align: center;
+}
+
+.mini-table-btn-inline:hover {
+    background: #e0e0e0;
+}
+
+.mini-table {
+    border-collapse: collapse;
+}
+
+.mini-table td {
+    border: 1px solid #bbb;
+    padding: 8px 15px;
+    min-width: 60px;
+    font-size: 14px;
+    line-height: 1.2;
+    height: 1px;
+    outline: none;
+}
+
+.mini-table td:empty::before {
+    content: '\00a0';
+}
+
+.mini-table td:focus {
+    background-color: #fff9e6;
+    border-color: #f0ad4e;
+}

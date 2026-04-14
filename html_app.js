@@ -18,6 +18,7 @@ var subtit = require('./static/js/make_subtit');
 var new_obj = require('./static/js/new_obj');
 var store = require('./static/js/store');
 var agenda = require('./static/js/agenda');
+var minitables = require('./static/js/minitables');
 var config = require('./lib/config');
 var annotations = require('./lib/annotations');
 var reminders = require('./lib/reminders');
@@ -326,6 +327,7 @@ io.sockets.on('connection', function (socket) {
       modify.textarea_html(socket, io, fs, util, curr_text)        //---- textarea to html and viceversa
       folders.deals_with_pdfs(socket)                              //---- pdfs in folders
       agenda.handle(socket)                                        //---- agenda
+      minitables.handle(socket)                                    //---- inline tables
       config.handle(io,socket)
 
       socket.on('tchat_message',function(mess){
