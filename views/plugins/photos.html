@@ -1423,22 +1423,17 @@ $(document).click(function(){
     $('.layout-dropdown').hide()
 })
 
-$('figure').click(function(){
-    if ($(this).parent().hasClass('thumbnail')){
-        //alert('figgg')
-        var addr_pic = $(this).find('img').attr('src')
-        if (one_img){
-
-            reset_bigpic()
-
-        }
-        if ( pic_yet_open.indexOf(addr_pic) == -1 ){
-
-            add_new_bigpic(addr_pic)
-            hook_slider('bp' + nb_bpics)
-            save_pos_drag()
-
-           }
+$(document).on('click', '.thumbnail img', function(e){
+    e.stopPropagation()
+    var addr_pic = $(this).attr('src')
+    if (!addr_pic) return
+    if (one_img){
+        reset_bigpic()
+    }
+    if ( pic_yet_open.indexOf(addr_pic) == -1 ){
+        add_new_bigpic(addr_pic)
+        hook_slider('bp' + nb_bpics)
+        save_pos_drag()
     }
 })
 
