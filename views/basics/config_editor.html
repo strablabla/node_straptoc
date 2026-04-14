@@ -328,6 +328,40 @@
     font-weight: 600;
 }
 
+.export-import-section h3 {
+    color: #333;
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+
+.export-btn, .import-btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.export-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.export-btn:hover {
+    background-color: #45a049;
+}
+
+.import-btn {
+    background-color: #ff9800;
+    color: white;
+}
+
+.import-btn:hover {
+    background-color: #f57c00;
+}
+
 .tab-content {
     display: none;
 }
@@ -865,6 +899,7 @@
             <button class="tab-button" data-tab="pages">Pages</button>
             <button class="tab-button" data-tab="reminders">Reminders</button>
             <button class="tab-button" data-tab="server">Server</button>
+            <button class="tab-button" data-tab="exportimport">Export/Import</button>
         </div>
 
         <!-- Tab: Color Tags -->
@@ -1071,6 +1106,23 @@
                 </div>
 
                 <button id="save_server_button">Save Server Config</button>
+            </div>
+        </div>
+
+        <!-- Tab: Export/Import -->
+        <div id="tab-exportimport" class="tab-content">
+            <div class="export-import-section">
+                <h3>Export</h3>
+                <p style="font-size: 13px; color: #666;">Télécharge un zip contenant tous les fichiers markdown et les données (agenda, tableaux, config, annotations).</p>
+                <button id="export_notes_btn" class="export-btn">📥 Télécharger l'archive</button>
+            </div>
+
+            <div class="export-import-section" style="margin-top: 30px;">
+                <h3>Import</h3>
+                <p style="font-size: 13px; color: #666;">⚠️ Importer un zip <strong>remplacera</strong> les fichiers existants portant le même nom.</p>
+                <input type="file" id="import_notes_input" accept=".zip" style="display:none;">
+                <button id="import_notes_btn" class="import-btn">📤 Choisir un zip à importer</button>
+                <div id="import_status" style="margin-top: 10px; font-size: 13px;"></div>
             </div>
         </div>
 
@@ -1540,6 +1592,44 @@ function setupEventHandlers() {
         // Load aliases when switching to style tab
         if (targetTab === 'style') {
             loadAliases();
+        }
+    });
+
+    //===================================================================== Export / Import
+
+    $('#export_notes_btn').click(function(){
+        window.location.href = '/export-notes';
+    });
+
+    $('#import_notes_btn').click(function(){
+        $('#import_notes_input').click();
+    });
+
+    $('#import_notes_input').change(function(e){
+        var file = e.target.files[0];
+        if (!file) return;
+        customConfirm('Importer "' + file.name + '" ? Les fichiers existants seront remplacés.', function(confirmed){
+            if (!confirmed) return;
+            var reader = new FileReader();
+            reader.onload = function(evt){
+                // convert ArrayBuffer to base64
+                var bytes = new Uint8Array(evt.target.result);
+                var binary = '';
+                for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+                var base64 = btoa(binary);
+                $('#import_status').text('Import en cours...').css('color', '#666');
+                socket.emit('import_notes', JSON.stringify({ zip: base64 }));
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    });
+
+    socket.on('import_done', function(msg){
+        var result = JSON.parse(msg);
+        if (result.success){
+            $('#import_status').html('✅ ' + result.files.length + ' fichiers importés. <strong>Rechargez la page</strong> pour voir les changements.').css('color', '#4CAF50');
+        } else {
+            $('#import_status').text('❌ Erreur: ' + result.error).css('color', '#c0392b');
         }
     });
 

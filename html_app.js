@@ -19,6 +19,7 @@ var new_obj = require('./static/js/new_obj');
 var store = require('./static/js/store');
 var agenda = require('./static/js/agenda');
 var minitables = require('./static/js/minitables');
+var export_import = require('./static/js/export_import');
 var config = require('./lib/config');
 var annotations = require('./lib/annotations');
 var reminders = require('./lib/reminders');
@@ -101,6 +102,8 @@ init.handle_pages(app, function() {
 page_main = { 'path': '/', 'name': 'main' }
 init.feed_page(app, page_main);
 app.get('/text', function(req, res){ res.render('struct/text.html'); });
+
+export_import.setupRoutes(app);
 
 // Route proxy pour PDFs externes (contournement CORS)
 app.get('/proxy-pdf', async (req, res) => {
@@ -328,6 +331,7 @@ io.sockets.on('connection', function (socket) {
       folders.deals_with_pdfs(socket)                              //---- pdfs in folders
       agenda.handle(socket)                                        //---- agenda
       minitables.handle(socket)                                    //---- inline tables
+      export_import.handleSocket(socket)                           //---- export/import
       config.handle(io,socket)
 
       socket.on('tchat_message',function(mess){
