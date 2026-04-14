@@ -240,6 +240,7 @@ The core [lib/straptoc.js](lib/straptoc.js) library extends markdown with:
 - Interactive portfolios and carousels
 - Folding lists (with deep fold mode via Alt+Q)
 - `!fold` command for automatic folder content extraction (PDFs, EPUBs, DJVUs, images, videos) with recursive subfolder support
+- `$tab <id>` inline editable mini-tables (data persisted in [static/tables.yaml](static/tables.yaml))
 - Tooltips and text hiding
 - Image sizing and captions
 - Copy/paste list items
@@ -534,6 +535,19 @@ In your markdown, write a list item with `!fold` followed by a folder path:
 ```
 
 > **Note**: The old `!fold path !inside` syntax is still accepted for backward compatibility, but `!inside` is no longer needed — `!fold` alone handles subfolders recursively.
+
+### Inline Editable Tables (`$tab`)
+
+Insert an editable mini-table directly in your markdown by writing a paragraph or list item containing only:
+
+```markdown
+$tab monTableau
+```
+
+- `monTableau` is the table identifier. Cell contents are persisted server-side in [static/tables.yaml](static/tables.yaml) under that key.
+- Multiple tables can coexist on the same page — each identifier maps to its own dataset.
+- Edits are saved in real time via socket.io and synchronized across connected clients.
+- Implementation: rendering in [lib/straptoc.js](lib/straptoc.js) (`initMiniTable`), UI helpers in [static/js/minitables.js](static/js/minitables.js).
 
 ## Security
 
