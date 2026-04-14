@@ -34,9 +34,8 @@ exports.handle = function(socket){
     socket.on('save_table_data', function(msg){
         var parsed = JSON.parse(msg)
         var tableId = parsed.id
-        var data = parsed.data
         var tables = loadTables()
-        tables[tableId] = data
+        tables[tableId] = { data: parsed.data, settings: parsed.settings || {} }
         saveTables(tables)
         console.log('Table saved:', tableId)
     })
