@@ -982,6 +982,22 @@
                 </button>
             </div>
 
+            <!-- Git Update Check Interval Configuration -->
+            <div style="background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: #333; font-size: 16px;">Git Update Check Interval</h3>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Interval (minutes):</label>
+                    <input type="number" id="git_update_interval" min="1" max="1440" step="1" placeholder="5"
+                           style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-family: monospace;">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        How often to check for pending git commits (badge on the update button). Default: 5 minutes. Reload page to apply.
+                    </small>
+                </div>
+                <button id="save_git_update_interval_btn" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 3px; cursor: pointer; font-weight: 600;">
+                    Save Interval
+                </button>
+            </div>
+
             <div id="pages_management_section">
                 <div id="pages_list_config_editor">
                     <!-- Pages will be inserted here dynamically -->
@@ -2569,6 +2585,7 @@ $(document).on('click', '[data-tab="pages"]', function() {
     console.log('===== PAGES TAB CLICKED =====');
     loadAddrSaved();
     loadAutosaveInterval();
+    loadGitUpdateInterval();
 });
 
 // ========== AUTOSAVE INTERVAL MANAGEMENT ==========
@@ -2601,6 +2618,35 @@ socket.on('autosave_interval_updated', function(result) {
     var data = JSON.parse(result);
     if (data.success) {
         showNotification('Autosave interval updated to ' + data.interval + ' minutes. Restart server to apply.', 'success', 3000);
+    } else {
+        showNotification('Error updating interval: ' + data.error, 'error');
+    }
+});
+
+// ========== GIT UPDATE INTERVAL MANAGEMENT ==========
+
+function loadGitUpdateInterval() {
+    socket.emit('get_git_update_interval');
+}
+
+socket.on('git_update_interval_data', function(data) {
+    var minutes = (data && data.minutes) || 5;
+    $('#git_update_interval').val(minutes);
+    console.log('Git update interval loaded:', minutes);
+});
+
+$('#save_git_update_interval_btn').click(function() {
+    var minutes = parseInt($('#git_update_interval').val());
+    if (!minutes || minutes < 1 || minutes > 1440) {
+        showNotification('Please enter a valid interval between 1 and 1440 minutes', 'error');
+        return;
+    }
+    socket.emit('save_git_update_interval', minutes);
+});
+
+socket.on('git_update_interval_updated', function(data) {
+    if (data.success) {
+        showNotification('Git update interval set to ' + data.minutes + ' minutes. Reload page to apply.', 'success', 3000);
     } else {
         showNotification('Error updating interval: ' + data.error, 'error');
     }
