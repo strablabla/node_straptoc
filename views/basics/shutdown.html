@@ -299,9 +299,13 @@ $(document).ready(function() {
                 }
             });
 
-            // Check on connect and every 5 minutes
+            // Check on connect, then every N minutes (from config.yaml: git_update_interval)
             checkGitUpdates();
-            setInterval(checkGitUpdates, 5 * 60 * 1000);
+            socket.once('git_update_interval_data', function(data) {
+                var minutes = (data && data.minutes) || 5;
+                setInterval(checkGitUpdates, minutes * 60 * 1000);
+            });
+            socket.emit('get_git_update_interval');
 
             socket.on('git_pull_result', function(data) {
                 var $status = $('#update_status');
