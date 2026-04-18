@@ -494,14 +494,16 @@ function loadIconGrid() {
 }
 
 // Open modal when clicking on icon_page
-$('#icon_page').click(function() {
-    if (curr_page) {  // Only allow icon change if we're on a specific page
-        var current_num = dic_icon_pages[curr_page] || '335'
-        if (confirm('change icon n°' + current_num + ' ?')) {
-            loadIconGrid()
-            $('#icon_picker_modal').fadeIn(200)
-        }
-    }
+$('#icon_page').off('click').on('click', function(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!curr_page) return  // Only allow icon change if we're on a specific page
+    var current_num = dic_icon_pages[curr_page] || '335'
+    confirm('change icon n°' + current_num + ' ?', function(ok) {
+        if (!ok) return
+        loadIconGrid()
+        $('#icon_picker_modal').fadeIn(200)
+    })
 })
 
 // Close button
