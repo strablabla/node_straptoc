@@ -38,6 +38,9 @@ static/js/strap_database.db
 *.crt
 *.key
 
+# Local data (specific to each instance)
+static/tables.yaml
+
 # Saved content
 views/saved/
 views/saved/*
