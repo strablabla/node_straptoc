@@ -28,6 +28,8 @@ static/pages.json
 static/drawing_state.json
 static/latex_voc.json
 static/addr_saved.json
+static/annotations.yaml
+static/bookmarks.yaml
 
 # User database
 static/js/strap_database.db
