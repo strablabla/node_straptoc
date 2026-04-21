@@ -680,6 +680,11 @@ $("li").dblclick( function(e){
         return
     }
     if (elem_li_grp.hasClass('strapvid_inside')){
+        // Only react when the dblclicked label belongs directly to THIS li,
+        // not to a nested sub-list li (otherwise the parent handler also fires
+        // while bubbling and duplicates/expands the selection).
+        var $dblLabel = $dblTarget.closest('.vid-group-label')
+        if ($dblLabel.closest('li')[0] !== elem_li_grp[0]) return
         var $grp = make_playlist_group(elem_li_grp)
         current_group_parent = $grp.items
         var added_count = 0
@@ -718,7 +723,14 @@ $("li").click( function(e){
     if (lazyList.length && !elem_li_parent.hasClass('vid-lazy-item')){
         // Only trigger when clicking on the group name text, not on empty space
         var $clickTarget = $(e.target)
-        if (!$clickTarget.closest('.vid-group-label').length) {
+        var $clickLabel = $clickTarget.closest('.vid-group-label')
+        if (!$clickLabel.length) {
+            return
+        }
+        // Only react when the clicked label belongs directly to THIS li, not
+        // to a nested sub-list li. Without this, clicking a sub-folder also
+        // triggers parents up the chain, loading their whole subtree.
+        if ($clickLabel.closest('li')[0] !== elem_li_parent[0]) {
             return
         }
         // Add all lazy videos from this parent to the playlist (grouped by directory)
