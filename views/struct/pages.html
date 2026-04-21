@@ -265,6 +265,9 @@ function fill_list_page(){
                $('#enter_new_page').css({ 'top' : butt_offset })
                                    .toggle()
           })
+
+          // Frame the current page link now that the list DOM exists
+          highlight_curr_page()
       });
 
 }
@@ -272,17 +275,16 @@ function fill_list_page(){
 // Note: fill_list_page() is now called inside the 'pages_data' socket handler
 // to ensure it runs after the data has been received
 
-// Change size of the current name page in the list..
+// Frame the current page name in the list with a white border
 
-function change_font_size_curr_page(font_size){
+function highlight_curr_page(){
 
-    /*
-
-    Change the font size
-
-    */
-
-    dic_deco_list = {'text-decoration':'underline', 'font-size': font_size + 'px'}
+    var dic_deco_list = {
+        'border': '1px solid white',
+        'border-radius': '4px',
+        'padding': '1px 6px',
+        'display': 'inline-block'
+    }
     $('#link_' + curr_page).css(dic_deco_list)    // general case
     if (curr_page == ''){
          $('#link_main').css(dic_deco_list)       // cas Main
@@ -291,20 +293,16 @@ function change_font_size_curr_page(font_size){
 }
 
 var pages_open = true                             // if true, list of pages visible
-change_font_size_curr_page(25)
 var time_page_close = 4000
 
 $('#toggle_pages').on('click', function(){           // toggle list of pages
 
      var translr = '-' + $('#pages').css('width')//'-130px' //
      if (pages_open){           // close..
-          //alert('closing')
           $('#pages').animate({'left':  translr })   // translate list_pages on the left  to hide it..
-          change_font_size_curr_page(12)
      }
      else{                      // open
           $('#pages').animate({ 'left': '0px' }) // translate list_pages on the right to show it..
-          change_font_size_curr_page(25)
      }
      $('.tp_arr').toggle()                      // exchange right and left arrow
      pages_open = !pages_open
