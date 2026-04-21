@@ -151,6 +151,126 @@
     font-size: 16px;
 }
 
+/* ---------- Bookmarks ---------- */
+
+.pdfjs-bookmark-btn {
+    margin-left: 20px !important;
+    font-size: 16px !important;
+}
+
+#pdfjs-bookmark-panel {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    background: #323232;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 10px;
+    min-width: 280px;
+    max-width: 340px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 200;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    display: none;
+    color: white;
+}
+
+#pdfjs-bookmark-panel.visible {
+    display: block;
+}
+
+.pdfjs-bookmark-add {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.pdfjs-bookmark-add input {
+    flex: 1;
+    background: #454545;
+    color: white;
+    border: 1px solid #666;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.pdfjs-bookmark-add button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.pdfjs-bookmark-add button:hover {
+    background: #45a049;
+}
+
+#pdfjs-bookmark-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#pdfjs-bookmark-list li {
+    display: flex;
+    align-items: center;
+    padding: 6px 4px;
+    border-bottom: 1px solid #454545;
+    font-size: 13px;
+}
+
+#pdfjs-bookmark-list li:hover {
+    background: #3f3f3f;
+}
+
+.pdfjs-bookmark-name {
+    cursor: pointer;
+    flex: 1;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pdfjs-bookmark-name:hover {
+    color: #87CEEB;
+}
+
+.pdfjs-bookmark-page {
+    color: #aaa;
+    font-size: 11px;
+    margin: 0 8px;
+    flex-shrink: 0;
+}
+
+.pdfjs-bookmark-del {
+    background: transparent;
+    border: none;
+    color: #ff6b6b;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.pdfjs-bookmark-del:hover {
+    color: #ff4444;
+}
+
+.pdfjs-bookmark-empty {
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px;
+    font-style: italic;
+}
+
 </style>
 
 <script type="module">
@@ -180,8 +300,246 @@ window.PDFViewer = {
     totalPages: 0,
     scale: 1.5,
     rendering: false,
-    currentPdfPath: null
+    currentPdfPath: null,
+    namedBookmarks: []
 };
+
+// ---------- Cache and dedupe of rendered pages ----------
+
+const MAX_CACHED_PAGES = 20;
+const pageCache = new Map();        // pageNum -> HTMLElement (canvasContainer)
+const pendingBuilds = new Map();    // pageNum -> Promise<HTMLElement>
+
+function cacheGet(pageNum) {
+    if (!pageCache.has(pageNum)) return null;
+    const el = pageCache.get(pageNum);
+    pageCache.delete(pageNum);
+    pageCache.set(pageNum, el);  // LRU: refresh insertion order
+    return el;
+}
+
+function cacheSet(pageNum, el) {
+    if (pageCache.has(pageNum)) pageCache.delete(pageNum);
+    pageCache.set(pageNum, el);
+    while (pageCache.size > MAX_CACHED_PAGES) {
+        const oldest = pageCache.keys().next().value;
+        pageCache.delete(oldest);
+    }
+}
+
+function clearPageCache() {
+    pageCache.clear();
+    pendingBuilds.clear();
+}
+
+// ---------- Accent tables (allocated once at module scope) ----------
+
+const ACCENT_CHARS = new Set([
+    '´', '´', '`', '`', '^', '^',
+    '¨', '¨', '~', '~', '¸', '¸',
+    '́', '̀', '̂', '̈', '̃', '̧'
+]);
+
+const ACCENT_MAP = {
+    'A´': 'Á', 'E´': 'É', 'I´': 'Í', 'O´': 'Ó', 'U´': 'Ú',
+    'a´': 'á', 'e´': 'é', 'i´': 'í', 'o´': 'ó', 'u´': 'ú',
+    'A´': 'Á', 'E´': 'É', 'I´': 'Í', 'O´': 'Ó', 'U´': 'Ú',
+    'a´': 'á', 'e´': 'é', 'i´': 'í', 'o´': 'ó', 'u´': 'ú',
+    'R´': 'R´', 'r´': 'r´',
+    'A`': 'À', 'E`': 'È', 'I`': 'Ì', 'O`': 'Ò', 'U`': 'Ù',
+    'a`': 'à', 'e`': 'è', 'i`': 'ì', 'o`': 'ò', 'u`': 'ù',
+    'A^': 'Â', 'E^': 'Ê', 'I^': 'Î', 'O^': 'Ô', 'U^': 'Û',
+    'a^': 'â', 'e^': 'ê', 'i^': 'î', 'o^': 'ô', 'u^': 'û',
+    'A¨': 'Ä', 'E¨': 'Ë', 'I¨': 'Ï', 'O¨': 'Ö', 'U¨': 'Ü',
+    'a¨': 'ä', 'e¨': 'ë', 'i¨': 'ï', 'o¨': 'ö', 'u¨': 'ü',
+    'A¨': 'Ä', 'E¨': 'Ë', 'I¨': 'Ï', 'O¨': 'Ö', 'U¨': 'Ü',
+    'a¨': 'ä', 'e¨': 'ë', 'i¨': 'ï', 'o¨': 'ö', 'u¨': 'ü',
+    'A~': 'Ã', 'N~': 'Ñ', 'O~': 'Õ',
+    'a~': 'ã', 'n~': 'ñ', 'o~': 'õ',
+    'C¸': 'Ç', 'c¸': 'ç',
+    'C¸': 'Ç', 'c¸': 'ç'
+};
+
+function isAccent(str) {
+    return str.length === 1 && ACCENT_CHARS.has(str);
+}
+
+function combineWithAccent(base, accent) {
+    return ACCENT_MAP[base + accent] || (base + accent);
+}
+
+const COPY_ACCENT_COMBOS = {
+    'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú',
+    'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú'
+};
+
+function handleTextCopy(e) {
+    const selectedText = window.getSelection().toString();
+    let fixedText = '';
+    for (let i = 0; i < selectedText.length; i++) {
+        const c = selectedText[i];
+        if (c.charCodeAt(0) === 0xB4) {
+            const next = selectedText[i + 1];
+            if (next && COPY_ACCENT_COMBOS[next]) {
+                fixedText += COPY_ACCENT_COMBOS[next];
+                i++;
+            }
+            continue;
+        }
+        fixedText += c;
+    }
+    fixedText = fixedText
+        .replace(/A`/g, 'À').replace(/E`/g, 'È').replace(/a`/g, 'à').replace(/e`/g, 'è')
+        .replace(/A\^/g, 'Â').replace(/E\^/g, 'Ê').replace(/I\^/g, 'Î').replace(/O\^/g, 'Ô').replace(/U\^/g, 'Û')
+        .replace(/a\^/g, 'â').replace(/e\^/g, 'ê').replace(/i\^/g, 'î').replace(/o\^/g, 'ô').replace(/u\^/g, 'û')
+        .normalize('NFC');
+    if (e.clipboardData) {
+        e.preventDefault();
+        e.clipboardData.setData('text/plain', fixedText);
+    }
+}
+
+// ---------- Bookmarks ----------
+
+const DEBOUNCE_LAST_PAGE_MS = 800;
+let lastPageSaveTimer = null;
+let bookmarkListenersAttached = false;
+
+function normalizePathClient(p) {
+    return (!p || p === '/' || p === '') ? 'page-root' : p;
+}
+
+function getBookmarksFor(pdfPath) {
+    if (!window.socket) return Promise.resolve({ lastPage: 1, named: [] });
+    return new Promise((resolve) => {
+        let done = false;
+        const finish = (result) => {
+            if (done) return;
+            done = true;
+            window.socket.off('bookmarks_loaded', handler);
+            resolve(result);
+        };
+        const handler = (data) => {
+            try { finish(JSON.parse(data)); }
+            catch (e) { finish({ lastPage: 1, named: [] }); }
+        };
+        window.socket.on('bookmarks_loaded', handler);
+        window.socket.emit('get_bookmarks', pdfPath);
+        setTimeout(() => finish({ lastPage: 1, named: [] }), 2000);
+    });
+}
+
+let pendingLastPageSave = null;  // { filePath, page } captured at schedule time
+
+function scheduleSaveLastPage(page) {
+    if (!window.socket || !window.PDFViewer.currentPdfPath) return;
+    clearTimeout(lastPageSaveTimer);
+    pendingLastPageSave = { filePath: window.PDFViewer.currentPdfPath, page: page };
+    lastPageSaveTimer = setTimeout(() => {
+        flushLastPageSave();
+    }, DEBOUNCE_LAST_PAGE_MS);
+}
+
+function flushLastPageSave() {
+    if (!pendingLastPageSave || !window.socket) return;
+    clearTimeout(lastPageSaveTimer);
+    window.socket.emit('save_last_page', JSON.stringify(pendingLastPageSave));
+    pendingLastPageSave = null;
+}
+
+// Exposed so the modal's close handler can persist before tearing down.
+window.flushPDFLastPage = flushLastPageSave;
+
+function renderBookmarkList() {
+    const $list = $('#pdfjs-bookmark-list');
+    $list.empty();
+    const named = window.PDFViewer.namedBookmarks || [];
+    if (named.length === 0) {
+        $list.append('<li class="pdfjs-bookmark-empty">No bookmarks yet</li>');
+        return;
+    }
+    named.forEach(bm => {
+        const $name = $('<span class="pdfjs-bookmark-name"></span>').text(bm.name).attr('title', bm.name);
+        const $page = $('<span class="pdfjs-bookmark-page"></span>').text('p.' + bm.page);
+        const $del = $('<button class="pdfjs-bookmark-del" title="Delete">×</button>');
+        $name.on('click', () => {
+            renderPage(bm.page);
+            $('#pdfjs-bookmark-panel').removeClass('visible');
+        });
+        $del.on('click', (e) => {
+            e.stopPropagation();
+            if (!window.socket) return;
+            window.socket.emit('delete_named_bookmark', JSON.stringify({
+                filePath: window.PDFViewer.currentPdfPath,
+                bookmarkId: bm.id
+            }));
+        });
+        const $li = $('<li/>').append($name).append($page).append($del);
+        $list.append($li);
+    });
+}
+
+function wireBookmarkUI() {
+    $('#pdfjs-bookmark-toggle').off('click').on('click', (e) => {
+        e.stopPropagation();
+        const $panel = $('#pdfjs-bookmark-panel');
+        const wasVisible = $panel.hasClass('visible');
+        $panel.toggleClass('visible');
+        if (!wasVisible) {
+            renderBookmarkList();
+            $('#pdfjs-bookmark-name').focus();
+        }
+    });
+
+    $('#pdfjs-bookmark-add-btn').off('click').on('click', () => {
+        const name = $('#pdfjs-bookmark-name').val().trim();
+        if (!name || !window.socket || !window.PDFViewer.currentPdfPath) return;
+        window.socket.emit('save_named_bookmark', JSON.stringify({
+            filePath: window.PDFViewer.currentPdfPath,
+            bookmark: { name: name, page: window.PDFViewer.currentPage }
+        }));
+        $('#pdfjs-bookmark-name').val('');
+    });
+
+    $('#pdfjs-bookmark-name').off('keydown').on('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            $('#pdfjs-bookmark-add-btn').click();
+        }
+    });
+
+    // Close panel on outside click
+    $(document).off('click.pdfjs-bookmark').on('click.pdfjs-bookmark', (e) => {
+        const $panel = $('#pdfjs-bookmark-panel');
+        if (!$panel.hasClass('visible')) return;
+        if ($(e.target).closest('#pdfjs-bookmark-panel, #pdfjs-bookmark-toggle').length === 0) {
+            $panel.removeClass('visible');
+        }
+    });
+
+    // Global socket listeners: attach once, reuse across PDFs
+    if (window.socket && !bookmarkListenersAttached) {
+        const currentMatches = (filePath) =>
+            filePath === normalizePathClient(window.PDFViewer.currentPdfPath);
+        window.socket.on('named_bookmark_saved', (data) => {
+            try {
+                const parsed = JSON.parse(data);
+                if (!currentMatches(parsed.filePath)) return;
+                window.PDFViewer.namedBookmarks = parsed.named || [];
+                renderBookmarkList();
+            } catch (e) {}
+        });
+        window.socket.on('named_bookmark_deleted', (data) => {
+            try {
+                const parsed = JSON.parse(data);
+                if (!currentMatches(parsed.filePath)) return;
+                window.PDFViewer.namedBookmarks = parsed.named || [];
+                renderBookmarkList();
+            } catch (e) {}
+        });
+        bookmarkListenersAttached = true;
+    }
+}
 
 // Détecte si une URL est externe (cross-origin)
 function isExternalUrl(url) {
@@ -230,6 +588,7 @@ async function initPDFViewer(pdfPath, containerId) {
 
         const pdfDoc = await loadingTask.promise;
 
+        clearPageCache();  // new PDF: drop everything cached from the previous one
         window.PDFViewer.pdfDoc = pdfDoc;
         window.PDFViewer.totalPages = pdfDoc.numPages;
         window.PDFViewer.currentPage = 1;
@@ -240,8 +599,17 @@ async function initPDFViewer(pdfPath, containerId) {
         // Build viewer UI
         buildViewerUI(container);
 
-        // Render first page
-        await renderPage(1);
+        // Fetch bookmarks for this PDF (auto-resume + named list)
+        const bookmarkData = await getBookmarksFor(pdfPath);
+        window.PDFViewer.namedBookmarks = bookmarkData.named || [];
+        const resumePage = Math.min(
+            Math.max(1, parseInt(bookmarkData.lastPage, 10) || 1),
+            pdfDoc.numPages
+        );
+        wireBookmarkUI();
+
+        // Render the resume page
+        await renderPage(resumePage);
 
         // Notify annotation system that PDF is ready
         if (window.annotationSystem) {
@@ -282,6 +650,14 @@ function buildViewerUI(container) {
                     <option value="2.5">250%</option>
                 </select>
                 <button id="pdfjs-zoom-in">+</button>
+                <button id="pdfjs-bookmark-toggle" class="pdfjs-bookmark-btn" title="Bookmarks">🔖</button>
+            </div>
+            <div id="pdfjs-bookmark-panel">
+                <div class="pdfjs-bookmark-add">
+                    <input type="text" id="pdfjs-bookmark-name" placeholder="Bookmark name" maxlength="40">
+                    <button id="pdfjs-bookmark-add-btn">Add</button>
+                </div>
+                <ul id="pdfjs-bookmark-list"></ul>
             </div>
             <div id="pdfjs-viewer-content" style="position: relative; overflow: auto; height: 800px;">
                 <!-- Pages will be rendered here -->
@@ -313,6 +689,7 @@ function buildViewerUI(container) {
 
     document.getElementById('pdfjs-scale').addEventListener('change', (e) => {
         window.PDFViewer.scale = parseFloat(e.target.value);
+        clearPageCache();  // cached canvases are at the previous scale
         renderPage(window.PDFViewer.currentPage);
     });
 
@@ -335,296 +712,179 @@ function buildViewerUI(container) {
     });
 }
 
-// Render a specific page
+// Build the DOM (canvas + text layer + annotation layer) for a page, fully rendered.
+// Does NOT insert into the live DOM — the caller decides when to attach.
+async function buildPageDom(pageNum) {
+
+    const page = await window.PDFViewer.pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: window.PDFViewer.scale });
+
+    const canvasContainer = document.createElement('div');
+    canvasContainer.className = 'pdfjs-canvas-container';
+    canvasContainer.dataset.pageNum = pageNum;
+    canvasContainer.style.width = viewport.width + 'px';
+    canvasContainer.style.height = viewport.height + 'px';
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pdfjs-page-canvas';
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    canvasContainer.appendChild(canvas);
+
+    const textLayer = document.createElement('div');
+    textLayer.className = 'pdfjs-text-layer';
+    textLayer.style.width = viewport.width + 'px';
+    textLayer.style.height = viewport.height + 'px';
+    canvasContainer.appendChild(textLayer);
+
+    const annotationLayer = document.createElement('div');
+    annotationLayer.className = 'pdfjs-annotation-layer';
+    annotationLayer.id = 'pdfjs-annotation-layer';
+    canvasContainer.appendChild(annotationLayer);
+
+    // Rasterize the page + fetch text content in parallel
+    const [_renderResult, textContent] = await Promise.all([
+        page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise,
+        page.getTextContent()
+    ]);
+
+    buildTextLayer(textContent, viewport, textLayer);
+    textLayer.addEventListener('copy', handleTextCopy);
+
+    return canvasContainer;
+}
+
+// Build the text layer spans using a DocumentFragment so the browser
+// only reflows once instead of once per item.
+function buildTextLayer(textContent, viewport, textLayer) {
+
+    // Merge accent items with the preceding base letter
+    const mergedItems = [];
+    const items = textContent.items;
+    const len = items.length;
+    let i = 0;
+    while (i < len) {
+        const currentItem = items[i];
+        let mergedStr = currentItem.str;
+        if (i + 1 < len && mergedStr.length > 0) {
+            const nextStr = items[i + 1].str;
+            if (isAccent(nextStr)) {
+                const lastChar = mergedStr[mergedStr.length - 1];
+                const combined = combineWithAccent(lastChar, nextStr);
+                mergedStr = mergedStr.substring(0, mergedStr.length - 1) + combined;
+                i++;
+            }
+        }
+        mergedItems.push({
+            str: mergedStr.normalize('NFC'),
+            transform: currentItem.transform
+        });
+        i++;
+    }
+
+    const fragment = document.createDocumentFragment();
+    const scale = viewport.scale;
+    const viewportHeight = viewport.height;
+    for (const item of mergedItems) {
+        const span = document.createElement('span');
+        span.textContent = item.str;
+        const tx = item.transform;
+        const x = tx[4] * scale;
+        const y = tx[5] * scale;
+        const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]) * scale;
+        const topPosition = viewportHeight - y - (fontSize * 0.85);
+        const style = span.style;
+        style.position = 'absolute';
+        style.left = x + 'px';
+        style.top = topPosition + 'px';
+        style.fontSize = fontSize + 'px';
+        style.fontFamily = 'sans-serif';
+        fragment.appendChild(span);
+    }
+    textLayer.appendChild(fragment);
+}
+
+// Returns the DOM for a page, from cache if available, else builds+caches.
+// Deduplicates concurrent calls (e.g. prefetch racing with a user click).
+function getOrBuildPageDom(pageNum) {
+    const cached = cacheGet(pageNum);
+    if (cached) return Promise.resolve(cached);
+    if (pendingBuilds.has(pageNum)) return pendingBuilds.get(pageNum);
+    const promise = buildPageDom(pageNum).then(el => {
+        cacheSet(pageNum, el);
+        pendingBuilds.delete(pageNum);
+        return el;
+    }).catch(err => {
+        pendingBuilds.delete(pageNum);
+        throw err;
+    });
+    pendingBuilds.set(pageNum, promise);
+    return promise;
+}
+
+// Pre-render neighboring pages during browser idle time so the next click
+// becomes an instant cache hit.
+function schedulePrefetch(currentPageNum) {
+    const total = window.PDFViewer.totalPages;
+    const candidates = [currentPageNum + 1, currentPageNum - 1]
+        .filter(n => n >= 1 && n <= total && !pageCache.has(n) && !pendingBuilds.has(n));
+    if (candidates.length === 0) return;
+    const run = () => {
+        for (const n of candidates) {
+            getOrBuildPageDom(n).catch(err => console.warn('Prefetch failed for page', n, err));
+        }
+    };
+    if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(run, { timeout: 1000 });
+    } else {
+        setTimeout(run, 200);
+    }
+}
+
+// Render a specific page into the viewer container.
 async function renderPage(pageNum) {
 
-    if (window.PDFViewer.rendering) {
-        return;
-    }
+    if (window.PDFViewer.rendering) return;
 
     window.PDFViewer.rendering = true;
     window.PDFViewer.currentPage = pageNum;
 
-    console.log('Rendering page', pageNum);
-
-    // Close annotation panel when changing pages
     if (window.closeAnnotationPanel) {
         window.closeAnnotationPanel();
     }
 
     try {
-        const page = await window.PDFViewer.pdfDoc.getPage(pageNum);
-
-        const viewport = page.getViewport({ scale: window.PDFViewer.scale });
-
-        // Prepare canvas
         const container = document.getElementById('pdfjs-viewer-content');
+        const canvasContainer = await getOrBuildPageDom(pageNum);
+
+        // Detach previously-displayed page from the live DOM.
+        // If it was cached, it stays alive in pageCache — revisiting it is free.
         container.innerHTML = '';
-
-        const canvasContainer = document.createElement('div');
-        canvasContainer.className = 'pdfjs-canvas-container';
-        canvasContainer.style.width = viewport.width + 'px';
-        canvasContainer.style.height = viewport.height + 'px';
-
-        const canvas = document.createElement('canvas');
-        canvas.className = 'pdfjs-page-canvas';
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        canvasContainer.appendChild(canvas);
-
-        // Create text layer for text selection
-        const textLayer = document.createElement('div');
-        textLayer.className = 'pdfjs-text-layer';
-        textLayer.style.width = viewport.width + 'px';
-        textLayer.style.height = viewport.height + 'px';
-        canvasContainer.appendChild(textLayer);
-
-        // Create annotation layer
-        const annotationLayer = document.createElement('div');
-        annotationLayer.className = 'pdfjs-annotation-layer';
-        annotationLayer.id = 'pdfjs-annotation-layer';
-        canvasContainer.appendChild(annotationLayer);
-
         container.appendChild(canvasContainer);
 
-        // Render PDF page
-        const context = canvas.getContext('2d');
-        const renderContext = {
-            canvasContext: context,
-            viewport: viewport
-        };
-
-        await page.render(renderContext).promise;
-
-        console.log('Page rendered successfully');
-
-        // Render text layer manually
-        const textContent = await page.getTextContent();
-
-        console.log('=== TEXT LAYER DEBUG ===');
-        console.log('Text content items:', textContent.items.length);
-
-        // Log first 20 items to understand the structure
-        for (let i = 0; i < Math.min(20, textContent.items.length); i++) {
-            const str = textContent.items[i].str;
-            const charCodes = Array.from(str).map(c => c.charCodeAt(0).toString(16)).join(' ');
-            console.log(`Item ${i}: "${str}" (chars: ${charCodes})`);
-        }
-
-        // Build merged items by combining accents with previous characters
-        const accentChars = [
-            '´', '\u00B4',  // Acute accent (chars: b4)
-            '`', '\u0060',  // Grave accent
-            '^', '\u005E',  // Circumflex
-            '¨', '\u00A8',  // Diaeresis/Umlaut
-            '~', '\u007E',  // Tilde
-            '¸', '\u00B8',  // Cedilla
-            '\u0301', '\u0300', '\u0302', '\u0308', '\u0303', '\u0327'  // Combining diacritics
-        ];
-
-        // Map of accent combinations: base + accent -> combined character
-        const accentMap = {
-            // Acute accent (´ and \u00B4 which is char b4)
-            'A´': 'Á', 'E´': 'É', 'I´': 'Í', 'O´': 'Ó', 'U´': 'Ú',
-            'a´': 'á', 'e´': 'é', 'i´': 'í', 'o´': 'ó', 'u´': 'ú',
-            'A\u00B4': 'Á', 'E\u00B4': 'É', 'I\u00B4': 'Í', 'O\u00B4': 'Ó', 'U\u00B4': 'Ú',
-            'a\u00B4': 'á', 'e\u00B4': 'é', 'i\u00B4': 'í', 'o\u00B4': 'ó', 'u\u00B4': 'ú',
-            'R\u00B4': 'R´', 'r\u00B4': 'r´',  // Fallback for R (not standard but in this PDF)
-            // Grave accent
-            'A`': 'À', 'E`': 'È', 'I`': 'Ì', 'O`': 'Ò', 'U`': 'Ù',
-            'a`': 'à', 'e`': 'è', 'i`': 'ì', 'o`': 'ò', 'u`': 'ù',
-            // Circumflex
-            'A^': 'Â', 'E^': 'Ê', 'I^': 'Î', 'O^': 'Ô', 'U^': 'Û',
-            'a^': 'â', 'e^': 'ê', 'i^': 'î', 'o^': 'ô', 'u^': 'û',
-            // Umlaut/Diaeresis
-            'A¨': 'Ä', 'E¨': 'Ë', 'I¨': 'Ï', 'O¨': 'Ö', 'U¨': 'Ü',
-            'a¨': 'ä', 'e¨': 'ë', 'i¨': 'ï', 'o¨': 'ö', 'u¨': 'ü',
-            'A\u00A8': 'Ä', 'E\u00A8': 'Ë', 'I\u00A8': 'Ï', 'O\u00A8': 'Ö', 'U\u00A8': 'Ü',
-            'a\u00A8': 'ä', 'e\u00A8': 'ë', 'i\u00A8': 'ï', 'o\u00A8': 'ö', 'u\u00A8': 'ü',
-            // Tilde
-            'A~': 'Ã', 'N~': 'Ñ', 'O~': 'Õ',
-            'a~': 'ã', 'n~': 'ñ', 'o~': 'õ',
-            // Cedilla
-            'C¸': 'Ç', 'c¸': 'ç',
-            'C\u00B8': 'Ç', 'c\u00B8': 'ç'
-        };
-
-        function isAccent(str) {
-            return str.length === 1 && accentChars.includes(str);
-        }
-
-        function combineWithAccent(base, accent) {
-            const combo = base + accent;
-            return accentMap[combo] || (base + accent);
-        }
-
-        // Merge items: if next item is an accent, combine it with current
-        const mergedItems = [];
-        let i = 0;
-        while (i < textContent.items.length) {
-            const currentItem = textContent.items[i];
-            let mergedStr = currentItem.str;
-
-            // Look ahead to see if next item is an accent
-            if (i + 1 < textContent.items.length) {
-                const nextItem = textContent.items[i + 1];
-                if (isAccent(nextItem.str) && mergedStr.length > 0) {
-                    // Get last character of current string
-                    const lastChar = mergedStr[mergedStr.length - 1];
-                    const combined = combineWithAccent(lastChar, nextItem.str);
-                    // Replace last char with combined version
-                    mergedStr = mergedStr.substring(0, mergedStr.length - 1) + combined;
-                    i++; // Skip the accent item
-                }
-            }
-
-            mergedItems.push({
-                str: mergedStr.normalize('NFC'),
-                transform: currentItem.transform,
-                width: currentItem.width,
-                height: currentItem.height
-            });
-            i++;
-        }
-
-        console.log('Merged items count:', mergedItems.length);
-        console.log('First 5 merged items:');
-        for (let i = 0; i < Math.min(5, mergedItems.length); i++) {
-            console.log(`  "${mergedItems[i].str}"`);
-        }
-
-        // Manual text rendering with viewport-adjusted positioning
-        mergedItems.forEach(function(item, index) {
-            const span = document.createElement('span');
-            span.textContent = item.str;
-
-            // Get original transform from PDF
-            const tx = item.transform;
-
-            // Calculate scaled positions
-            const scale = viewport.scale;
-            const x = tx[4] * scale;
-            const y = tx[5] * scale;
-            const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]) * scale;
-
-            // Convert Y from bottom-origin to top-origin
-            // Adjust by subtracting a fraction of fontSize for better alignment
-            const topPosition = viewport.height - y - (fontSize * 0.85);
-
-            span.style.position = 'absolute';
-            span.style.left = x + 'px';
-            span.style.top = topPosition + 'px';
-            span.style.fontSize = fontSize + 'px';
-            span.style.fontFamily = 'sans-serif';
-
-            textLayer.appendChild(span);
-
-            if (index < 5) {
-                console.log(`Text ${index}: "${item.str}" PDF(${tx[4]}, ${tx[5]}) -> Screen(${x}, ${topPosition}), fontSize: ${fontSize}`);
-            }
-        });
-
-        console.log('Text layer rendered manually');
-        console.log('Text layer children count:', textLayer.children.length);
-        console.log('=== END TEXT LAYER DEBUG ===');
-
-        // Add copy event listener to fix accents when copying text
-        textLayer.addEventListener('copy', function(e) {
-            const selection = window.getSelection();
-            let selectedText = selection.toString();
-
-            console.log('=== COPY EVENT ===');
-            console.log('Original text:', selectedText);
-            console.log('Original char codes:', Array.from(selectedText).map(c => c.charCodeAt(0).toString(16)).join(' '));
-
-            // Fix separated accents in copied text
-            // Character-by-character reconstruction
-            const accentB4 = String.fromCharCode(0xB4);  // The ´ character (b4)
-
-            const accentCombos = {
-                'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú',
-                'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú'
-            };
-
-            let fixedText = '';
-
-            for (let i = 0; i < selectedText.length; i++) {
-                const currentChar = selectedText[i];
-                const currentCode = currentChar.charCodeAt(0);
-
-                // If current char is b4 accent, check what comes AFTER
-                if (currentCode === 0xB4) {
-                    // Check if next character can be combined with this accent
-                    if (i + 1 < selectedText.length) {
-                        const nextChar = selectedText[i + 1];
-                        if (accentCombos[nextChar]) {
-                            // Combine accent with next letter
-                            fixedText += accentCombos[nextChar];
-                            i++; // Skip the next letter (we've already added its accented version)
-                            continue;
-                        }
-                    }
-                    // If we can't combine, skip the accent (don't add it)
-                    continue;
-                }
-
-                // Otherwise, add the character as-is
-                fixedText += currentChar;
-            }
-
-            // Also handle other accents with simple replace
-            fixedText = fixedText.replace(/A`/g, 'À');
-            fixedText = fixedText.replace(/E`/g, 'È');
-            fixedText = fixedText.replace(/a`/g, 'à');
-            fixedText = fixedText.replace(/e`/g, 'è');
-
-            fixedText = fixedText.replace(/A\^/g, 'Â');
-            fixedText = fixedText.replace(/E\^/g, 'Ê');
-            fixedText = fixedText.replace(/I\^/g, 'Î');
-            fixedText = fixedText.replace(/O\^/g, 'Ô');
-            fixedText = fixedText.replace(/U\^/g, 'Û');
-            fixedText = fixedText.replace(/a\^/g, 'â');
-            fixedText = fixedText.replace(/e\^/g, 'ê');
-            fixedText = fixedText.replace(/i\^/g, 'î');
-            fixedText = fixedText.replace(/o\^/g, 'ô');
-            fixedText = fixedText.replace(/u\^/g, 'û');
-
-            fixedText = fixedText.normalize('NFC');
-
-            console.log('Fixed text:', fixedText);
-            console.log('Fixed char codes:', Array.from(fixedText).map(c => c.charCodeAt(0).toString(16)).join(' '));
-
-            // Set the clipboard data with fixed text
-            if (e.clipboardData) {
-                e.preventDefault();
-                e.clipboardData.setData('text/plain', fixedText);
-            }
-        });
-
-        // Update page number input
         document.getElementById('pdfjs-page-num').value = pageNum;
-
-        // Update navigation buttons
         document.getElementById('pdfjs-prev-page').disabled = (pageNum === 1);
         document.getElementById('pdfjs-next-page').disabled = (pageNum === window.PDFViewer.totalPages);
 
-        // Reload annotations for this page
         if (window.annotationSystem && window.annotationSystem.active) {
             window.reloadPDFAnnotations();
         }
+
+        // Persist the current page as the auto-resume target (debounced)
+        scheduleSaveLastPage(pageNum);
 
     } catch (error) {
         console.error('Error rendering page:', error);
     } finally {
         window.PDFViewer.rendering = false;
 
-        // Reapply crosshair cursor if annotations are active
         if (window.annotationSystem && window.annotationSystem.active) {
             setTimeout(function() {
                 $('.pdfjs-page-canvas, .pdfjs-text-layer, #pdfjs-annotation-layer').css('cursor', 'crosshair');
             }, 100);
         }
+
+        schedulePrefetch(pageNum);
     }
 }
 

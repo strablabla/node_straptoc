@@ -129,7 +129,7 @@ annotations:
         scale: 1.5
         viewportX: 473
         viewportY: 652
-      content: Narrenschiff....
+      content: Narrenschiff et le nom du document qu'a écrit Brant dans les années je ne sais pas exactement combien..
       color: '#ffff00'
       page: 5
       timestamp: '2026-01-04T18:56:09.804Z'
@@ -146,7 +146,7 @@ annotations:
         scale: 1.5
         viewportX: 724
         viewportY: 548
-      content: personnage coomique
+      content: personnage super super coomique
       color: '#ffff00'
       page: 1
       timestamp: '2026-01-04T19:04:16.733Z'
@@ -282,7 +282,7 @@ annotations:
         scale: 1.5
         viewportX: 322
         viewportY: 372
-      content: trompette
+      content: Ce célèbre texte démarre sur les chapeaux de roues... trompettes à fond !!! ahahah
       color: '#ffff00'
       page: 1
       timestamp: '2026-01-04T19:33:31.257Z'
@@ -303,5 +303,39 @@ annotations:
       color: '#ffff00'
       page: 2
       timestamp: '2026-01-04T19:33:55.186Z'
+      filePath: pdfs/Sebastian_Brant_DasNarrenschiff.pdf
+      fileType: pdf
+    - id: temp-1776780730793
+      type: text
+      location:
+        x: 624.453125
+        'y': 95
+        width: 0
+        height: 0
+        page: 15
+        scale: 1.5
+        viewportX: 1091
+        viewportY: 237
+      content: très très important l'éducation des enfants !! crucial même !!!
+      color: '#ffff00'
+      page: 15
+      timestamp: '2026-04-21T14:12:43.993Z'
+      filePath: pdfs/Sebastian_Brant_DasNarrenschiff.pdf
+      fileType: pdf
+    - id: temp-1776782263194
+      type: text
+      location:
+        x: 772.9609375
+        'y': 129
+        width: 0
+        height: 0
+        page: 19
+        scale: 1.5
+        viewportX: 906
+        viewportY: 271
+      content: La plus grande folie ici-bas,c’est d’admirer l’argent plus que la sagesse et de donner la préférence à un homme riche,portant bonnet de fou garni de grelots
+      color: '#ffff00'
+      page: 19
+      timestamp: '2026-04-21T14:37:54.249Z'
       filePath: pdfs/Sebastian_Brant_DasNarrenschiff.pdf
       fileType: pdf

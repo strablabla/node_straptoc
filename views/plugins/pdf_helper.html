@@ -44,6 +44,10 @@ function openPDFViewer(pdfPath, options) {
 
         // Function to clean up and close the modal
         var closeModal = function() {
+            // Persist the current page before tearing down (debounce may still be pending)
+            if (window.flushPDFLastPage) {
+                window.flushPDFLastPage();
+            }
             // Clean up PDF viewer before hiding
             if (window.PDFViewer) {
                 window.PDFViewer.pdfDoc = null;

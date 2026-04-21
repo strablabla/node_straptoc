@@ -46,25 +46,15 @@
     background-color: white;
     padding: 20px;
     box-shadow: 0.5em 0.5em 0.7em rgba(0, 0, 0, 0.3);
-    border: 1px solid #ccc;
+    border: none;
     border-radius: 5px;
     z-index: 10001;  /* Above PDF overlay */
     min-width: 350px;
     max-width: 450px;
 }
 
-#annotation_panel.reduced {
-    min-width: auto;
-    width: 40px;
-    height: 40px;
-    padding: 5px;
-    overflow: hidden;
-}
-
 #annotation_content {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    display: block;
 }
 
 .annotation-header {
@@ -98,7 +88,7 @@
     width: 100%;
     min-height: 120px;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: none;
     border-radius: 4px;
     font-family: monospace;
     font-size: 13px;
@@ -112,38 +102,34 @@
     pointer-events: auto !important;
 }
 
+#annotation_textarea:focus {
+    outline: none;
+    box-shadow: none;
+    border: none;
+}
+
 .annotation-footer {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
 }
 
-.annotation-save-btn {
-    padding: 8px 16px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.annotation-save-btn:hover {
-    background: #45a049;
-}
-
+.annotation-save-btn,
 .annotation-delete-btn {
-    padding: 8px 16px;
-    background: #f44336;
-    color: white;
+    padding: 4px 10px;
+    background: white;
+    color: black;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 18px;
+    line-height: 1;
 }
 
+.annotation-save-btn:hover,
 .annotation-delete-btn:hover {
-    background: #da190b;
+    background: #f0f0f0;
 }
 
 /* Annotation markers on content */
@@ -179,21 +165,20 @@
 <!-- No icon here, will be added to navbar dynamically -->
 
 <!-- Status indicator for annotation mode -->
-<div id="annotations-status-indicator">mode annotation</div>
+<div id="annotations-status-indicator">mode note</div>
 
 <div id="annotation_panel">
     <div class="annotation-header">
-        <span id="annotation_title">New Annotation</span>
+        <span id="annotation_title">New Note</span>
         <div class="annotation-controls">
-            <span class="annotation-btn" id="annotation_reduce">_</span>
-            <span class="annotation-btn" id="annotation_close">x</span>
+            <span class="annotation-btn" id="annotation_close" title="Close">×</span>
         </div>
     </div>
     <div id="annotation_content">
-        <textarea id="annotation_textarea" placeholder="Enter your annotation..."></textarea>
+        <textarea id="annotation_textarea" placeholder="Enter your note..."></textarea>
         <div class="annotation-footer">
-            <button class="annotation-delete-btn" id="annotation_delete" style="display:none;">Delete</button>
-            <button class="annotation-save-btn" id="annotation_save">Save</button>
+            <button class="annotation-delete-btn" id="annotation_delete" title="Delete" style="display:none;">×</button>
+            <button class="annotation-save-btn" id="annotation_save" title="Save">↵</button>
         </div>
     </div>
 </div>
@@ -217,7 +202,6 @@ window.annotationSystem = {
     fileType: null,
     annotations: [],
     currentAnnotation: null,
-    panelReduced: false,
     pdfReady: false,  // For PDF.js viewer
     currentPdfPage: 1,  // Current page in PDF.js viewer
     saving: false  // Flag to prevent double saves
@@ -236,20 +220,18 @@ function initAnnotationSystem() {
         toggleAnnotationMode();
     });
 
-    // Panel controls
-    $('#annotation_close').click(function() {
+    // Panel controls (event delegation so handlers survive any DOM re-render)
+    $(document).off('click.annotations_controls');
+    $(document).on('click.annotations_controls', '#annotation_close', function(e) {
+        e.stopPropagation();
         closeAnnotationPanel();
     });
-
-    $('#annotation_reduce').click(function() {
-        toggleAnnotationPanel();
-    });
-
-    $('#annotation_save').click(function() {
+    $(document).on('click.annotations_controls', '#annotation_save', function(e) {
+        e.stopPropagation();
         saveCurrentAnnotation();
     });
-
-    $('#annotation_delete').click(function() {
+    $(document).on('click.annotations_controls', '#annotation_delete', function(e) {
+        e.stopPropagation();
         deleteCurrentAnnotation();
     });
 
@@ -404,7 +386,7 @@ function toggleAnnotationMode() {
         // Show status indicator using class
         var $indicator = $('#annotations-status-indicator');
         if ($indicator.length === 0) {
-            $indicator = $('<div id="annotations-status-indicator">mode annotation</div>');
+            $indicator = $('<div id="annotations-status-indicator">mode note</div>');
             $('body').append($indicator);
         }
         $indicator.addClass('visible');
@@ -672,7 +654,7 @@ function displayAnnotationMarkers() {
 
         var marker = $('<div/>').addClass('annotation-marker')
                                 .attr('data-annotation-id', annotation.id)
-                                .attr('title', annotation.content ? annotation.content.substring(0, 50) + '...' : 'Annotation');
+                                .attr('title', annotation.content ? annotation.content.substring(0, 50) + '...' : 'Note');
 
         // Position the marker
         if (annotation.location) {
@@ -847,9 +829,9 @@ function createNewAnnotation(location) {
 
     // Use viewport coords if available (from double-click), otherwise canvas-relative
     if (location.viewportX !== undefined && location.viewportY !== undefined) {
-        showAnnotationPanel(location.viewportX, location.viewportY, 'New Annotation', true);
+        showAnnotationPanel(location.viewportX, location.viewportY, 'New Note', true);
     } else {
-        showAnnotationPanel(location.x, location.y, 'New Annotation', false);
+        showAnnotationPanel(location.x, location.y, 'New Note', false);
     }
     $('#annotation_textarea').val('');
     $('#annotation_delete').hide();
@@ -861,7 +843,7 @@ function editAnnotation(annotation, clickEvent) {
 
     annotationSystem.currentAnnotation = annotation;
 
-    var title = 'Annotation';
+    var title = 'Note';
     if (annotation.timestamp) {
         var date = new Date(annotation.timestamp);
         title += ' - ' + date.toLocaleString();
@@ -994,24 +976,17 @@ function showAnnotationPanel(x, y, title, isViewportCoords) {
         'display': 'block',
         'z-index': '10001',
         'background-color': 'white',
-        'border': '1px solid #ccc'
+        'border': 'none'
     }).show();
 
     console.log('Panel position set to:', leftPos, topPos);
     console.log('Panel display:', $('#annotation_panel').css('display'));
     console.log('Panel visibility:', $('#annotation_panel').is(':visible'));
 
-    if (annotationSystem.panelReduced) {
-        $('#annotation_panel').addClass('reduced');
-        $('#annotation_content').hide();
-    } else {
-        $('#annotation_panel').removeClass('reduced');
-        $('#annotation_content').show();
-        console.log('Content shown');
-    }
-
-    // Make panel draggable
-    $('#annotation_panel').draggable();
+    // Make panel draggable (but don't start a drag when clicking controls/textarea)
+    $('#annotation_panel').draggable({
+        cancel: '.annotation-btn, .annotation-save-btn, .annotation-delete-btn, #annotation_textarea, button, textarea'
+    });
 
     // Focus textarea after a small delay to ensure panel is visible
     setTimeout(function() {
@@ -1060,19 +1035,6 @@ function closeAnnotationPanel() {
     }
 }
 
-// Toggle annotation panel size
-function toggleAnnotationPanel() {
-    annotationSystem.panelReduced = !annotationSystem.panelReduced;
-
-    if (annotationSystem.panelReduced) {
-        $('#annotation_panel').addClass('reduced');
-        $('#annotation_content').hide();
-    } else {
-        $('#annotation_panel').removeClass('reduced');
-        $('#annotation_content').show();
-    }
-}
-
 // Save current annotation
 function saveCurrentAnnotation() {
 
@@ -1094,7 +1056,7 @@ function saveCurrentAnnotation() {
 
     if (content === '') {
         annotationSystem.saving = false;
-        showNotification('Annotation content cannot be empty', 'error');
+        showNotification('Note content cannot be empty', 'error');
         return;
     }
 
@@ -1129,7 +1091,7 @@ socket.on('annotation_saved', function(data) {
     annotationSystem.saving = false;
 
     if (result.success) {
-        showNotification('Annotation saved successfully', 'success');
+        showNotification('Note saved successfully', 'success');
 
         // Remove temporary marker before adding the permanent one
         $('.annotation-marker[data-annotation-id^="temp-"]').remove();
@@ -1174,7 +1136,7 @@ function deleteCurrentAnnotation() {
         return;
     }
 
-    if (!confirm('Are you sure you want to delete this annotation?')) {
+    if (!confirm('Are you sure you want to delete this note?')) {
         return;
     }
 
@@ -1191,7 +1153,7 @@ socket.on('annotation_deleted', function(data) {
     var result = JSON.parse(data);
 
     if (result.success) {
-        showNotification('Annotation deleted successfully', 'success');
+        showNotification('Note deleted successfully', 'success');
 
         // Remove from local array
         annotationSystem.annotations = annotationSystem.annotations.filter(
@@ -1370,7 +1332,7 @@ function reloadPDFAnnotations() {
 
         var marker = $('<div/>').addClass('annotation-marker')
                                 .attr('data-annotation-id', annotation.id)
-                                .attr('title', annotation.content ? annotation.content.substring(0, 50) + '...' : 'Annotation');
+                                .attr('title', annotation.content ? annotation.content.substring(0, 50) + '...' : 'Note');
 
         // Position the marker, adjusting for scale
         if (annotation.location) {
