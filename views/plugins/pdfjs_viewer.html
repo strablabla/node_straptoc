@@ -714,7 +714,7 @@ async function initPDFViewer(pdfPath, containerId) {
         // Build viewer UI
         buildViewerUI(container);
 
-        // Fetch bookmarks for this PDF (auto-resume + named list)
+        // Fetch bookmarks for this PDF (auto-resume + named list + zoom)
         const bookmarkData = await getBookmarksFor(pdfPath);
         window.PDFViewer.namedBookmarks = bookmarkData.named || [];
         const resumePage = Math.min(
@@ -722,6 +722,19 @@ async function initPDFViewer(pdfPath, containerId) {
             pdfDoc.numPages
         );
         wireBookmarkUI();
+
+        // Restore saved zoom level if present
+        const savedScale = parseFloat(bookmarkData.scale);
+        if (Number.isFinite(savedScale) && savedScale > 0) {
+            window.PDFViewer.scale = savedScale;
+            const scaleSelect = document.getElementById('pdfjs-scale');
+            if (scaleSelect) {
+                const match = Array.from(scaleSelect.options).find(
+                    o => parseFloat(o.value) === savedScale
+                );
+                if (match) scaleSelect.value = match.value;
+            }
+        }
 
         // Render the resume page
         await renderPage(resumePage);
@@ -826,9 +839,16 @@ function buildViewerUI(container) {
     });
 
     document.getElementById('pdfjs-scale').addEventListener('change', (e) => {
-        window.PDFViewer.scale = parseFloat(e.target.value);
+        const newScale = parseFloat(e.target.value);
+        window.PDFViewer.scale = newScale;
         clearPageCache();  // cached canvases are at the previous scale
         renderPage(window.PDFViewer.currentPage);
+        if (window.socket && window.PDFViewer.currentPdfPath) {
+            window.socket.emit('save_zoom_level', JSON.stringify({
+                filePath: window.PDFViewer.currentPdfPath,
+                scale: newScale
+            }));
+        }
     });
 
     document.getElementById('pdfjs-zoom-out').addEventListener('click', () => {
