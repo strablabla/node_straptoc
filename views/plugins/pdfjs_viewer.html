@@ -68,6 +68,13 @@
     width: 80px;
     padding: 0 4px;
     margin: -10px 0;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.pdfjs-viewer-controls #pdfjs-scale:hover,
+.pdfjs-viewer-controls #pdfjs-scale:focus {
+    background: #454545;
 }
 
 .pdfjs-viewer-controls #pdfjs-prev-page,
@@ -78,8 +85,57 @@
     font-size: 10px;
 }
 
+.pdfjs-viewer-controls #pdfjs-prev-page,
+.pdfjs-viewer-controls #pdfjs-next-page,
+.pdfjs-viewer-controls #pdfjs-zoom-in,
+.pdfjs-viewer-controls #pdfjs-zoom-out,
+.pdfjs-viewer-controls #pdfjs-bookmark-toggle {
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.pdfjs-viewer-controls #pdfjs-prev-page:hover,
+.pdfjs-viewer-controls #pdfjs-next-page:hover,
+.pdfjs-viewer-controls #pdfjs-zoom-in:hover,
+.pdfjs-viewer-controls #pdfjs-zoom-out:hover,
+.pdfjs-viewer-controls #pdfjs-bookmark-toggle:hover,
+.pdfjs-viewer-controls #pdfjs-prev-page:focus,
+.pdfjs-viewer-controls #pdfjs-next-page:focus,
+.pdfjs-viewer-controls #pdfjs-zoom-in:focus,
+.pdfjs-viewer-controls #pdfjs-zoom-out:focus,
+.pdfjs-viewer-controls #pdfjs-bookmark-toggle:focus {
+    background: #454545;
+}
+
 .pdfjs-viewer-controls #pdfjs-page-num {
-    margin: -10px 6px;
+    margin: -10px 0;
+    direction: rtl;
+    text-align: right;
+    padding-left: 4px;
+    padding-right: 2px;
+    width: 2ch;
+    transition: width 0.15s ease;
+    -moz-appearance: textfield;
+    border: 1px solid transparent;
+    background: transparent;
+    transform: translateY(-2px);
+}
+
+.pdfjs-viewer-controls #pdfjs-page-num::-webkit-inner-spin-button,
+.pdfjs-viewer-controls #pdfjs-page-num::-webkit-outer-spin-button {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.pdfjs-viewer-controls #pdfjs-page-num:hover,
+.pdfjs-viewer-controls #pdfjs-page-num:focus {
+    width: 4ch;
+    background: #454545;
+}
+
+.pdfjs-viewer-controls #pdfjs-page-num:hover::-webkit-inner-spin-button,
+.pdfjs-viewer-controls #pdfjs-page-num:focus::-webkit-inner-spin-button {
+    opacity: 1;
 }
 
 .pdfjs-page-info {
@@ -88,7 +144,7 @@
     margin: 0 10px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 2px;
 }
 
 .pdfjs-canvas-container {
@@ -678,8 +734,8 @@ function buildViewerUI(container) {
                 <button id="pdfjs-prev-page">◀</button>
                 <span class="pdfjs-page-info">
                     <img src="capicon/svg/266.svg" alt="Page" title="Page" style="width: 18px; height: 18px; filter: invert(1); vertical-align: middle;">
-                    <input type="number" id="pdfjs-page-num" min="1" max="${window.PDFViewer.totalPages}" value="1" style="width: 55px;">
-                    <span>of <span id="pdfjs-page-count">${window.PDFViewer.totalPages}</span></span>
+                    <input type="number" id="pdfjs-page-num" min="1" max="${window.PDFViewer.totalPages}" value="1">
+                    <span>/ <span id="pdfjs-page-count">${window.PDFViewer.totalPages}</span></span>
                 </span>
                 <button id="pdfjs-next-page">▶</button>
                 <svg title="Zoom" viewBox="0 0 24 24" style="margin-left: 20px; width: 20px; height: 20px; vertical-align: middle;" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6" style="fill: none; stroke: white; stroke-width: 2.5px; cursor: default;"></circle><polygon points="21,19 14.5,14.5 19,21" style="fill: white; stroke: white; stroke-width: 1.5px; stroke-linejoin: round;"></polygon></svg>
@@ -723,11 +779,30 @@ function buildViewerUI(container) {
         }
     });
 
-    document.getElementById('pdfjs-page-num').addEventListener('change', (e) => {
+    const pageNumInput = document.getElementById('pdfjs-page-num');
+    const updatePageNumWidth = (hovering) => {
+        const digits = String(pageNumInput.value || '1').length;
+        const base = digits + 3;  // extra space for padding/border so digits are fully visible
+        const extra = hovering ? 2 : 0;  // room for spinner arrows on hover/focus
+        pageNumInput.style.width = (base + extra) + 'ch';
+    };
+    updatePageNumWidth(false);
+    pageNumInput.addEventListener('input', () => updatePageNumWidth(
+        document.activeElement === pageNumInput || pageNumInput.matches(':hover')
+    ));
+    pageNumInput.addEventListener('mouseenter', () => updatePageNumWidth(true));
+    pageNumInput.addEventListener('mouseleave', () => {
+        if (document.activeElement !== pageNumInput) updatePageNumWidth(false);
+    });
+    pageNumInput.addEventListener('focus', () => updatePageNumWidth(true));
+    pageNumInput.addEventListener('blur', () => updatePageNumWidth(false));
+
+    pageNumInput.addEventListener('change', (e) => {
         const pageNum = parseInt(e.target.value);
         if (pageNum >= 1 && pageNum <= window.PDFViewer.totalPages) {
             renderPage(pageNum);
         }
+        updatePageNumWidth(document.activeElement === pageNumInput);
     });
 
     document.getElementById('pdfjs-scale').addEventListener('change', (e) => {
@@ -905,7 +980,10 @@ async function renderPage(pageNum) {
         container.innerHTML = '';
         container.appendChild(canvasContainer);
 
-        document.getElementById('pdfjs-page-num').value = pageNum;
+        const pageInput = document.getElementById('pdfjs-page-num');
+        pageInput.value = pageNum;
+        const hovering = document.activeElement === pageInput || pageInput.matches(':hover');
+        pageInput.style.width = (String(pageNum).length + 3 + (hovering ? 2 : 0)) + 'ch';
         document.getElementById('pdfjs-prev-page').disabled = (pageNum === 1);
         document.getElementById('pdfjs-next-page').disabled = (pageNum === window.PDFViewer.totalPages);
 
