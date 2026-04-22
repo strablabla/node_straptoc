@@ -19,7 +19,7 @@
     position: sticky;
     top: 0;
     background: #323232;
-    padding: 10px;
+    padding: 10px 10px 10px 60px;
     display: flex;
     gap: 10px;
     align-items: center;
@@ -31,10 +31,14 @@
     background: #454545;
     color: white;
     border: 1px solid #666;
-    padding: 5px 12px;
+    padding: 0 12px;
+    height: 30px;
+    line-height: 28px;
     cursor: pointer;
     border-radius: 3px;
     font-size: 14px;
+    box-sizing: border-box;
+    vertical-align: middle;
 }
 
 .pdfjs-viewer-controls button:hover {
@@ -51,14 +55,40 @@
     background: #454545;
     color: white;
     border: 1px solid #666;
-    padding: 5px 8px;
+    padding: 0 8px;
+    height: 30px;
+    line-height: 28px;
     border-radius: 3px;
+    font-size: 14px;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+.pdfjs-viewer-controls #pdfjs-scale {
+    width: 80px;
+    padding: 0 4px;
+    margin: -10px 0;
+}
+
+.pdfjs-viewer-controls #pdfjs-prev-page,
+.pdfjs-viewer-controls #pdfjs-next-page,
+.pdfjs-viewer-controls #pdfjs-zoom-in,
+.pdfjs-viewer-controls #pdfjs-zoom-out {
+    padding: 0 4px;
+    font-size: 10px;
+}
+
+.pdfjs-viewer-controls #pdfjs-page-num {
+    margin: -10px 6px;
 }
 
 .pdfjs-page-info {
     color: white;
     font-size: 14px;
     margin: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .pdfjs-canvas-container {
@@ -156,6 +186,10 @@
 .pdfjs-bookmark-btn {
     margin-left: 20px !important;
     font-size: 16px !important;
+    padding: 0 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 #pdfjs-bookmark-panel {
@@ -166,8 +200,8 @@
     border: 1px solid #666;
     border-radius: 4px;
     padding: 10px;
-    min-width: 280px;
-    max-width: 340px;
+    min-width: 187px;
+    max-width: 227px;
     max-height: 400px;
     overflow-y: auto;
     z-index: 200;
@@ -187,23 +221,31 @@
 }
 
 .pdfjs-bookmark-add input {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
     background: #454545;
     color: white;
     border: 1px solid #666;
-    padding: 4px 8px;
+    padding: 0 8px;
+    height: 28px;
+    line-height: 26px;
     border-radius: 3px;
     font-size: 13px;
+    box-sizing: border-box;
 }
 
 .pdfjs-bookmark-add button {
     background: #4CAF50;
     color: white;
     border: none;
-    padding: 4px 10px;
+    padding: 0 10px;
+    height: 28px;
+    line-height: 26px;
     border-radius: 3px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 16px;
+    box-sizing: border-box;
 }
 
 .pdfjs-bookmark-add button:hover {
@@ -251,7 +293,7 @@
 .pdfjs-bookmark-del {
     background: transparent;
     border: none;
-    color: #ff6b6b;
+    color: white;
     cursor: pointer;
     font-size: 16px;
     padding: 0 4px;
@@ -260,7 +302,7 @@
 }
 
 .pdfjs-bookmark-del:hover {
-    color: #ff4444;
+    color: #ff6b6b;
 }
 
 .pdfjs-bookmark-empty {
@@ -633,13 +675,14 @@ function buildViewerUI(container) {
     const html = `
         <div class="pdfjs-viewer-container">
             <div class="pdfjs-viewer-controls">
-                <button id="pdfjs-prev-page">◀ Previous</button>
+                <button id="pdfjs-prev-page">◀</button>
                 <span class="pdfjs-page-info">
-                    Page <input type="number" id="pdfjs-page-num" min="1" max="${window.PDFViewer.totalPages}" value="1" style="width: 50px;">
-                    of <span id="pdfjs-page-count">${window.PDFViewer.totalPages}</span>
+                    <img src="capicon/svg/266.svg" alt="Page" title="Page" style="width: 18px; height: 18px; filter: invert(1); vertical-align: middle;">
+                    <input type="number" id="pdfjs-page-num" min="1" max="${window.PDFViewer.totalPages}" value="1" style="width: 55px;">
+                    <span>of <span id="pdfjs-page-count">${window.PDFViewer.totalPages}</span></span>
                 </span>
-                <button id="pdfjs-next-page">Next ▶</button>
-                <span style="margin-left: 20px;">Zoom:</span>
+                <button id="pdfjs-next-page">▶</button>
+                <svg title="Zoom" viewBox="0 0 24 24" style="margin-left: 20px; width: 20px; height: 20px; vertical-align: middle;" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6" style="fill: none; stroke: white; stroke-width: 2.5px; cursor: default;"></circle><polygon points="21,19 14.5,14.5 19,21" style="fill: white; stroke: white; stroke-width: 1.5px; stroke-linejoin: round;"></polygon></svg>
                 <button id="pdfjs-zoom-out">−</button>
                 <select id="pdfjs-scale">
                     <option value="0.5">50%</option>
@@ -650,12 +693,12 @@ function buildViewerUI(container) {
                     <option value="2.5">250%</option>
                 </select>
                 <button id="pdfjs-zoom-in">+</button>
-                <button id="pdfjs-bookmark-toggle" class="pdfjs-bookmark-btn" title="Bookmarks">🔖</button>
+                <button id="pdfjs-bookmark-toggle" class="pdfjs-bookmark-btn" title="Bookmarks"><img src="capicon/svg/355.svg" alt="Bookmarks" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
             </div>
             <div id="pdfjs-bookmark-panel">
                 <div class="pdfjs-bookmark-add">
                     <input type="text" id="pdfjs-bookmark-name" placeholder="Bookmark name" maxlength="40">
-                    <button id="pdfjs-bookmark-add-btn">Add</button>
+                    <button id="pdfjs-bookmark-add-btn">+</button>
                 </div>
                 <ul id="pdfjs-bookmark-list"></ul>
             </div>
