@@ -89,7 +89,8 @@
 .pdfjs-viewer-controls #pdfjs-next-page,
 .pdfjs-viewer-controls #pdfjs-zoom-in,
 .pdfjs-viewer-controls #pdfjs-zoom-out,
-.pdfjs-viewer-controls #pdfjs-bookmark-toggle {
+.pdfjs-viewer-controls #pdfjs-bookmark-toggle,
+.pdfjs-viewer-controls #pdfjs-annotation-toggle {
     background: transparent;
     border: 1px solid transparent;
 }
@@ -99,12 +100,28 @@
 .pdfjs-viewer-controls #pdfjs-zoom-in:hover,
 .pdfjs-viewer-controls #pdfjs-zoom-out:hover,
 .pdfjs-viewer-controls #pdfjs-bookmark-toggle:hover,
+.pdfjs-viewer-controls #pdfjs-annotation-toggle:hover,
 .pdfjs-viewer-controls #pdfjs-prev-page:focus,
 .pdfjs-viewer-controls #pdfjs-next-page:focus,
 .pdfjs-viewer-controls #pdfjs-zoom-in:focus,
 .pdfjs-viewer-controls #pdfjs-zoom-out:focus,
-.pdfjs-viewer-controls #pdfjs-bookmark-toggle:focus {
+.pdfjs-viewer-controls #pdfjs-bookmark-toggle:focus,
+.pdfjs-viewer-controls #pdfjs-annotation-toggle:focus {
     background: #454545;
+}
+
+.pdfjs-viewer-controls #pdfjs-annotation-toggle.active {
+    background: #6a6a6a;
+    border-color: #999;
+}
+
+.pdfjs-annot-btn {
+    margin-left: 6px !important;
+    font-size: 16px !important;
+    padding: 0 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .pdfjs-viewer-controls #pdfjs-page-num {
@@ -750,6 +767,7 @@ function buildViewerUI(container) {
                 </select>
                 <button id="pdfjs-zoom-in">+</button>
                 <button id="pdfjs-bookmark-toggle" class="pdfjs-bookmark-btn" title="Bookmarks"><img src="capicon/svg/355.svg" alt="Bookmarks" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
+                <button id="pdfjs-annotation-toggle" class="pdfjs-annot-btn" title="Toggle annotations"><img src="capicon/svg/354.svg" alt="Annotate" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
             </div>
             <div id="pdfjs-bookmark-panel">
                 <div class="pdfjs-bookmark-add">
@@ -828,6 +846,47 @@ function buildViewerUI(container) {
             select.dispatchEvent(new Event('change'));
         }
     });
+
+    const annotBtn = document.getElementById('pdfjs-annotation-toggle');
+    const syncAnnotBtnState = () => {
+        if (window.annotationSystem && window.annotationSystem.active) {
+            annotBtn.classList.add('active');
+        } else {
+            annotBtn.classList.remove('active');
+        }
+    };
+    annotBtn.addEventListener('click', () => {
+        if (window.toggleAnnotationMode) {
+            window.toggleAnnotationMode();
+            syncAnnotBtnState();
+        }
+    });
+    window.syncPDFJSAnnotBtnState = syncAnnotBtnState;
+    syncAnnotBtnState();
+
+    // Wheel-past-boundary → turn page
+    const viewerContent = document.getElementById('pdfjs-viewer-content');
+    let wheelCooldown = false;
+    viewerContent.addEventListener('wheel', (e) => {
+        if (wheelCooldown || window.PDFViewer.rendering) return;
+        const atBottom = viewerContent.scrollTop + viewerContent.clientHeight >= viewerContent.scrollHeight - 1;
+        const atTop = viewerContent.scrollTop <= 0;
+        if (e.deltaY > 0 && atBottom && window.PDFViewer.currentPage < window.PDFViewer.totalPages) {
+            e.preventDefault();
+            wheelCooldown = true;
+            setTimeout(() => { wheelCooldown = false; }, 400);
+            renderPage(window.PDFViewer.currentPage + 1).then(() => {
+                viewerContent.scrollTop = 0;
+            });
+        } else if (e.deltaY < 0 && atTop && window.PDFViewer.currentPage > 1) {
+            e.preventDefault();
+            wheelCooldown = true;
+            setTimeout(() => { wheelCooldown = false; }, 400);
+            renderPage(window.PDFViewer.currentPage - 1).then(() => {
+                viewerContent.scrollTop = viewerContent.scrollHeight;
+            });
+        }
+    }, { passive: false });
 }
 
 // Build the DOM (canvas + text layer + annotation layer) for a page, fully rendered.

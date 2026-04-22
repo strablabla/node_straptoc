@@ -1,13 +1,17 @@
 bookmarks:
   pdfs/Sebastian_Brant_DasNarrenschiff.pdf:
-    lastPage: 15
+    lastPage: 29
     named:
       - name: aaa
         page: 21
         id: bm-1776786994444-121
         timestamp: '2026-04-21T15:56:34.444Z'
+      - name: emprunt
+        page: 26
+        id: bm-1776840989220-895
+        timestamp: '2026-04-22T06:56:29.220Z'
   pdfs/Classical_and_Relativistic_Derivation_of_the_Sagnac_Effect.pdf:
-    lastPage: 7
+    lastPage: 5
     named:
       - name: somewhere
         page: 5
@@ -17,3 +21,6 @@ bookmarks:
         page: 7
         id: bm-1776839300993-893
         timestamp: '2026-04-22T06:28:20.993Z'
+  /pdfs_levels/pdf1/Classical_and_Relativistic_Derivation_of_the_Sagnac_Effect.pdf:
+    lastPage: 4
+    named: []

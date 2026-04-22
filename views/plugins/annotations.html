@@ -11,27 +11,6 @@
     display: none;  /* Hidden by default */
 }
 
-#annotations-status-indicator {
-    position: fixed !important;
-    top: 10px !important;
-    left: 10px !important;
-    z-index: 999999 !important;
-    background: #4CAF50 !important;
-    color: white !important;
-    padding: 7px 12px !important;  /* Agrandi de 1.2x (6->7, 10->12) */
-    border-radius: 4px !important;  /* Agrandi de 1.2x (3->4) */
-    font-weight: bold !important;
-    font-size: 13px !important;  /* Agrandi de 1.2x (11->13) */
-    box-shadow: 0 2px 7px rgba(0,0,0,0.3) !important;  /* Agrandi de 1.2x */
-    border: 1px solid #2E7D32 !important;  /* 1px reste 1px */
-    display: none !important;
-    pointer-events: none !important;
-}
-
-#annotations-status-indicator.visible {
-    display: block !important;
-}
-
 /* Crosshair cursor for PDF in annotation mode */
 .annotation-mode-active .pdfjs-page-canvas,
 .annotation-mode-active .pdfjs-text-layer,
@@ -164,9 +143,6 @@
 
 <!-- No icon here, will be added to navbar dynamically -->
 
-<!-- Status indicator for annotation mode -->
-<div id="annotations-status-indicator">mode note</div>
-
 <div id="annotation_panel">
     <div class="annotation-header">
         <span id="annotation_title">New Note</span>
@@ -233,28 +209,6 @@ function initAnnotationSystem() {
     $(document).on('click.annotations_controls', '#annotation_delete', function(e) {
         e.stopPropagation();
         deleteCurrentAnnotation();
-    });
-
-    // Alt+A keyboard shortcut - Remove any existing handlers first to prevent duplicates
-    $(document).off('keydown.annotations');
-    $(document).off('keyup.annotations');
-
-    var altAPressed = false;
-    $(document).on('keydown.annotations', function(e) {
-        // Alt+A: Alt key + A key (65)
-        if (e.altKey && e.keyCode === 65 && !altAPressed) {
-            altAPressed = true;
-            e.preventDefault();
-            e.stopPropagation();
-            toggleAnnotationMode();
-        }
-    });
-
-    $(document).on('keyup.annotations', function(e) {
-        // Reset flag when A key is released
-        if (e.keyCode === 65) {
-            altAPressed = false;
-        }
     });
 
     // Detect current file context
@@ -362,17 +316,14 @@ function toggleAnnotationMode() {
         annotationSystem.active = false;
         $('#annotation_toggle_navbar').attr('src', 'capicon/svg/353.svg').hide();
 
-        // Hide indicator using class
-        $('#annotations-status-indicator').removeClass('visible');
-        console.log('Indicator hidden, class removed');
-
         hideAllAnnotationMarkers();
         closeAnnotationPanel();
         removePdfEpubClickHandlers();
 
         // Remove crosshair cursor by removing class from modal and viewer
         $('#pdf-viewer-modal, #pdf-viewer-modal-content').removeClass('annotation-mode-active');
-        console.log('Crosshair removed, annotation-mode-active class removed');
+
+        if (window.syncPDFJSAnnotBtnState) window.syncPDFJSAnnotBtnState();
 
         console.log('Annotation mode deactivated');
     } else {
@@ -383,18 +334,10 @@ function toggleAnnotationMode() {
 
         $('#annotation_toggle_navbar').attr('src', 'capicon/svg/354.svg').show();
 
-        // Show status indicator using class
-        var $indicator = $('#annotations-status-indicator');
-        if ($indicator.length === 0) {
-            $indicator = $('<div id="annotations-status-indicator">mode note</div>');
-            $('body').append($indicator);
-        }
-        $indicator.addClass('visible');
-        console.log('Indicator shown, class added');
-
         // Add crosshair cursor by adding class to modal and viewer
         $('#pdf-viewer-modal, #pdf-viewer-modal-content').addClass('annotation-mode-active');
-        console.log('Crosshair added, annotation-mode-active class added');
+
+        if (window.syncPDFJSAnnotBtnState) window.syncPDFJSAnnotBtnState();
 
         // Wait a bit for DOM to be ready, then attach handlers
         setTimeout(function() {

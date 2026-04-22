@@ -339,6 +339,36 @@ function relative_addr(addr, addr_short){
           var display_name = elem.replace(/\.(pdf|epub|djvu)$/i, '')
 
           var div_format = $('<div/>').text(display_name).addClass('embed_pdf')
+
+          // case pdf — opens in PDF.js modal on click, no inline embed
+          if ( elem.search(/\.pdf$/i) != -1 ){
+              div_format.css('cursor', 'pointer')
+                        .attr('title', 'Open PDF')
+                        .addClass('pdf-link')
+                        .attr('data-pdf-path', full_path)
+                        .on('click', function() {
+                            if (window.annotationSystem) {
+                                window.annotationSystem.currentFile = full_path;
+                                window.annotationSystem.fileType = 'pdf';
+                            }
+                            if (window.openPDFViewer) {
+                                window.openPDFViewer(full_path);
+                                setTimeout(function() {
+                                    if (window.socket) window.socket.emit('get_annotations', full_path);
+                                    if (window.setupPDFJSAnnotationHandlers) window.setupPDFJSAnnotationHandlers();
+                                    if (window.reloadPDFAnnotations) {
+                                        setTimeout(function() { window.reloadPDFAnnotations(); }, 500);
+                                    }
+                                }, 1500);
+                            } else {
+                                console.error('PDF.js viewer not available');
+                            }
+                        })
+              var curr_li = $('<li/>').addClass('fold_li')
+              new_ul.append(curr_li.append(div_format))
+              return
+          }
+
           var a_deploy = $('<a/>').text(' [+]')
           var span_tog = $('<span/>').addClass('tog_elem').append(a_deploy)
 
@@ -359,10 +389,6 @@ function relative_addr(addr, addr_short){
               obj_html = '<br><div class="lazy-djvu-container" id="' + viewerId + '" data-djvu-path="' + full_path + '" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
                         '<div class="lazy-djvu-viewer" style="display: none;"></div>' +
                         '</div><br>'
-          }
-          // case pdf (default)
-          else {
-              obj_html = embed_elem(full_path)
           }
 
           var divformat_plus = div_format.append(span_tog)
@@ -406,7 +432,6 @@ function relative_addr(addr, addr_short){
         $('.tog_elem').off('click').on('click', function(){
 
                 var taga = $(this).find('a')
-                var $pdfContainer = $(this).next().find('.lazy-pdfjs-container')
                 var $videoContainer = $(this).next().find('.lazy-video-container')
                 var $epubContainer = $(this).next().find('.lazy-epub-container')
                 var $djvuContainer = $(this).next().find('.lazy-djvu-container')
@@ -418,22 +443,6 @@ function relative_addr(addr, addr_short){
                 } else {
                     taga.text(' [-]')
                     $(this).next().show()
-
-                    // Lazy load PDF
-                    if ($pdfContainer.length > 0) {
-                        var isLoaded = $pdfContainer.data('loaded')
-                        if (!isLoaded || isLoaded === 'false') {
-                            var pdfPath = $pdfContainer.data('pdf-path')
-                            var $viewer = $pdfContainer.find('.lazy-pdfjs-viewer')
-                            var obj = $('<object/>').attr('data', pdfPath)
-                                                    .attr('type', 'application/pdf')
-                                                    .attr('width', '100%')
-                                                    .attr('height', '800px')
-                            $viewer.empty().append(obj)
-                            $viewer.show()
-                            $pdfContainer.data('loaded', 'true')
-                        }
-                    }
 
                     // Lazy load Video
                     if ($videoContainer.length > 0) {
@@ -528,62 +537,6 @@ function relative_addr(addr, addr_short){
                 }
             })
     }
-
-    function embed_elem(addr){
-
-        /*
-        Lazy loading placeholder for PDF viewer.
-        */
-
-        var viewerId = 'pdf-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-
-        var htm = '<br><div class="lazy-pdfjs-container" id="{}" data-pdf-path="{}" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
-                  '<div class="lazy-pdfjs-viewer" style="display: none; min-height: 800px;"></div>' +
-                  '</div><br>';
-
-        return htm.format(viewerId, addr);
-    }
-
-    // Global function to lazy load PDF viewer
-    window.lazyLoadPDFViewer = function(btn) {
-        var $btn = $(btn);
-        var $container = $btn.closest('.lazy-pdfjs-container');
-        var $viewer = $container.find('.lazy-pdfjs-viewer');
-        var pdfPath = $container.data('pdf-path');
-        var viewerId = $container.attr('id');
-        var isLoaded = $container.data('loaded');
-
-        if (!isLoaded || isLoaded === 'false') {
-            $btn.text('Chargement...');
-            $btn.prop('disabled', true);
-            var innerViewerId = viewerId + '-inner';
-            $viewer.attr('id', innerViewerId);
-            $viewer.slideDown(300, function() {
-                if (pdfPath && window.initPDFViewer) {
-                    window.initPDFViewer(pdfPath, innerViewerId);
-                    $container.data('loaded', 'true');
-                    $btn.text('Masquer le PDF');
-                    $btn.prop('disabled', false);
-                } else {
-                    var obj = $('<object/>').attr('data', pdfPath)
-                                            .attr('type', 'application/pdf')
-                                            .attr('width', '100%')
-                                            .attr('height', '800px');
-                    $viewer.append(obj);
-                    $container.data('loaded', 'true');
-                    $btn.text('Masquer le PDF');
-                    $btn.prop('disabled', false);
-                }
-            });
-        } else if ($viewer.is(':visible')) {
-            $viewer.slideUp(300);
-            $btn.text('Afficher le PDF');
-        } else {
-            $viewer.slideDown(300);
-            $btn.text('Masquer le PDF');
-        }
-    };
-
 
 function make_li_imgs_scan(divportf, elem, web_path){
 
