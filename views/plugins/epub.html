@@ -1,4 +1,104 @@
 
+<style>
+
+/* EPUB viewer — toolbar styled to match the PDF.js viewer */
+
+.epubjs-viewer-wrap {
+    display: inline-block;
+    margin: 10px 0;
+}
+
+.epubjs-viewer-controls {
+    background: #323232;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    width: 600px;
+    box-sizing: border-box;
+}
+
+.epubjs-viewer-controls button {
+    background: transparent;
+    color: white;
+    border: 1px solid transparent;
+    height: 30px;
+    line-height: 28px;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.epubjs-viewer-controls button:hover,
+.epubjs-viewer-controls button:focus {
+    background: #454545;
+}
+
+.epubjs-viewer-controls input.epubjs-page-num {
+    background: transparent;
+    color: white;
+    border: 1px solid transparent;
+    height: 30px;
+    padding: 0 4px;
+    padding-right: 2px;
+    margin: -10px 0;
+    border-radius: 3px;
+    font-size: 14px;
+    box-sizing: border-box;
+    direction: rtl;
+    text-align: right;
+    transform: translateY(-2px);
+    transition: width 0.15s ease;
+}
+
+.epubjs-viewer-controls input.epubjs-page-num:hover,
+.epubjs-viewer-controls input.epubjs-page-num:focus {
+    background: #454545;
+}
+
+.epubjs-viewer-controls input.epubjs-page-num::-webkit-inner-spin-button,
+.epubjs-viewer-controls input.epubjs-page-num::-webkit-outer-spin-button {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.epubjs-viewer-controls input.epubjs-page-num:hover::-webkit-inner-spin-button,
+.epubjs-viewer-controls input.epubjs-page-num:focus::-webkit-inner-spin-button {
+    opacity: 1;
+}
+
+.epubjs-viewer-controls .epubjs-page-info {
+    color: white;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.epubjs-viewer-controls .epubjs-font-pct {
+    color: white;
+    font-size: 12px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.epubjs-viewer-controls .epubjs-font-label {
+    margin-left: 20px;
+}
+
+.epubjs-viewer-render {
+    width: 600px;
+    height: 660px;
+    background: white;
+    overflow: auto;
+}
+
+</style>
+
 <script>
 
 function set_margin(){
@@ -12,131 +112,131 @@ let step_font = 5
 function incrFont(rendition) {
   currentSize += step_font;
   rendition.themes.fontSize(`${currentSize}%`);
-  // rendition.themes.select("override");
 }
 
 // decrease fonts
 function decrFont(rendition) {
-  currentSize = Math.max(50, currentSize - step_font); // lower limit
+  currentSize = Math.max(50, currentSize - step_font);
   rendition.themes.fontSize(`${currentSize}%`);
-  // rendition.themes.select("override");
 }
 
+// Initialize an EPUB viewer with PDF-style toolbar into a container element.
+// container: HTMLElement (will be cleared and filled)
+// addr: path to the .epub
+window.initEpubViewer = function(container, addr) {
 
-function make_epub(li, addr){
+    const epub_id = addr.split('/').at(-1).split('.epub')[0].replace(/[^a-zA-Z0-9_-]/g, '_');
+    const renderId = 'epub-render-' + epub_id + '-' + Date.now();
 
-        // alert('found addr as ' + addr)
-        var block_epub = $('<div/>')
-        var epub_id = addr.split('/').at(-1).split('.epub')[0]
-        block_epub.append($('<div/>').attr('id',addr))
-                  .append($('<span/>').text('page 0 ').attr('id','first_page'+epub_id))
-                  .append($('<span/>').text('< prev').attr('id','prev_page'+epub_id))
-                  .append($('<span/>').text('.    .'))
-                  .append($('<span/>').text('next >').attr('id','next_page'+epub_id))
-                  .append($('<span/>').text('   '))
-                  .append($('<input/>').text('').attr('id','num_page'+epub_id))
-                  .append($('<button/>').text('go').attr('id','go_page'+epub_id))
-                  .append($('<span/>').text('   curr page: '))
-                  .append($('<span/>').text('').attr('id','curr_page'+epub_id))
-                  // font size
-                  .append($('<div/>'))
-                  .append($('<span/>').text('< ').attr('id','font_down'+epub_id))
-                  .append($('<span/>').text('> ').attr('id','font_up'+epub_id))
-                  .append($('<span/>').text('font percent: '))
-                  .append($('<span/>').text('').attr('id','font_percent'+epub_id))
+    container.innerHTML = `
+        <div class="epubjs-viewer-wrap">
+            <div class="epubjs-viewer-controls">
+                <button class="epubjs-prev" title="Previous">◀</button>
+                <span class="epubjs-page-info">
+                    <input type="number" class="epubjs-page-num" min="0" value="0">
+                    <span>/ <span class="epubjs-page-total">?</span></span>
+                </span>
+                <button class="epubjs-next" title="Next">▶</button>
+                <button class="epubjs-font-down epubjs-font-label" title="Smaller font">−</button>
+                <span class="epubjs-font-pct">100 %</span>
+                <button class="epubjs-font-up" title="Larger font">+</button>
+            </div>
+            <div id="${renderId}" class="epubjs-viewer-render"></div>
+        </div>
+    `;
 
+    const $wrap = $(container).find('.epubjs-viewer-wrap');
+    const $prev = $wrap.find('.epubjs-prev');
+    const $next = $wrap.find('.epubjs-next');
+    const $pageInput = $wrap.find('.epubjs-page-num');
+    const $pageTotal = $wrap.find('.epubjs-page-total');
+    const $fontPct = $wrap.find('.epubjs-font-pct');
+    const $fontUp = $wrap.find('.epubjs-font-up');
+    const $fontDown = $wrap.find('.epubjs-font-down');
 
-        li.replaceWith(block_epub)
+    const updatePageNumWidth = () => {
+        const digits = String($pageInput.val() || '0').length;
+        $pageInput[0].style.width = (digits + 3) + 'ch';
+    };
+    updatePageNumWidth();
 
-        var book = ePub(addr);
-        var currp = 0
-        // attaching to Id=addr
-        var rendition = book.renderTo(addr, {
-                                              flow: "scrolled-doc",
-                                              width: 600,
-                                              height: 660
-                                            });
+    if (typeof ePub === 'undefined') {
+        console.error('ePub.js is not loaded');
+        return;
+    }
 
-        rendition.display();
+    const book = ePub(addr);
+    const rendition = book.renderTo(renderId, {
+        flow: 'scrolled-doc',
+        width: 600,
+        height: 660
+    });
+    rendition.display();
 
-        function getCurrPageIndex() {
-            setTimeout( function(){
-                          var currLoc = rendition.currentLocation();
-                          var page_index = currLoc.start.index;
-                          //alert(page_index)
-                          $('#curr_page'+epub_id).text(page_index)
-                  }, 150)
-          }
+    book.ready.then(() => {
+        const total = (book.spine && book.spine.length) ? book.spine.length - 1 : '?';
+        $pageTotal.text(total);
+        if (typeof total === 'number') {
+            $pageInput.attr('max', total);
+        }
+    });
 
-          function getCurrFontPerc() {
-              setTimeout( function(){
-                            $('#font_percent'+epub_id).text(currentSize+' %')
-                    }, 150)
+    const refreshPageIndex = () => {
+        setTimeout(() => {
+            const loc = rendition.currentLocation();
+            if (loc && loc.start && typeof loc.start.index === 'number') {
+                $pageInput.val(loc.start.index);
+                updatePageNumWidth();
             }
+        }, 150);
+    };
 
-        // init font percentage
-        getCurrFontPerc()
+    const refreshFontPct = () => {
+        $fontPct.text(currentSize + ' %');
+    };
+    refreshFontPct();
 
-        $('#num_page' + epub_id).css({'width':'30px'})
-
-        $('#first_page' + epub_id).click(function(){
-            //return to first page
-            rendition.display(0);
+    $prev.on('click', () => {
+        rendition.prev();
+        setTimeout(set_margin, 100);
+        refreshPageIndex();
+    });
+    $next.on('click', () => {
+        rendition.next();
+        setTimeout(set_margin, 100);
+        refreshPageIndex();
+    });
+    $pageInput.on('change', () => {
+        const n = parseInt($pageInput.val(), 10);
+        if (Number.isFinite(n) && n >= 0) {
+            rendition.display(n);
             setTimeout(set_margin, 100);
-            // currp = 0
-            // $('#curr_page').text(currp)
-            getCurrPageIndex()
-        })
+            refreshPageIndex();
+        }
+    });
+    $fontUp.on('click', () => {
+        incrFont(rendition);
+        setTimeout(set_margin, 100);
+        refreshPageIndex();
+        refreshFontPct();
+    });
+    $fontDown.on('click', () => {
+        decrFont(rendition);
+        setTimeout(set_margin, 100);
+        refreshPageIndex();
+        refreshFontPct();
+    });
 
-        $('#next_page' + epub_id).click(function(){
-            //alert('next')
-            rendition.next();
-            setTimeout(set_margin, 100);
-            // currp += 1
-            // $('#curr_page').text(currp)
-            getCurrPageIndex()
+    rendition.on('relocated', refreshPageIndex);
 
-        })
+    return { book, rendition };
+};
 
-        $('#prev_page' + epub_id).click(function(){
-            //alert('next')
-            rendition.prev();
-            setTimeout(set_margin, 100);
-            // currp -= 1
-            // $('#curr_page').text(currp)
-            getCurrPageIndex()
-        })
-
-        $('#go_page' + epub_id).click(function(){
-            //alert('next')
-            num = parseInt($('#num_page'+epub_id).val())
-            //alert(num)
-            rendition.display(num);
-            setTimeout(set_margin, 100);
-            // currp = num
-            // $('#curr_page').text(currp)
-            getCurrPageIndex()
-        })
-
-        $('#font_up' + epub_id).click(function(){
-            incrFont(rendition)
-            setTimeout(set_margin, 100);
-            getCurrPageIndex()
-            getCurrFontPerc()
-
-        })
-
-        $('#font_down' + epub_id).click(function(){
-            decrFont(rendition)
-            setTimeout(set_margin, 100);
-            getCurrPageIndex()
-            getCurrFontPerc()
-
-        })
-
-
-
-
+// Legacy wrapper: replaces an <li> with the new viewer (keeps old call sites working)
+function make_epub(li, addr){
+    const wrap = document.createElement('div');
+    $(li).replaceWith(wrap);
+    window.initEpubViewer(wrap, addr);
 }
 
 
@@ -153,10 +253,5 @@ $('.§§').click(function(){
     }
 
 })
-
-
-
-
-
 
 </script>

@@ -466,50 +466,10 @@ function relative_addr(addr, addr_short){
                         if (!isLoaded || isLoaded === 'false') {
                             var epubPath = $epubContainer.data('epub-path')
                             var $viewer = $epubContainer.find('.lazy-epub-viewer')
-                            var epub_id = epubPath.split('/').at(-1).split('.epub')[0]
-                            var block_epub = $('<div/>')
-                            block_epub.append($('<div/>').attr('id', epubPath))
-                                      .append($('<span/>').text('page 0 ').attr('id','first_page'+epub_id))
-                                      .append($('<span/>').text('< prev').attr('id','prev_page'+epub_id))
-                                      .append($('<span/>').text('.    .'))
-                                      .append($('<span/>').text('next >').attr('id','next_page'+epub_id))
-                                      .append($('<span/>').text('   '))
-                                      .append($('<input/>').text('').attr('id','num_page'+epub_id).css({'width':'30px'}))
-                                      .append($('<button/>').text('go').attr('id','go_page'+epub_id))
-                                      .append($('<span/>').text('   curr page: '))
-                                      .append($('<span/>').text('').attr('id','curr_page'+epub_id))
-                                      .append($('<div/>'))
-                                      .append($('<span/>').text('< ').attr('id','font_down'+epub_id))
-                                      .append($('<span/>').text('> ').attr('id','font_up'+epub_id))
-                                      .append($('<span/>').text('font percent: '))
-                                      .append($('<span/>').text('').attr('id','font_percent'+epub_id))
-
-                            $viewer.empty().append(block_epub)
-                            $viewer.show()
-
-                            if (typeof ePub !== 'undefined') {
-                                var book = ePub(epubPath)
-                                var rendition = book.renderTo(epubPath, {
-                                    flow: "scrolled-doc",
-                                    width: 600,
-                                    height: 660
-                                })
-                                rendition.display()
-                                $('#first_page' + epub_id).click(function(){ rendition.display(0) })
-                                $('#next_page' + epub_id).click(function(){ rendition.next() })
-                                $('#prev_page' + epub_id).click(function(){ rendition.prev() })
-                                $('#go_page' + epub_id).click(function(){
-                                    var num = parseInt($('#num_page'+epub_id).val())
-                                    rendition.display(num)
-                                })
-                                $('#font_up' + epub_id).click(function(){
-                                    if (typeof incrFont === 'function') incrFont(rendition)
-                                })
-                                $('#font_down' + epub_id).click(function(){
-                                    if (typeof decrFont === 'function') decrFont(rendition)
-                                })
+                            $viewer.empty().show()
+                            if (typeof ePub !== 'undefined' && window.initEpubViewer) {
+                                window.initEpubViewer($viewer[0], epubPath)
                             }
-
                             $epubContainer.data('loaded', 'true')
                         }
                     }
