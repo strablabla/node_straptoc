@@ -2127,9 +2127,13 @@ function openModal() {
 }
 
 function closeModal() {
-    // Auto-save before closing
-    saveColorTags();
-    saveAliases();
+    // Auto-save before closing. Chain through socket ack so the two writes
+    // are serialized on the client too — defence in depth alongside the
+    // server-side queue in lib/config.js (updateConfigYaml).
+    socket.emit('update_color_tags', JSON.stringify(colorTagsData));
+    socket.once('color_tags_updated', function() {
+        socket.emit('update_aliases', JSON.stringify(aliasesData));
+    });
 
     $('#color_tags_modal').fadeOut(300);
     modalOpen = false;
