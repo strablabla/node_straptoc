@@ -562,10 +562,16 @@ function createTemporaryMarker(annotation) {
         return;
     }
 
-    // For EPUBs, append to the active viewer's render container.
+    // For EPUBs, append to EPUB.js's `.epub-container`. That's the element
+    // that actually scrolls (overflow-y:scroll, position:relative, height
+    // matching the configured render height). The iframe sits inside it at
+    // offset (0,0) with full content height, so the range bounding rect we
+    // captured maps directly to absolute coords in this container.
     if (annotationSystem.fileType === 'epub' && annotationSystem.currentEpubViewer) {
         var $epubRender = $('#' + annotationSystem.currentEpubViewer.renderId);
-        if ($epubRender.length > 0) {
+        var $scrollParent = $epubRender.find('.epub-container').first();
+        if ($scrollParent.length === 0) $scrollParent = $epubRender;
+        if ($scrollParent.length > 0) {
             $('<div/>').addClass('annotation-marker')
                 .attr('data-annotation-id', annotation.id)
                 .attr('title', 'New annotation')
@@ -575,7 +581,7 @@ function createTemporaryMarker(annotation) {
                     'top': annotation.location.y + 'px',
                     'pointer-events': 'auto'
                 })
-                .appendTo($epubRender);
+                .appendTo($scrollParent);
         }
     }
 }
@@ -1514,8 +1520,12 @@ window.repositionEpubAnnotations = function(viewerId) {
     if (!viewerId) viewerId = window.activeEpubViewerId;
     if (!viewerId || !window.EPUBViewers || !window.EPUBViewers[viewerId]) return;
     var viewer = window.EPUBViewers[viewerId];
-    var $container = $('#' + viewer.renderId);
-    if ($container.length === 0) return;
+    var $render = $('#' + viewer.renderId);
+    if ($render.length === 0) return;
+    // Markers attach to .epub-container (the actual scroll parent created by
+    // EPUB.js). Fall back to the render div if EPUB.js hasn't injected it yet.
+    var $container = $render.find('.epub-container').first();
+    if ($container.length === 0) $container = $render;
 
     // Only act on the viewer whose file the annotation system is tracking.
     if (annotationSystem.currentFile !== viewer.epubPath) return;
