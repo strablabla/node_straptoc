@@ -189,6 +189,16 @@ var annotationSystem = window.annotationSystem;
 // Initialize annotation system
 function initAnnotationSystem() {
 
+    // Make the panel draggable once, at boot, instead of re-running this
+    // setup on every showAnnotationPanel call (jQuery UI's draggable() init
+    // is non-trivial work).
+    var panelEl = $('#annotation_panel');
+    if (panelEl.length && !panelEl.data('ui-draggable')) {
+        panelEl.draggable({
+            cancel: '.annotation-btn, .annotation-save-btn, .annotation-delete-btn, #annotation_textarea, button, textarea'
+        });
+    }
+
     // Set up toggle button in navbar (will be shown/hidden dynamically)
     $(document).on('click', '#annotation_toggle_navbar', function() {
         $('#id_view_image').hide();
@@ -848,28 +858,19 @@ function editAnnotation(annotation, clickEvent) {
         title += ' - ' + date.toLocaleString();
     }
 
-    // If we have a click event, use the click position (viewport coords)
-    // Otherwise fall back to the annotation's stored position
-    if (clickEvent && clickEvent.clientX !== undefined && clickEvent.clientY !== undefined) {
-        console.log('Using click position for panel:', clickEvent.clientX, clickEvent.clientY);
-        showAnnotationPanel(
-            clickEvent.clientX,
-            clickEvent.clientY,
-            title,
-            true  // isViewportCoords = true
-        );
-    } else {
-        console.log('Using annotation stored position for panel');
-        showAnnotationPanel(
-            annotation.location.x,
-            annotation.location.y,
-            title,
-            false  // isViewportCoords = false (canvas-relative)
-        );
-    }
+    // Populate content + delete-button visibility BEFORE showing the panel,
+    // so the moment it appears the user sees the saved text — no flash of
+    // an empty textarea while the value is filled in afterwards.
+    var ta = document.getElementById('annotation_textarea');
+    if (ta) ta.value = annotation.content || '';
+    var delBtn = document.getElementById('annotation_delete');
+    if (delBtn) delBtn.style.display = '';
 
-    $('#annotation_textarea').val(annotation.content);
-    $('#annotation_delete').show();
+    if (clickEvent && clickEvent.clientX !== undefined && clickEvent.clientY !== undefined) {
+        showAnnotationPanel(clickEvent.clientX, clickEvent.clientY, title, true);
+    } else {
+        showAnnotationPanel(annotation.location.x, annotation.location.y, title, false);
+    }
 }
 
 // Show annotation panel
@@ -923,27 +924,21 @@ function showAnnotationPanel(x, y, title, isViewportCoords) {
         topPos = 10;
     }
 
-    $('#annotation_panel').css({
-        'left': leftPos + 'px',
-        'top': topPos + 'px',
-        'display': 'block',
-        'z-index': '10001',
-        'background-color': '#fbf6ea',
-        'border': 'none'
-    }).show();
-
-    // Make panel draggable on first show only — re-initializing destroys
-    // and rebuilds the jQuery UI handlers, which is wasteful per click.
-    var panelEl = $('#annotation_panel');
-    if (!panelEl.data('ui-draggable')) {
-        panelEl.draggable({
-            cancel: '.annotation-btn, .annotation-save-btn, .annotation-delete-btn, #annotation_textarea, button, textarea'
-        });
+    // Position the panel in one CSS write before making it visible, so the
+    // browser only does a single reflow when it appears.
+    var panel = document.getElementById('annotation_panel');
+    if (panel) {
+        panel.style.left = leftPos + 'px';
+        panel.style.top = topPos + 'px';
+        panel.style.zIndex = '10001';
+        panel.style.backgroundColor = '#fbf6ea';
+        panel.style.border = 'none';
+        panel.style.display = 'block';
     }
 
-    // Focus textarea synchronously — the 200ms timeout was leftover from an
-    // earlier visibility race that no longer applies.
-    $('#annotation_textarea').focus();
+    // Focus the textarea after the panel is on-screen.
+    var ta = document.getElementById('annotation_textarea');
+    if (ta) ta.focus();
 }
 
 // Close annotation panel
@@ -1610,7 +1605,9 @@ function _repositionEpubAnnotationsImpl(viewerId) {
 
     // ---- WRITE PHASE ----
     // Build all markers into a DocumentFragment, then attach the fragment
-    // in a single appendChild call. One write, one reflow.
+    // in a single appendChild call. One write, one reflow. Handlers go
+    // directly on the elements (cheaper than jQuery event delegation,
+    // which would have to walk up the DOM on every click).
     var fragment = document.createDocumentFragment();
     jobs.forEach(function(job) {
         var marker = document.createElement('div');
@@ -1622,20 +1619,17 @@ function _repositionEpubAnnotationsImpl(viewerId) {
         s.left = (offset.x + job.left - 12) + 'px';
         s.top = (offset.y + job.top - 12) + 'px';
         s.pointerEvents = 'auto';
+
+        var ann = job.ann;
+        marker.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            editAnnotation(ann, ev);
+        });
+
         fragment.appendChild(marker);
     });
     containerEl.appendChild(fragment);
-
-    // Click handling via delegation: one listener on the container instead
-    // of N per-marker handlers. Idempotent — `.off().on()` ensures we don't
-    // stack listeners across reposition cycles.
-    $container.off('click.annot-marker').on('click.annot-marker', '.annotation-marker', function(ev) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        var id = this.getAttribute('data-annotation-id');
-        var ann = annotationSystem.annotations.find(function(a) { return a.id === id; });
-        if (ann) editAnnotation(ann, ev);
-    });
 }
 
 // Update the .active state of every EPUB viewer's toolbar button so each
