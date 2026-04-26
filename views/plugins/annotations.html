@@ -875,99 +875,53 @@ function editAnnotation(annotation, clickEvent) {
 // Show annotation panel
 function showAnnotationPanel(x, y, title, isViewportCoords) {
 
-    console.log('showAnnotationPanel called with x:', x, 'y:', y, 'title:', title, 'isViewportCoords:', isViewportCoords);
-
     $('#annotation_title').text(title);
 
-    // Calculate absolute position
     var leftPos, topPos;
     var screenX, screenY;
 
-    // If coords are already viewport coordinates, use them directly
     if (isViewportCoords) {
         screenX = x;
         screenY = y;
-
-        console.log('=== showAnnotationPanel positioning (direct viewport) ===');
-        console.log('Viewport coords:', {screenX: screenX, screenY: screenY});
-        console.log('Window scroll:', {scrollX: window.scrollX, scrollY: window.scrollY});
-        console.log('Document element scroll:', {scrollLeft: document.documentElement.scrollLeft, scrollTop: document.documentElement.scrollTop});
     }
     // If we're in PDF.js viewer modal, convert canvas-relative coords to screen coords
     else if (window.PDFViewer && window.PDFViewer.pdfDoc) {
-
-        // Find the canvas for the current page
         var currentPage = window.PDFViewer.currentPage;
         var $canvas = $('.pdfjs-canvas-container').eq(currentPage - 1);
 
         if ($canvas.length > 0) {
             var rect = $canvas[0].getBoundingClientRect();
-
-            // Calculate screen position from canvas-relative coords
             screenX = rect.left + x;
             screenY = rect.top + y;
-
-            console.log('=== showAnnotationPanel positioning (canvas-relative) ===');
-            console.log('Current page:', currentPage);
-            console.log('Canvas rect:', {left: rect.left, top: rect.top, width: rect.width, height: rect.height});
-            console.log('Canvas-relative coords:', {x: x, y: y});
-            console.log('Calculated screen coords:', {screenX: screenX, screenY: screenY});
         } else {
-            // Fallback if canvas not found
-            console.warn('Canvas not found for page', currentPage);
             screenX = x + 50;
             screenY = y;
         }
     } else {
-        // For non-PDF contexts, use the coords as-is (with small offset)
         screenX = x + 50;
         screenY = y;
     }
 
-    // Now position the panel intelligently using the screen coords
-    // Position panel to the right of the click, but keep it on screen
-    var panelWidth = 300;  // Approximate panel width
-    var panelHeight = 200; // Approximate panel height
+    var panelWidth = 300;
+    var panelHeight = 200;
     var windowWidth = $(window).width();
     var windowHeight = $(window).height();
 
-    // Try to place it to the right of click, with 30px offset (20px more than before)
     leftPos = screenX + 30;
-
-    console.log('BEFORE X adjustment: leftPos =', leftPos, 'screenX =', screenX, 'windowWidth =', windowWidth);
-
-    // If panel would go off right edge, place it to the left instead
     if (leftPos + panelWidth > windowWidth) {
-        console.log('Panel would go off right edge, moving to left');
         leftPos = screenX - panelWidth - 10;
-        // If still off screen, clamp to right edge with margin
         if (leftPos < 10) {
-            console.log('Still off left edge, clamping to right edge');
             leftPos = windowWidth - panelWidth - 10;
         }
     }
 
-    console.log('AFTER X adjustment: leftPos =', leftPos);
-
-    // Position vertically aligned with click
     topPos = screenY;
-
-    console.log('BEFORE Y adjustment: topPos =', topPos, 'screenY =', screenY);
-
-    // If panel would go off bottom edge, shift it up
     if (topPos + panelHeight > windowHeight) {
-        console.log('Panel would go off bottom, adjusting from', topPos, 'to', windowHeight - panelHeight - 10);
         topPos = windowHeight - panelHeight - 10;
     }
-
-    // Don't let it go above top edge
     if (topPos < 10) {
-        console.log('Panel would go off top, adjusting from', topPos, 'to 10');
         topPos = 10;
     }
-
-    console.log('AFTER adjustment: topPos =', topPos);
-    console.log('Final panel position: left=', leftPos, 'top=', topPos);
 
     $('#annotation_panel').css({
         'left': leftPos + 'px',
@@ -978,25 +932,18 @@ function showAnnotationPanel(x, y, title, isViewportCoords) {
         'border': 'none'
     }).show();
 
-    console.log('Panel position set to:', leftPos, topPos);
-    console.log('Panel display:', $('#annotation_panel').css('display'));
-    console.log('Panel visibility:', $('#annotation_panel').is(':visible'));
+    // Make panel draggable on first show only — re-initializing destroys
+    // and rebuilds the jQuery UI handlers, which is wasteful per click.
+    var panelEl = $('#annotation_panel');
+    if (!panelEl.data('ui-draggable')) {
+        panelEl.draggable({
+            cancel: '.annotation-btn, .annotation-save-btn, .annotation-delete-btn, #annotation_textarea, button, textarea'
+        });
+    }
 
-    // Make panel draggable (but don't start a drag when clicking controls/textarea)
-    $('#annotation_panel').draggable({
-        cancel: '.annotation-btn, .annotation-save-btn, .annotation-delete-btn, #annotation_textarea, button, textarea'
-    });
-
-    // Focus textarea after a small delay to ensure panel is visible
-    setTimeout(function() {
-        console.log('Attempting to focus textarea');
-        var $textarea = $('#annotation_textarea');
-        console.log('Textarea exists:', $textarea.length);
-        console.log('Textarea visible:', $textarea.is(':visible'));
-        console.log('Textarea display:', $textarea.css('display'));
-        $textarea.focus();
-        console.log('Textarea focused');
-    }, 200);
+    // Focus textarea synchronously — the 200ms timeout was leftover from an
+    // earlier visibility race that no longer applies.
+    $('#annotation_textarea').focus();
 }
 
 // Close annotation panel
