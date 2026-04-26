@@ -517,17 +517,8 @@ function attachPdfEpubClickHandlers() {
     // EPUBs handle dblclick via the rendition's content hook (registered when
     // initEpubViewer creates the rendition). An overlay over the iframe doesn't
     // work because the iframe swallows the events; see attachEpubAnnotationHooks.
-    if (window.EPUBViewers) {
-        Object.keys(window.EPUBViewers).forEach(function(viewerId) {
-            // Refresh markers for any viewer whose file matches the active one.
-            var viewer = window.EPUBViewers[viewerId];
-            if (viewer && viewer.epubPath === annotationSystem.currentFile) {
-                if (window.repositionEpubAnnotations) {
-                    setTimeout(function() { window.repositionEpubAnnotations(viewerId); }, 100);
-                }
-            }
-        });
-    }
+    // Marker rendering is triggered by `annotations_loaded` after the server
+    // returns the data, so nothing extra to do here for EPUBs.
 }
 
 // Remove click handlers from PDF and EPUB elements
@@ -1595,7 +1586,8 @@ window.attachEpubAnnotationHooks = function(viewer) {
 
 // Debounce per viewer so a burst of save / chapter-render / font-change
 // events coalesces into a single repaint. Without this, ~each click and
-// each scroll would tear down + rebuild every marker.
+// each scroll would tear down + rebuild every marker. Kept short so
+// toggling annotation mode feels instant.
 var _epubRepositionTimers = {};
 window.repositionEpubAnnotations = function(viewerId) {
     if (!viewerId) viewerId = window.activeEpubViewerId;
@@ -1604,7 +1596,7 @@ window.repositionEpubAnnotations = function(viewerId) {
     _epubRepositionTimers[viewerId] = setTimeout(function() {
         delete _epubRepositionTimers[viewerId];
         _repositionEpubAnnotationsImpl(viewerId);
-    }, 150);
+    }, 50);
 };
 
 function _repositionEpubAnnotationsImpl(viewerId) {
@@ -1638,84 +1630,46 @@ function _repositionEpubAnnotationsImpl(viewerId) {
     var loc = viewer.rendition.currentLocation();
     var currentChapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
 
-    // Track placed-marker count to know whether a retry is warranted.
-    // EPUB.js's manager occasionally returns empty ranges for the very first
-    // reposition after annotation mode activates (its internal `visible()`
-    // view list isn't fully populated yet). One retry is enough to recover.
-    var placedCount = 0;
-    var attemptable = 0;
-    var settledCount = 0;
-
     annotationSystem.annotations.forEach(function(ann) {
         if (!ann.cfi) return;
-        // Cheap pre-filter: skip annotations from other chapters when we know.
         if (typeof ann.chapter === 'number' && currentChapter !== null && ann.chapter !== currentChapter) {
             return;
         }
-        attemptable++;
 
         var rangeResult;
         try {
             rangeResult = viewer.rendition.getRange(ann.cfi);
         } catch (err) {
-            console.warn('EPUB getRange threw for', ann.cfi, err);
-            settledCount++;
-            maybeScheduleRetry();
             return;
         }
 
         Promise.resolve(rangeResult).then(function(range) {
-            try {
-                if (!range) return;
-                var rect = range.getBoundingClientRect();
-                if (!rect.width && !rect.height && !rect.left && !rect.top) return;
+            if (!range) return;
+            var rect = range.getBoundingClientRect();
+            if (!rect.width && !rect.height && !rect.left && !rect.top) return;
 
-                var iframe = findIframeForRange(range);
-                var off = iframeOffsetInContainer(iframe, $container[0]);
+            var iframe = findIframeForRange(range);
+            var off = iframeOffsetInContainer(iframe, $container[0]);
 
-                var marker = $('<div/>').addClass('annotation-marker')
-                    .attr('data-annotation-id', ann.id)
-                    .attr('title', ann.content ? ann.content.substring(0, 50) + '...' : 'Note')
-                    .css({
-                        position: 'absolute',
-                        left: (off.x + rect.left - 12) + 'px',
-                        top: (off.y + rect.top - 12) + 'px',
-                        'pointer-events': 'auto'
-                    });
-
-                marker.on('click', function(ev) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    editAnnotation(ann, ev);
+            var marker = $('<div/>').addClass('annotation-marker')
+                .attr('data-annotation-id', ann.id)
+                .attr('title', ann.content ? ann.content.substring(0, 50) + '...' : 'Note')
+                .css({
+                    position: 'absolute',
+                    left: (off.x + rect.left - 12) + 'px',
+                    top: (off.y + rect.top - 12) + 'px',
+                    'pointer-events': 'auto'
                 });
 
-                $container.append(marker);
-                placedCount++;
-            } finally {
-                settledCount++;
-                maybeScheduleRetry();
-            }
-        }).catch(function(err) {
-            console.warn('EPUB getRange rejected for', ann.cfi, err);
-            settledCount++;
-            maybeScheduleRetry();
-        });
+            marker.on('click', function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                editAnnotation(ann, ev);
+            });
+
+            $container.append(marker);
+        }).catch(function() {});
     });
-
-    // If we had nothing to place, no retry needed.
-    if (attemptable === 0) return;
-
-    function maybeScheduleRetry() {
-        if (settledCount < attemptable) return;
-        if (placedCount > 0) return;                     // success, no retry
-        if (viewer._annotRetried) return;                // already retried once
-        viewer._annotRetried = true;
-        setTimeout(function() {
-            // Clear the flag a bit later so subsequent toggles can retry too.
-            setTimeout(function() { viewer._annotRetried = false; }, 2000);
-            window.repositionEpubAnnotations(viewerId);
-        }, 500);
-    }
 }
 
 // Update the .active state of every EPUB viewer's toolbar button so each
