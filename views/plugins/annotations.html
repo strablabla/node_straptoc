@@ -258,8 +258,21 @@ function detectCurrentFile() {
         }
     }
 
-    // Check for EPUB
-    var epubContainer = $('#epub-viewer:visible, .epub-container:visible').first();
+    // Check for EPUB — prefer the most-recently-active viewer (set by epub.html on render).
+    if (window.activeEpubViewerId && window.EPUBViewers && window.EPUBViewers[window.activeEpubViewerId]) {
+        var activeViewer = window.EPUBViewers[window.activeEpubViewerId];
+        if (activeViewer && activeViewer.epubPath) {
+            if (activeViewer.epubPath !== previousFile) {
+                annotationSystem.annotationsLoaded = false;
+            }
+            annotationSystem.currentFile = activeViewer.epubPath;
+            annotationSystem.fileType = 'epub';
+            annotationSystem.currentEpubViewer = activeViewer;
+            return;
+        }
+    }
+    // Fallback: legacy markup-based detection (kept for templates that don't go through EPUBViewers)
+    var epubContainer = $('#epub-viewer:visible, .epub-container:visible, .lazy-epub-container:visible').first();
     if (epubContainer.length > 0) {
         var epubSrc = epubContainer.attr('data-epub-path') || epubContainer.attr('src');
         if (epubSrc) {
@@ -324,6 +337,8 @@ function toggleAnnotationMode() {
         $('#pdf-viewer-modal, #pdf-viewer-modal-content').removeClass('annotation-mode-active');
 
         if (window.syncPDFJSAnnotBtnState) window.syncPDFJSAnnotBtnState();
+        if (window.syncEpubAnnotationCursor) window.syncEpubAnnotationCursor();
+        if (window.syncAllEpubAnnotBtnStates) window.syncAllEpubAnnotBtnStates();
 
         console.log('Annotation mode deactivated');
     } else {
@@ -346,6 +361,9 @@ function toggleAnnotationMode() {
             $('#pdf-viewer-modal, #pdf-viewer-modal-content').addClass('annotation-mode-active');
             console.log('Reapplied annotation-mode-active class');
         }, 500);
+
+        if (window.syncEpubAnnotationCursor) window.syncEpubAnnotationCursor();
+        if (window.syncAllEpubAnnotBtnStates) window.syncAllEpubAnnotBtnStates();
 
         console.log('Annotation mode activated for file:', annotationSystem.currentFile);
     }
@@ -464,45 +482,20 @@ function attachPdfEpubClickHandlers() {
         $elem.append($overlay);
     });
 
-    // Handle EPUBs
-    $('#epub-viewer, .epub-container').each(function() {
-        var $elem = $(this);
-
-        if ($elem.css('position') === 'static') {
-            $elem.css('position', 'relative');
-        }
-
-        var $overlay = $('<div/>')
-            .addClass('epub-click-overlay')
-            .css({
-                'position': 'absolute',
-                'top': '0',
-                'left': '0',
-                'width': '100%',
-                'height': '100%',
-                'z-index': '10',
-                'cursor': 'crosshair',
-                'background': 'transparent'
-            });
-
-        $overlay.on('dblclick', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            var offset = $(this).offset();
-            var location = {
-                x: e.pageX - offset.left,
-                y: e.pageY - offset.top,
-                width: 0,
-                height: 0
-            };
-
-            detectCurrentFile();
-            createNewAnnotation(location);
+    // EPUBs handle dblclick via the rendition's content hook (registered when
+    // initEpubViewer creates the rendition). An overlay over the iframe doesn't
+    // work because the iframe swallows the events; see attachEpubAnnotationHooks.
+    if (window.EPUBViewers) {
+        Object.keys(window.EPUBViewers).forEach(function(viewerId) {
+            // Refresh markers for any viewer whose file matches the active one.
+            var viewer = window.EPUBViewers[viewerId];
+            if (viewer && viewer.epubPath === annotationSystem.currentFile) {
+                if (window.repositionEpubAnnotations) {
+                    setTimeout(function() { window.repositionEpubAnnotations(viewerId); }, 100);
+                }
+            }
         });
-
-        $elem.append($overlay);
-    });
+    }
 }
 
 // Remove click handlers from PDF and EPUB elements
@@ -524,6 +517,13 @@ socket.on('annotations_loaded', function(data) {
         // Use PDF-specific reload if in PDF.js viewer
         if (annotationSystem.fileType === 'pdf' && window.PDFViewer && window.PDFViewer.pdfDoc) {
             reloadPDFAnnotations();
+        } else if (annotationSystem.fileType === 'epub' && window.repositionEpubAnnotations) {
+            // EPUB markers are positioned by resolving stored CFIs against the
+            // currently rendered chapter — that has to happen per-viewer.
+            var viewerId = annotationSystem.currentEpubViewer
+                ? annotationSystem.currentEpubViewer.viewerId
+                : window.activeEpubViewerId;
+            window.repositionEpubAnnotations(viewerId);
         } else {
             displayAnnotationMarkers();
         }
@@ -558,6 +558,24 @@ function createTemporaryMarker(annotation) {
 
             $annotationLayer.append(marker);
             console.log('Temporary marker created in PDF.js annotation layer');
+        }
+        return;
+    }
+
+    // For EPUBs, append to the active viewer's render container.
+    if (annotationSystem.fileType === 'epub' && annotationSystem.currentEpubViewer) {
+        var $epubRender = $('#' + annotationSystem.currentEpubViewer.renderId);
+        if ($epubRender.length > 0) {
+            $('<div/>').addClass('annotation-marker')
+                .attr('data-annotation-id', annotation.id)
+                .attr('title', 'New annotation')
+                .css({
+                    'position': 'absolute',
+                    'left': annotation.location.x + 'px',
+                    'top': annotation.location.y + 'px',
+                    'pointer-events': 'auto'
+                })
+                .appendTo($epubRender);
         }
     }
 }
@@ -679,7 +697,13 @@ function findAnnotationContainer() {
     }
 
     if (annotationSystem.fileType === 'epub') {
-        var epubContainer = $('#epub-viewer:visible, .epub-container:visible').first();
+        // Prefer the active EPUB viewer's render container — that's where
+        // markers are positioned (absolute, in container content coords).
+        if (annotationSystem.currentEpubViewer) {
+            var $render = $('#' + annotationSystem.currentEpubViewer.renderId);
+            if ($render.length > 0) return $render;
+        }
+        var epubContainer = $('#epub-viewer:visible, .epub-container:visible, .epubjs-viewer-render:visible').first();
         if (epubContainer.length > 0) {
             return epubContainer;
         }
@@ -756,10 +780,13 @@ function createNewAnnotation(location) {
     }
 
     if (annotationSystem.fileType === 'epub') {
-        // For EPUBs, try to get CFI
-        // This would need to be integrated with EPUB.js viewer
-        annotationSystem.currentAnnotation.cfi = '';
-        annotationSystem.currentAnnotation.chapter = '';
+        // CFI + chapter are computed by handleEpubDblClick and passed in
+        // via the location object — promote them onto the annotation itself
+        // so they end up in the persisted YAML.
+        annotationSystem.currentAnnotation.cfi = (location && location.cfi) ? location.cfi : '';
+        if (location && typeof location.chapter === 'number') {
+            annotationSystem.currentAnnotation.chapter = location.chapter;
+        }
     }
 
     // Create a temporary marker immediately
@@ -975,6 +1002,11 @@ function closeAnnotationPanel() {
     // Reload annotations to ensure all markers are visible
     if (window.PDFViewer && window.PDFViewer.pdfDoc) {
         reloadPDFAnnotations();
+    } else if (annotationSystem.fileType === 'epub' && window.repositionEpubAnnotations) {
+        var viewerId = annotationSystem.currentEpubViewer
+            ? annotationSystem.currentEpubViewer.viewerId
+            : window.activeEpubViewerId;
+        window.repositionEpubAnnotations(viewerId);
     }
 }
 
@@ -1054,6 +1086,11 @@ socket.on('annotation_saved', function(data) {
         // Check if the annotation has a page property (indicates it's a PDF annotation)
         if (result.annotation.page && window.PDFViewer && window.PDFViewer.pdfDoc) {
             reloadPDFAnnotations();
+        } else if (result.annotation.fileType === 'epub' && window.repositionEpubAnnotations) {
+            var viewerId = annotationSystem.currentEpubViewer
+                ? annotationSystem.currentEpubViewer.viewerId
+                : window.activeEpubViewerId;
+            window.repositionEpubAnnotations(viewerId);
         } else {
             displayAnnotationMarkers();
         }
@@ -1103,8 +1140,17 @@ socket.on('annotation_deleted', function(data) {
             ann => ann.id !== result.annotationId
         );
 
-        // Refresh markers
-        displayAnnotationMarkers();
+        // Refresh markers — dispatch by file type
+        if (annotationSystem.fileType === 'pdf' && window.PDFViewer && window.PDFViewer.pdfDoc) {
+            reloadPDFAnnotations();
+        } else if (annotationSystem.fileType === 'epub' && window.repositionEpubAnnotations) {
+            var viewerId = annotationSystem.currentEpubViewer
+                ? annotationSystem.currentEpubViewer.viewerId
+                : window.activeEpubViewerId;
+            window.repositionEpubAnnotations(viewerId);
+        } else {
+            displayAnnotationMarkers();
+        }
         closeAnnotationPanel();
     }
 });
@@ -1320,6 +1366,254 @@ function reloadPDFAnnotations() {
 window.reloadPDFAnnotations = reloadPDFAnnotations;
 window.closeAnnotationPanel = closeAnnotationPanel;
 window.toggleAnnotationMode = toggleAnnotationMode;
+
+//===========================================
+// EPUB.js Viewer Integration (CFI-anchored)
+//===========================================
+
+// EPUB.js renders each chapter into its own iframe. The outer page can't
+// listen for events inside the iframe via document.on('dblclick', ...),
+// so we hook into rendition.hooks.content — which fires every time a
+// chapter is rendered — to attach listeners directly to the iframe's
+// document. Same for marker positioning: we resolve a stored CFI to a
+// DOM Range inside the iframe, then place the marker in the outer
+// container at the range's bounding rect (the iframe sits at offset 0,0
+// inside the .epubjs-viewer-render scrollable container, so the rect
+// coords work directly as absolute positions).
+
+function getCaretRangeFromPoint(doc, x, y) {
+    if (doc.caretRangeFromPoint) {
+        return doc.caretRangeFromPoint(x, y);
+    }
+    if (doc.caretPositionFromPoint) {
+        var pos = doc.caretPositionFromPoint(x, y);
+        if (!pos) return null;
+        var r = doc.createRange();
+        r.setStart(pos.offsetNode, pos.offset);
+        r.setEnd(pos.offsetNode, pos.offset);
+        return r;
+    }
+    return null;
+}
+
+function getViewIframe(view, contents) {
+    if (view && view.iframe) return view.iframe;
+    if (contents && contents.iframe) return contents.iframe;
+    if (view && view.element) {
+        var ifr = view.element.querySelector ? view.element.querySelector('iframe') : null;
+        if (ifr) return ifr;
+    }
+    return null;
+}
+
+function handleEpubDblClick(viewer, contents, view, e) {
+
+    if (!annotationSystem.active) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Make sure annotation system targets THIS viewer's file. If the user
+    // double-clicks in a different EPUB than the one currently tracked,
+    // switch context and (re-)load its annotations.
+    if (annotationSystem.currentFile !== viewer.epubPath) {
+        annotationSystem.currentFile = viewer.epubPath;
+        annotationSystem.fileType = 'epub';
+        annotationSystem.annotationsLoaded = false;
+        annotationSystem.currentEpubViewer = viewer;
+        socket.emit('get_annotations', viewer.epubPath);
+    } else {
+        annotationSystem.currentEpubViewer = viewer;
+    }
+
+    var doc = contents.document;
+    var range = getCaretRangeFromPoint(doc, e.clientX, e.clientY);
+    if (!range) {
+        console.warn('EPUB dblclick: no caret range at point');
+        return;
+    }
+
+    var cfi = '';
+    try { cfi = contents.cfiFromRange(range); } catch (err) {}
+    if (!cfi) {
+        try { cfi = viewer.rendition.cfiFromRange ? viewer.rendition.cfiFromRange(range) : ''; } catch (err) {}
+    }
+    if (!cfi) {
+        console.warn('EPUB dblclick: could not derive CFI');
+        return;
+    }
+
+    // range.getBoundingClientRect() is in iframe-viewport coords. With
+    // flow:'scrolled-doc' the iframe height equals its content height, so
+    // those coords are also the absolute offset within the iframe. The iframe
+    // itself sits at offset (0,0) inside .epubjs-viewer-render, so the rect
+    // doubles as an absolute position in the scrollable container.
+    var rangeRect = range.getBoundingClientRect();
+
+    // Panel position needs outer-document viewport coords. e.clientX/Y are
+    // iframe-viewport — translate by the iframe's outer-doc rect.
+    var iframe = getViewIframe(view, contents);
+    var iframeRect = iframe ? iframe.getBoundingClientRect() : { left: 0, top: 0 };
+
+    var loc = viewer.rendition.currentLocation();
+    var chapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
+
+    var location = {
+        x: rangeRect.left - 12,    // center the 24px marker on the click
+        y: rangeRect.top - 12,
+        cfi: cfi,
+        chapter: chapter,
+        viewportX: iframeRect.left + e.clientX,
+        viewportY: iframeRect.top + e.clientY
+    };
+
+    createNewAnnotation(location);
+}
+
+window.attachEpubAnnotationHooks = function(viewer) {
+
+    if (!viewer || !viewer.rendition || !viewer.rendition.hooks) return;
+
+    viewer.rendition.hooks.content.register(function(contents, view) {
+        // Defensive: contents.document may be missing on some EPUBs (rare).
+        if (!contents || !contents.document) return;
+        contents.document.addEventListener('dblclick', function(e) {
+            handleEpubDblClick(viewer, contents, view, e);
+        });
+        // Crosshair cursor inside the iframe when annotation mode is on.
+        // Toggled via a class on documentElement so it tracks live state.
+        try {
+            var styleEl = contents.document.createElement('style');
+            styleEl.textContent =
+                'html.straptoc-annot-active, html.straptoc-annot-active * { cursor: crosshair !important; }';
+            contents.document.head.appendChild(styleEl);
+            if (annotationSystem.active && annotationSystem.currentFile === viewer.epubPath) {
+                contents.document.documentElement.classList.add('straptoc-annot-active');
+            }
+            // Cache so toggleAnnotationMode can reach it.
+            viewer._iframeDocs = viewer._iframeDocs || [];
+            viewer._iframeDocs.push(contents.document);
+        } catch (err) {
+            // Cross-origin or detached doc — ignore silently.
+        }
+    });
+
+    // After each chapter render, refresh markers if this viewer's file is the
+    // one annotation mode is tracking.
+    viewer.rendition.on('rendered', function() {
+        if (annotationSystem.active && annotationSystem.currentFile === viewer.epubPath) {
+            // Small delay so EPUB.js has fully populated the iframe DOM and
+            // CFI ↔ Range resolution actually finds the text.
+            setTimeout(function() { window.repositionEpubAnnotations(viewer.viewerId); }, 150);
+        }
+    });
+};
+
+window.repositionEpubAnnotations = function(viewerId) {
+
+    if (!viewerId) viewerId = window.activeEpubViewerId;
+    if (!viewerId || !window.EPUBViewers || !window.EPUBViewers[viewerId]) return;
+    var viewer = window.EPUBViewers[viewerId];
+    var $container = $('#' + viewer.renderId);
+    if ($container.length === 0) return;
+
+    // Only act on the viewer whose file the annotation system is tracking.
+    if (annotationSystem.currentFile !== viewer.epubPath) return;
+
+    if (!annotationSystem.active) {
+        $container.find('.annotation-marker').remove();
+        return;
+    }
+
+    // Clear existing markers EXCEPT the one currently being edited
+    if (annotationSystem.currentAnnotation && annotationSystem.currentAnnotation.id) {
+        $container.find('.annotation-marker').not('[data-annotation-id="' + annotationSystem.currentAnnotation.id + '"]').remove();
+    } else {
+        $container.find('.annotation-marker').remove();
+    }
+
+    if (!annotationSystem.annotations || annotationSystem.annotations.length === 0) return;
+
+    var loc = viewer.rendition.currentLocation();
+    var currentChapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
+
+    annotationSystem.annotations.forEach(function(ann) {
+        if (!ann.cfi) return;
+        // Cheap pre-filter: skip annotations from other chapters when we know.
+        if (typeof ann.chapter === 'number' && currentChapter !== null && ann.chapter !== currentChapter) {
+            return;
+        }
+
+        var rangeResult;
+        try {
+            rangeResult = viewer.rendition.getRange(ann.cfi);
+        } catch (err) {
+            console.warn('EPUB getRange threw for', ann.cfi, err);
+            return;
+        }
+
+        Promise.resolve(rangeResult).then(function(range) {
+            if (!range) return;
+            var rect = range.getBoundingClientRect();
+            // CFI not in the currently-rendered chapter → empty rect.
+            if (!rect.width && !rect.height && !rect.left && !rect.top) return;
+
+            var marker = $('<div/>').addClass('annotation-marker')
+                .attr('data-annotation-id', ann.id)
+                .attr('title', ann.content ? ann.content.substring(0, 50) + '...' : 'Note')
+                .css({
+                    position: 'absolute',
+                    left: (rect.left - 12) + 'px',
+                    top: (rect.top - 12) + 'px',
+                    'pointer-events': 'auto'
+                });
+
+            marker.on('click', function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                editAnnotation(ann, ev);
+            });
+
+            $container.append(marker);
+        }).catch(function(err) {
+            console.warn('EPUB getRange rejected for', ann.cfi, err);
+        });
+    });
+};
+
+// Update the .active state of every EPUB viewer's toolbar button so each
+// viewer's button reflects whether its file is currently being annotated.
+function syncAllEpubAnnotBtnStates() {
+    if (!window.EPUBViewers) return;
+    Object.keys(window.EPUBViewers).forEach(function(id) {
+        var v = window.EPUBViewers[id];
+        if (v && typeof v.syncAnnotBtnState === 'function') {
+            v.syncAnnotBtnState();
+        }
+    });
+}
+window.syncAllEpubAnnotBtnStates = syncAllEpubAnnotBtnStates;
+
+// Toggle the crosshair cursor inside every loaded EPUB iframe when
+// annotation mode flips on/off.
+function syncEpubAnnotationCursor() {
+    if (!window.EPUBViewers) return;
+    Object.keys(window.EPUBViewers).forEach(function(id) {
+        var v = window.EPUBViewers[id];
+        if (!v || !v._iframeDocs) return;
+        var match = (annotationSystem.active && annotationSystem.currentFile === v.epubPath);
+        v._iframeDocs.forEach(function(doc) {
+            try {
+                if (match) {
+                    doc.documentElement.classList.add('straptoc-annot-active');
+                } else {
+                    doc.documentElement.classList.remove('straptoc-annot-active');
+                }
+            } catch (err) {}
+        });
+    });
+}
+window.syncEpubAnnotationCursor = syncEpubAnnotationCursor;
 
 // Initialize when document is ready
 $(document).ready(function() {

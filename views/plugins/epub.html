@@ -6,6 +6,7 @@
 .epubjs-viewer-wrap {
     display: inline-block;
     margin: 10px 0;
+    position: relative;  /* anchor for the bookmark panel */
 }
 
 .epubjs-viewer-controls {
@@ -90,11 +91,150 @@
     margin-left: 20px;
 }
 
+.epubjs-viewer-controls .epubjs-bookmark-btn,
+.epubjs-viewer-controls .epubjs-annot-btn {
+    margin-left: 6px;
+    font-size: 16px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.epubjs-viewer-controls .epubjs-annot-btn.active {
+    background: #6a6a6a;
+    border-color: #999;
+}
+
 .epubjs-viewer-render {
     width: 600px;
     height: 660px;
     background: white;
     overflow: auto;
+    position: relative;  /* anchor for absolute-positioned annotation markers */
+}
+
+/* Bookmark panel (mirrors the PDF.js bookmark panel look) */
+
+.epubjs-bookmark-panel {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: #323232;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 10px;
+    min-width: 187px;
+    max-width: 227px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 200;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    display: none;
+    color: white;
+}
+
+.epubjs-bookmark-panel.visible {
+    display: block;
+}
+
+.epubjs-bookmark-add {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.epubjs-bookmark-add input {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+    background: #454545;
+    color: white;
+    border: 1px solid #666;
+    padding: 0 8px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 3px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.epubjs-bookmark-add button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0 10px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.epubjs-bookmark-add button:hover {
+    background: #45a049;
+}
+
+.epubjs-bookmark-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.epubjs-bookmark-list li {
+    display: flex;
+    align-items: center;
+    padding: 6px 4px;
+    border-bottom: 1px solid #454545;
+    font-size: 13px;
+}
+
+.epubjs-bookmark-list li:hover {
+    background: #3f3f3f;
+}
+
+.epubjs-bookmark-name {
+    cursor: pointer;
+    flex: 1;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.epubjs-bookmark-name:hover {
+    color: #87CEEB;
+}
+
+.epubjs-bookmark-page {
+    color: #aaa;
+    font-size: 11px;
+    margin: 0 8px;
+    flex-shrink: 0;
+}
+
+.epubjs-bookmark-del {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.epubjs-bookmark-del:hover {
+    color: #ff6b6b;
+}
+
+.epubjs-bookmark-empty {
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px;
+    font-style: italic;
 }
 
 </style>
@@ -105,20 +245,17 @@ function set_margin(){
     $('.epub-view').children().css({'margin': '0 0 0 0'})
 }
 
-let currentSize = 100;
-let step_font = 5
+// Per-viewer font size is held inside each viewer instance; this helper
+// is used by the +/− buttons to bump the value and reapply it.
+const STEP_FONT = 5;
+const FONT_SIZE_DEFAULT = 100;
+const FONT_SIZE_MIN = 50;
+const FONT_SIZE_MAX = 300;
 
-// increase fonts
-function incrFont(rendition) {
-  currentSize += step_font;
-  rendition.themes.fontSize(`${currentSize}%`);
-}
-
-// decrease fonts
-function decrFont(rendition) {
-  currentSize = Math.max(50, currentSize - step_font);
-  rendition.themes.fontSize(`${currentSize}%`);
-}
+// Index of live EPUB viewers, keyed by their container DOM id, so the
+// annotation system can reach the rendition + path without duplicating state.
+window.EPUBViewers = window.EPUBViewers || {};
+window.activeEpubViewerId = window.activeEpubViewerId || null;
 
 // Initialize an EPUB viewer with PDF-style toolbar into a container element.
 // container: HTMLElement (will be cleared and filled)
@@ -127,9 +264,10 @@ window.initEpubViewer = function(container, addr) {
 
     const epub_id = addr.split('/').at(-1).split('.epub')[0].replace(/[^a-zA-Z0-9_-]/g, '_');
     const renderId = 'epub-render-' + epub_id + '-' + Date.now();
+    const viewerId = renderId;  // also used as the EPUBViewers key
 
     container.innerHTML = `
-        <div class="epubjs-viewer-wrap">
+        <div class="epubjs-viewer-wrap" data-viewer-id="${viewerId}">
             <div class="epubjs-viewer-controls">
                 <button class="epubjs-prev" title="Previous">◀</button>
                 <span class="epubjs-page-info">
@@ -140,8 +278,17 @@ window.initEpubViewer = function(container, addr) {
                 <button class="epubjs-font-down epubjs-font-label" title="Smaller font">−</button>
                 <span class="epubjs-font-pct">100 %</span>
                 <button class="epubjs-font-up" title="Larger font">+</button>
+                <button class="epubjs-bookmark-btn" title="Bookmarks"><img src="capicon/svg/355.svg" alt="Bookmarks" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
+                <button class="epubjs-annot-btn" title="Toggle annotations"><img src="capicon/svg/354.svg" alt="Annotate" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
             </div>
             <div id="${renderId}" class="epubjs-viewer-render"></div>
+            <div class="epubjs-bookmark-panel">
+                <div class="epubjs-bookmark-add">
+                    <input type="text" class="epubjs-bookmark-name-input" placeholder="Bookmark name" maxlength="40">
+                    <button class="epubjs-bookmark-add-btn">+</button>
+                </div>
+                <ul class="epubjs-bookmark-list"></ul>
+            </div>
         </div>
     `;
 
@@ -153,6 +300,12 @@ window.initEpubViewer = function(container, addr) {
     const $fontPct = $wrap.find('.epubjs-font-pct');
     const $fontUp = $wrap.find('.epubjs-font-up');
     const $fontDown = $wrap.find('.epubjs-font-down');
+    const $bmToggle = $wrap.find('.epubjs-bookmark-btn');
+    const $bmPanel = $wrap.find('.epubjs-bookmark-panel');
+    const $bmNameInput = $wrap.find('.epubjs-bookmark-name-input');
+    const $bmAddBtn = $wrap.find('.epubjs-bookmark-add-btn');
+    const $bmList = $wrap.find('.epubjs-bookmark-list');
+    const $annotBtn = $wrap.find('.epubjs-annot-btn');
 
     const updatePageNumWidth = () => {
         const digits = String($pageInput.val() || '0').length;
@@ -171,7 +324,219 @@ window.initEpubViewer = function(container, addr) {
         width: 600,
         height: 660
     });
-    rendition.display();
+
+    // Per-viewer state. Stored in EPUBViewers so other modules
+    // (annotation system, etc.) can locate it without duplication.
+    const state = {
+        viewerId: viewerId,
+        renderId: renderId,
+        epubPath: addr,
+        book: book,
+        rendition: rendition,
+        currentSize: FONT_SIZE_DEFAULT,
+        named: [],
+        ready: false,
+        // Last-CFI save debounce
+        cfiSaveTimer: null,
+        cfiPendingSave: null,
+        // Updated by syncAllEpubAnnotBtnStates when annotation mode toggles
+        syncAnnotBtnState: null
+    };
+    window.EPUBViewers[viewerId] = state;
+
+    // ----- annotation toggle button (wired here because it touches `state`) -----
+
+    const syncAnnotBtnState = () => {
+        const active = window.annotationSystem &&
+                       window.annotationSystem.active &&
+                       window.annotationSystem.currentFile === addr;
+        $annotBtn.toggleClass('active', !!active);
+    };
+    state.syncAnnotBtnState = syncAnnotBtnState;
+    $annotBtn.on('click', () => {
+        // Make this viewer the active one BEFORE toggling, so detectCurrentFile
+        // picks up the right path.
+        window.activeEpubViewerId = viewerId;
+        if (window.toggleAnnotationMode) {
+            window.toggleAnnotationMode();
+            syncAnnotBtnState();
+        }
+    });
+
+    // ----- font size helpers (per-viewer) -----
+
+    function applyFontSize() {
+        rendition.themes.fontSize(state.currentSize + '%');
+        $fontPct.text(state.currentSize + ' %');
+    }
+
+    function persistFontSize() {
+        if (window.socket) {
+            window.socket.emit('save_font_size', JSON.stringify({
+                filePath: state.epubPath,
+                fontSize: state.currentSize
+            }));
+        }
+    }
+
+    // ----- CFI persistence -----
+
+    const CFI_DEBOUNCE_MS = 800;
+
+    function scheduleSaveCfi(cfi) {
+        if (!window.socket || !cfi) return;
+        clearTimeout(state.cfiSaveTimer);
+        state.cfiPendingSave = { filePath: state.epubPath, cfi: cfi };
+        state.cfiSaveTimer = setTimeout(() => {
+            if (!state.cfiPendingSave) return;
+            window.socket.emit('save_last_cfi', JSON.stringify(state.cfiPendingSave));
+            state.cfiPendingSave = null;
+        }, CFI_DEBOUNCE_MS);
+    }
+
+    // ----- bookmark list rendering -----
+
+    function renderBookmarkList() {
+        $bmList.empty();
+        const named = state.named || [];
+        if (named.length === 0) {
+            $bmList.append('<li class="epubjs-bookmark-empty">No bookmarks yet</li>');
+            return;
+        }
+        named.forEach(bm => {
+            const $name = $('<span class="epubjs-bookmark-name"></span>')
+                .text(bm.name).attr('title', bm.name);
+            // For EPUBs we show the chapter index when available; otherwise
+            // we show the page number (PDF-style bookmarks coexist in YAML).
+            const label = (typeof bm.chapter === 'number')
+                ? ('ch.' + bm.chapter)
+                : (Number.isFinite(bm.page) ? ('p.' + bm.page) : '');
+            const $page = $('<span class="epubjs-bookmark-page"></span>').text(label);
+            const $del = $('<button class="epubjs-bookmark-del" title="Delete">×</button>');
+            $name.on('click', () => {
+                if (bm.cfi) {
+                    rendition.display(bm.cfi);
+                } else if (Number.isFinite(bm.page)) {
+                    rendition.display(bm.page);
+                }
+                $bmPanel.removeClass('visible');
+            });
+            $del.on('click', (e) => {
+                e.stopPropagation();
+                if (!window.socket) return;
+                window.socket.emit('delete_named_bookmark', JSON.stringify({
+                    filePath: state.epubPath,
+                    bookmarkId: bm.id
+                }));
+            });
+            $('<li/>').append($name).append($page).append($del).appendTo($bmList);
+        });
+    }
+
+    function addCurrentLocationAsBookmark() {
+        const name = ($bmNameInput.val() || '').trim();
+        if (!name || !window.socket) return;
+        const loc = rendition.currentLocation();
+        if (!loc || !loc.start) return;
+        const cfi = loc.start.cfi || '';
+        const chapter = (typeof loc.start.index === 'number') ? loc.start.index : null;
+        if (!cfi) return;
+        const bookmark = { name: name, cfi: cfi };
+        if (chapter !== null) bookmark.chapter = chapter;
+        window.socket.emit('save_named_bookmark', JSON.stringify({
+            filePath: state.epubPath,
+            bookmark: bookmark
+        }));
+        $bmNameInput.val('');
+    }
+
+    $bmToggle.on('click', (e) => {
+        e.stopPropagation();
+        const wasVisible = $bmPanel.hasClass('visible');
+        $bmPanel.toggleClass('visible');
+        if (!wasVisible) {
+            renderBookmarkList();
+            $bmNameInput.focus();
+        }
+    });
+    $bmAddBtn.on('click', addCurrentLocationAsBookmark);
+    $bmNameInput.on('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCurrentLocationAsBookmark();
+        }
+    });
+    // Click outside the panel closes it. Scoped per-viewer with a namespace.
+    $(document).on('click.epub-bm-' + viewerId, (e) => {
+        if (!$bmPanel.hasClass('visible')) return;
+        if ($(e.target).closest($bmPanel).length === 0 &&
+            $(e.target).closest($bmToggle).length === 0) {
+            $bmPanel.removeClass('visible');
+        }
+    });
+
+    // ----- bookmark socket listeners (filter by filePath, scoped to this viewer) -----
+
+    function onNamedSavedOrDeleted(data) {
+        try {
+            const parsed = JSON.parse(data);
+            if (parsed.filePath !== state.epubPath) return;
+            state.named = parsed.named || [];
+            if ($bmPanel.hasClass('visible')) renderBookmarkList();
+        } catch (err) {}
+    }
+    if (window.socket) {
+        window.socket.on('named_bookmark_saved', onNamedSavedOrDeleted);
+        window.socket.on('named_bookmark_deleted', onNamedSavedOrDeleted);
+    }
+
+    // ----- initial fetch of saved bookmarks / position / font -----
+
+    function fetchBookmarksThenDisplay() {
+        if (!window.socket) {
+            rendition.display();
+            return;
+        }
+        let done = false;
+        const finish = (parsed) => {
+            if (done) return;
+            done = true;
+            window.socket.off('bookmarks_loaded', handler);
+            applyInitialState(parsed || {});
+        };
+        // Filter responses by filePath — multiple viewers can be initializing
+        // at once and the PDF viewer also listens to `bookmarks_loaded`.
+        const handler = (data) => {
+            try {
+                const parsed = JSON.parse(data);
+                if (parsed.filePath !== state.epubPath) return;
+                finish(parsed);
+            } catch (err) { /* keep waiting */ }
+        };
+        window.socket.on('bookmarks_loaded', handler);
+        window.socket.emit('get_bookmarks', state.epubPath);
+        // Safety net so the viewer always opens even if the server is mute.
+        setTimeout(() => finish({}), 2000);
+    }
+
+    function applyInitialState(parsed) {
+        state.named = parsed.named || [];
+        // Restore font size before displaying so the first paint uses it.
+        const savedFs = parseInt(parsed.fontSize, 10);
+        if (Number.isFinite(savedFs) && savedFs >= FONT_SIZE_MIN && savedFs <= FONT_SIZE_MAX) {
+            state.currentSize = savedFs;
+        }
+        applyFontSize();
+
+        // Display: prefer saved CFI, otherwise default open (chapter 0).
+        if (typeof parsed.lastCfi === 'string' && parsed.lastCfi.length > 0) {
+            rendition.display(parsed.lastCfi);
+        } else {
+            rendition.display();
+        }
+    }
+
+    fetchBookmarksThenDisplay();
 
     book.ready.then(() => {
         const total = (book.spine && book.spine.length) ? book.spine.length - 1 : '?';
@@ -179,6 +544,7 @@ window.initEpubViewer = function(container, addr) {
         if (typeof total === 'number') {
             $pageInput.attr('max', total);
         }
+        state.ready = true;
     });
 
     const refreshPageIndex = () => {
@@ -190,11 +556,6 @@ window.initEpubViewer = function(container, addr) {
             }
         }, 150);
     };
-
-    const refreshFontPct = () => {
-        $fontPct.text(currentSize + ' %');
-    };
-    refreshFontPct();
 
     $prev.on('click', () => {
         rendition.prev();
@@ -215,21 +576,53 @@ window.initEpubViewer = function(container, addr) {
         }
     });
     $fontUp.on('click', () => {
-        incrFont(rendition);
+        state.currentSize = Math.min(FONT_SIZE_MAX, state.currentSize + STEP_FONT);
+        applyFontSize();
         setTimeout(set_margin, 100);
         refreshPageIndex();
-        refreshFontPct();
+        persistFontSize();
+        // Annotations need to be re-laid-out after a font change because
+        // the text has reflowed and the bounding rects shifted.
+        if (window.repositionEpubAnnotations) {
+            setTimeout(() => window.repositionEpubAnnotations(viewerId), 200);
+        }
     });
     $fontDown.on('click', () => {
-        decrFont(rendition);
+        state.currentSize = Math.max(FONT_SIZE_MIN, state.currentSize - STEP_FONT);
+        applyFontSize();
         setTimeout(set_margin, 100);
         refreshPageIndex();
-        refreshFontPct();
+        persistFontSize();
+        if (window.repositionEpubAnnotations) {
+            setTimeout(() => window.repositionEpubAnnotations(viewerId), 200);
+        }
     });
 
-    rendition.on('relocated', refreshPageIndex);
+    // Track the active viewer so the annotation system can target the right
+    // rendition when the user toggles annotation mode.
+    rendition.on('rendered', () => {
+        window.activeEpubViewerId = viewerId;
+    });
 
-    return { book, rendition };
+    // Annotation system hooks: registers a content hook on the rendition
+    // (fires per chapter render) so dblclick handlers and CFI ↔ position
+    // resolution work inside the iframe. Done after rendition exists.
+    if (window.attachEpubAnnotationHooks) {
+        window.attachEpubAnnotationHooks(state);
+    }
+
+    rendition.on('relocated', (location) => {
+        refreshPageIndex();
+        if (location && location.start && location.start.cfi) {
+            scheduleSaveCfi(location.start.cfi);
+        }
+        // Re-anchor annotation markers after every chapter change.
+        if (window.repositionEpubAnnotations) {
+            setTimeout(() => window.repositionEpubAnnotations(viewerId), 100);
+        }
+    });
+
+    return { book, rendition, viewerId, state };
 };
 
 // Legacy wrapper: replaces an <li> with the new viewer (keeps old call sites working)
