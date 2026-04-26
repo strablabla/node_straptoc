@@ -1577,6 +1577,14 @@ function _repositionEpubAnnotationsImpl(viewerId) {
     var loc = viewer.rendition.currentLocation();
     var currentChapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
 
+    // The iframe/container offset is the same for every annotation in this
+    // chapter — compute it once. getBoundingClientRect is expensive on a
+    // huge EPUB DOM because it forces a synchronous layout flush; calling
+    // it 2N times (twice per annotation) was the source of the visible
+    // freeze when toggling annotation mode.
+    var cachedOffset = null;
+    var containerEl = $container[0];
+
     annotationSystem.annotations.forEach(function(ann) {
         if (!ann.cfi) return;
         if (typeof ann.chapter === 'number' && currentChapter !== null && ann.chapter !== currentChapter) {
@@ -1595,16 +1603,17 @@ function _repositionEpubAnnotationsImpl(viewerId) {
             var rect = range.getBoundingClientRect();
             if (!rect.width && !rect.height && !rect.left && !rect.top) return;
 
-            var iframe = findIframeForRange(range);
-            var off = iframeOffsetInContainer(iframe, $container[0]);
+            if (cachedOffset === null) {
+                cachedOffset = iframeOffsetInContainer(findIframeForRange(range), containerEl);
+            }
 
             var marker = $('<div/>').addClass('annotation-marker')
                 .attr('data-annotation-id', ann.id)
                 .attr('title', ann.content ? ann.content.substring(0, 50) + '...' : 'Note')
                 .css({
                     position: 'absolute',
-                    left: (off.x + rect.left - 12) + 'px',
-                    top: (off.y + rect.top - 12) + 'px',
+                    left: (cachedOffset.x + rect.left - 12) + 'px',
+                    top: (cachedOffset.y + rect.top - 12) + 'px',
                     'pointer-events': 'auto'
                 });
 
