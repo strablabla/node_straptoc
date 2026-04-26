@@ -1479,6 +1479,10 @@ function handleEpubDblClick(viewer, contents, view, e) {
 window.attachEpubAnnotationHooks = function(viewer) {
 
     if (!viewer || !viewer.rendition || !viewer.rendition.hooks) return;
+    // Guard against double-attach (the plugin file is included twice via the
+    // base.html block, and this would otherwise stack listeners).
+    if (viewer._annotHooksAttached) return;
+    viewer._annotHooksAttached = true;
 
     viewer.rendition.hooks.content.register(function(contents, view) {
         // Defensive: contents.document may be missing on some EPUBs (rare).
@@ -1515,10 +1519,23 @@ window.attachEpubAnnotationHooks = function(viewer) {
     });
 };
 
+// Debounce per viewer so a burst of save / chapter-render / font-change
+// events coalesces into a single repaint. Without this, ~each click and
+// each scroll would tear down + rebuild every marker.
+var _epubRepositionTimers = {};
 window.repositionEpubAnnotations = function(viewerId) {
-
     if (!viewerId) viewerId = window.activeEpubViewerId;
-    if (!viewerId || !window.EPUBViewers || !window.EPUBViewers[viewerId]) return;
+    if (!viewerId) return;
+    clearTimeout(_epubRepositionTimers[viewerId]);
+    _epubRepositionTimers[viewerId] = setTimeout(function() {
+        delete _epubRepositionTimers[viewerId];
+        _repositionEpubAnnotationsImpl(viewerId);
+    }, 150);
+};
+
+function _repositionEpubAnnotationsImpl(viewerId) {
+
+    if (!window.EPUBViewers || !window.EPUBViewers[viewerId]) return;
     var viewer = window.EPUBViewers[viewerId];
     var $render = $('#' + viewer.renderId);
     if ($render.length === 0) return;

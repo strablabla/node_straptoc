@@ -616,10 +616,11 @@ window.initEpubViewer = function(container, addr) {
         if (location && location.start && location.start.cfi) {
             scheduleSaveCfi(location.start.cfi);
         }
-        // Re-anchor annotation markers after every chapter change.
-        if (window.repositionEpubAnnotations) {
-            setTimeout(() => window.repositionEpubAnnotations(viewerId), 100);
-        }
+        // Markers are absolutely positioned inside .epub-container, which is
+        // the element that actually scrolls — so they follow the scroll for
+        // free. No need to reposition them on every scroll/relocated event;
+        // chapter changes are handled by attachEpubAnnotationHooks via the
+        // `rendered` event.
     });
 
     return { book, rendition, viewerId, state };
