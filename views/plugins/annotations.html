@@ -1522,13 +1522,32 @@ function handleEpubDblClick(viewer, contents, view, e) {
     var loc = viewer.rendition.currentLocation();
     var chapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
 
+    // Marker position in .epub-container CONTENT coords (where it'll be
+    // placed via position:absolute).
+    var markerContentX = iframeOffset.x + rangeRect.left - 12;
+    var markerContentY = iframeOffset.y + rangeRect.top - 12;
+
+    // Panel position in OUTER document VIEWPORT coords. Derive it from the
+    // marker's visual position (which we know is correct because the star
+    // appears at the click). This works whether `.epub-container` itself
+    // scrolls or whether the outer page scrolls — getBoundingClientRect
+    // already accounts for both, and we just subtract the container's own
+    // scroll to get content→viewport correctly.
+    var containerRect = epubContainerEl
+        ? epubContainerEl.getBoundingClientRect()
+        : iframeRect;
+    var containerScrollLeft = epubContainerEl ? (epubContainerEl.scrollLeft || 0) : 0;
+    var containerScrollTop = epubContainerEl ? (epubContainerEl.scrollTop || 0) : 0;
+    var clickViewportX = containerRect.left + markerContentX + 12 - containerScrollLeft;
+    var clickViewportY = containerRect.top + markerContentY + 12 - containerScrollTop;
+
     var location = {
-        x: iframeOffset.x + rangeRect.left - 12,    // center the 24px marker on the click
-        y: iframeOffset.y + rangeRect.top - 12,
+        x: markerContentX,
+        y: markerContentY,
         cfi: cfi,
         chapter: chapter,
-        viewportX: iframeRect.left + e.clientX,
-        viewportY: iframeRect.top + e.clientY
+        viewportX: clickViewportX,
+        viewportY: clickViewportY
     };
 
     createNewAnnotation(location);
