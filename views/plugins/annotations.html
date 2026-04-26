@@ -465,9 +465,18 @@ function attachPdfEpubClickHandlers() {
         console.log('Overlay added to parent');
     });
 
-    // Handle embed PDFs
+    // Handle embed PDFs.
+    //
+    // The `.embed_pdf` class is misleading: extract_folder.html adds it to
+    // EVERY file row (PDF, EPUB, DJVU). For EPUB/DJVU rows the row contains
+    // a lazy viewer as a descendant, so a 100%×100% overlay would smother
+    // the actual EPUB iframe and freeze the cursor on crosshair. Skip those.
     $('.embed_pdf').each(function() {
         var $elem = $(this);
+
+        if ($elem.find('.lazy-epub-container, .lazy-djvu-container, .epubjs-viewer-wrap').length > 0) {
+            return;  // EPUB/DJVU row — handled by their own dedicated hooks
+        }
 
         if ($elem.css('position') === 'static') {
             $elem.css('position', 'relative');
