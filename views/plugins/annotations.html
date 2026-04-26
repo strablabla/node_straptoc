@@ -221,7 +221,30 @@ function detectCurrentFile() {
     // Store previous file to detect changes
     var previousFile = annotationSystem.currentFile;
 
-    // Check for PDF.js viewer modal (highest priority)
+    // EPUB takes priority when an active EPUB viewer is registered AND the
+    // PDF.js modal isn't currently open. Without this, a PDF.js viewer that
+    // was opened earlier in the session (and whose pdfDoc is still in
+    // memory) would steal context away from the EPUB the user is actually
+    // reading right now.
+    var pdfModalVisible = $('#pdf-viewer-modal').is(':visible');
+    if (!pdfModalVisible &&
+        window.activeEpubViewerId &&
+        window.EPUBViewers &&
+        window.EPUBViewers[window.activeEpubViewerId]) {
+        var activeViewerEarly = window.EPUBViewers[window.activeEpubViewerId];
+        if (activeViewerEarly && activeViewerEarly.epubPath) {
+            if (activeViewerEarly.epubPath !== previousFile) {
+                annotationSystem.annotationsLoaded = false;
+            }
+            annotationSystem.currentFile = activeViewerEarly.epubPath;
+            annotationSystem.fileType = 'epub';
+            annotationSystem.currentEpubViewer = activeViewerEarly;
+            return;
+        }
+    }
+
+    // Check for PDF.js viewer modal (preferred when its modal is the
+    // currently visible reader)
     if (window.PDFViewer && window.PDFViewer.pdfDoc && annotationSystem.currentFile &&
         annotationSystem.currentFile.includes('.pdf')) {
         // Already set by PDF.js viewer, don't change it
@@ -1412,6 +1435,36 @@ function getViewIframe(view, contents) {
     return null;
 }
 
+// Compute an iframe's position in its container's CONTENT coordinate space
+// (i.e. what an absolutely-positioned child of the container would need as
+// `top`/`left` to align with the iframe's top-left).
+//
+// Uses getBoundingClientRect rather than offsetParent walking so we don't
+// depend on assumptions about EPUB.js's internal wrapper structure or which
+// elements are positioned. The container's scrollTop is added so the result
+// lives in content coords (not the visible-viewport-relative coords that
+// getBoundingClientRect returns).
+function iframeOffsetInContainer(iframe, container) {
+    if (!iframe || !container) return { x: 0, y: 0 };
+    var iRect = iframe.getBoundingClientRect();
+    var cRect = container.getBoundingClientRect();
+    return {
+        x: iRect.left - cRect.left + (container.scrollLeft || 0),
+        y: iRect.top - cRect.top + (container.scrollTop || 0)
+    };
+}
+
+// Locate the iframe whose document holds the given Range, regardless of
+// how deeply EPUB.js has nested it. Returns null for cross-origin frames.
+function findIframeForRange(range) {
+    try {
+        var doc = range.startContainer && range.startContainer.ownerDocument;
+        return (doc && doc.defaultView && doc.defaultView.frameElement) || null;
+    } catch (err) {
+        return null;
+    }
+}
+
 function handleEpubDblClick(viewer, contents, view, e) {
 
     if (!annotationSystem.active) return;
@@ -1451,22 +1504,27 @@ function handleEpubDblClick(viewer, contents, view, e) {
 
     // range.getBoundingClientRect() is in iframe-viewport coords. With
     // flow:'scrolled-doc' the iframe height equals its content height, so
-    // those coords are also the absolute offset within the iframe. The iframe
-    // itself sits at offset (0,0) inside .epubjs-viewer-render, so the rect
-    // doubles as an absolute position in the scrollable container.
+    // those coords are the absolute offset within the iframe document.
+    // To translate that to .epub-container coords (where we attach markers),
+    // add the iframe's cumulative offset within .epub-container — EPUB.js
+    // may wrap the iframe in a per-view div, so a single offsetTop/Left
+    // isn't enough.
     var rangeRect = range.getBoundingClientRect();
 
-    // Panel position needs outer-document viewport coords. e.clientX/Y are
-    // iframe-viewport — translate by the iframe's outer-doc rect.
     var iframe = getViewIframe(view, contents);
     var iframeRect = iframe ? iframe.getBoundingClientRect() : { left: 0, top: 0 };
+
+    var $render = $('#' + viewer.renderId);
+    var $epubContainer = $render.find('.epub-container').first();
+    var epubContainerEl = $epubContainer.length ? $epubContainer[0] : null;
+    var iframeOffset = iframeOffsetInContainer(iframe, epubContainerEl);
 
     var loc = viewer.rendition.currentLocation();
     var chapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
 
     var location = {
-        x: rangeRect.left - 12,    // center the 24px marker on the click
-        y: rangeRect.top - 12,
+        x: iframeOffset.x + rangeRect.left - 12,    // center the 24px marker on the click
+        y: iframeOffset.y + rangeRect.top - 12,
         cfi: cfi,
         chapter: chapter,
         viewportX: iframeRect.left + e.clientX,
@@ -1490,22 +1548,10 @@ window.attachEpubAnnotationHooks = function(viewer) {
         contents.document.addEventListener('dblclick', function(e) {
             handleEpubDblClick(viewer, contents, view, e);
         });
-        // Crosshair cursor inside the iframe when annotation mode is on.
-        // Toggled via a class on documentElement so it tracks live state.
-        try {
-            var styleEl = contents.document.createElement('style');
-            styleEl.textContent =
-                'html.straptoc-annot-active, html.straptoc-annot-active * { cursor: crosshair !important; }';
-            contents.document.head.appendChild(styleEl);
-            if (annotationSystem.active && annotationSystem.currentFile === viewer.epubPath) {
-                contents.document.documentElement.classList.add('straptoc-annot-active');
-            }
-            // Cache so toggleAnnotationMode can reach it.
-            viewer._iframeDocs = viewer._iframeDocs || [];
-            viewer._iframeDocs.push(contents.document);
-        } catch (err) {
-            // Cross-origin or detached doc — ignore silently.
-        }
+        // (No iframe cursor injection: the toolbar annotation button gets a
+        // .active class to signal mode; injecting CSS into each chapter's
+        // iframe head was both redundant and prone to leaving stale crosshair
+        // cursors when iframe doc references went stale across chapter swaps.)
     });
 
     // After each chapter render, refresh markers if this viewer's file is the
@@ -1564,49 +1610,85 @@ function _repositionEpubAnnotationsImpl(viewerId) {
     var loc = viewer.rendition.currentLocation();
     var currentChapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
 
+    // Track placed-marker count to know whether a retry is warranted.
+    // EPUB.js's manager occasionally returns empty ranges for the very first
+    // reposition after annotation mode activates (its internal `visible()`
+    // view list isn't fully populated yet). One retry is enough to recover.
+    var placedCount = 0;
+    var attemptable = 0;
+    var settledCount = 0;
+
     annotationSystem.annotations.forEach(function(ann) {
         if (!ann.cfi) return;
         // Cheap pre-filter: skip annotations from other chapters when we know.
         if (typeof ann.chapter === 'number' && currentChapter !== null && ann.chapter !== currentChapter) {
             return;
         }
+        attemptable++;
 
         var rangeResult;
         try {
             rangeResult = viewer.rendition.getRange(ann.cfi);
         } catch (err) {
             console.warn('EPUB getRange threw for', ann.cfi, err);
+            settledCount++;
+            maybeScheduleRetry();
             return;
         }
 
         Promise.resolve(rangeResult).then(function(range) {
-            if (!range) return;
-            var rect = range.getBoundingClientRect();
-            // CFI not in the currently-rendered chapter → empty rect.
-            if (!rect.width && !rect.height && !rect.left && !rect.top) return;
+            try {
+                if (!range) return;
+                var rect = range.getBoundingClientRect();
+                if (!rect.width && !rect.height && !rect.left && !rect.top) return;
 
-            var marker = $('<div/>').addClass('annotation-marker')
-                .attr('data-annotation-id', ann.id)
-                .attr('title', ann.content ? ann.content.substring(0, 50) + '...' : 'Note')
-                .css({
-                    position: 'absolute',
-                    left: (rect.left - 12) + 'px',
-                    top: (rect.top - 12) + 'px',
-                    'pointer-events': 'auto'
+                var iframe = findIframeForRange(range);
+                var off = iframeOffsetInContainer(iframe, $container[0]);
+
+                var marker = $('<div/>').addClass('annotation-marker')
+                    .attr('data-annotation-id', ann.id)
+                    .attr('title', ann.content ? ann.content.substring(0, 50) + '...' : 'Note')
+                    .css({
+                        position: 'absolute',
+                        left: (off.x + rect.left - 12) + 'px',
+                        top: (off.y + rect.top - 12) + 'px',
+                        'pointer-events': 'auto'
+                    });
+
+                marker.on('click', function(ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    editAnnotation(ann, ev);
                 });
 
-            marker.on('click', function(ev) {
-                ev.preventDefault();
-                ev.stopPropagation();
-                editAnnotation(ann, ev);
-            });
-
-            $container.append(marker);
+                $container.append(marker);
+                placedCount++;
+            } finally {
+                settledCount++;
+                maybeScheduleRetry();
+            }
         }).catch(function(err) {
             console.warn('EPUB getRange rejected for', ann.cfi, err);
+            settledCount++;
+            maybeScheduleRetry();
         });
     });
-};
+
+    // If we had nothing to place, no retry needed.
+    if (attemptable === 0) return;
+
+    function maybeScheduleRetry() {
+        if (settledCount < attemptable) return;
+        if (placedCount > 0) return;                     // success, no retry
+        if (viewer._annotRetried) return;                // already retried once
+        viewer._annotRetried = true;
+        setTimeout(function() {
+            // Clear the flag a bit later so subsequent toggles can retry too.
+            setTimeout(function() { viewer._annotRetried = false; }, 2000);
+            window.repositionEpubAnnotations(viewerId);
+        }, 500);
+    }
+}
 
 // Update the .active state of every EPUB viewer's toolbar button so each
 // viewer's button reflects whether its file is currently being annotated.
@@ -1621,26 +1703,11 @@ function syncAllEpubAnnotBtnStates() {
 }
 window.syncAllEpubAnnotBtnStates = syncAllEpubAnnotBtnStates;
 
-// Toggle the crosshair cursor inside every loaded EPUB iframe when
-// annotation mode flips on/off.
-function syncEpubAnnotationCursor() {
-    if (!window.EPUBViewers) return;
-    Object.keys(window.EPUBViewers).forEach(function(id) {
-        var v = window.EPUBViewers[id];
-        if (!v || !v._iframeDocs) return;
-        var match = (annotationSystem.active && annotationSystem.currentFile === v.epubPath);
-        v._iframeDocs.forEach(function(doc) {
-            try {
-                if (match) {
-                    doc.documentElement.classList.add('straptoc-annot-active');
-                } else {
-                    doc.documentElement.classList.remove('straptoc-annot-active');
-                }
-            } catch (err) {}
-        });
-    });
-}
-window.syncEpubAnnotationCursor = syncEpubAnnotationCursor;
+// (Previously: syncEpubAnnotationCursor toggled a class on each iframe's
+// documentElement to set crosshair cursor. Removed — the toolbar button
+// state is sufficient signal, and the iframe-doc tracking caused the cursor
+// to occasionally stick after chapter changes.)
+window.syncEpubAnnotationCursor = function() {};  // no-op stub for callers
 
 // Initialize when document is ready
 $(document).ready(function() {
