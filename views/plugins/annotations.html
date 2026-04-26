@@ -27,7 +27,7 @@
     box-shadow: none;
     border: none;
     border-radius: 5px;
-    z-index: 10001;  /* Above PDF overlay */
+    z-index: 10010;  /* Above annotation markers (10002) so it covers them */
     min-width: 350px;
     max-width: 450px;
 }
@@ -925,6 +925,8 @@ function showAnnotationPanel(x, y, title, isViewportCoords) {
     var windowWidth = $(window).width();
     var windowHeight = $(window).height();
 
+    // Horizontal: try the right of the click first; fall back to the left,
+    // then clamp to viewport edge if neither fits.
     leftPos = screenX + 30;
     if (leftPos + panelWidth > windowWidth) {
         leftPos = screenX - panelWidth - 10;
@@ -933,7 +935,13 @@ function showAnnotationPanel(x, y, title, isViewportCoords) {
         }
     }
 
-    topPos = screenY;
+    // Vertical: open the panel ABOVE the click so the star marker stays
+    // visible beneath. If there isn't enough room above, fall back to
+    // opening below; finally clamp into the viewport.
+    topPos = screenY - panelHeight - 20;
+    if (topPos < 10) {
+        topPos = screenY + 20;
+    }
     if (topPos + panelHeight > windowHeight) {
         topPos = windowHeight - panelHeight - 10;
     }
@@ -947,7 +955,7 @@ function showAnnotationPanel(x, y, title, isViewportCoords) {
     if (panel) {
         panel.style.left = leftPos + 'px';
         panel.style.top = topPos + 'px';
-        panel.style.zIndex = '10001';
+        panel.style.zIndex = '10010';
         panel.style.backgroundColor = '#fbf6ea';
         panel.style.border = 'none';
         panel.style.display = 'block';
