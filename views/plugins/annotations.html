@@ -111,6 +111,13 @@
     background: #f0e8d4;
 }
 
+/* When annotation mode is off, hide EPUB markers via CSS (they stay in
+   the DOM with their click handlers attached) so toggling on/off is just
+   a class change instead of a full DOM rebuild. */
+body.annot-off .epub-container .annotation-marker {
+    display: none !important;
+}
+
 /* Annotation markers on content */
 .annotation-marker {
     position: absolute;
@@ -188,6 +195,11 @@ var annotationSystem = window.annotationSystem;
 
 // Initialize annotation system
 function initAnnotationSystem() {
+
+    // Annotation mode starts off. The class on <body> gates the visibility
+    // of EPUB markers via CSS, so toggling annotation mode doesn't need to
+    // tear down and rebuild the marker DOM each time.
+    document.body.classList.add('annot-off');
 
     // Make the panel draggable once, at boot, instead of re-running this
     // setup on every showAnnotationPanel call (jQuery UI's draggable() init
@@ -360,9 +372,15 @@ function toggleAnnotationMode() {
     if (annotationSystem.active) {
         // Deactivate
         annotationSystem.active = false;
+        document.body.classList.add('annot-off');
         $('#annotation_toggle_navbar').attr('src', 'capicon/svg/353.svg').hide();
 
-        hideAllAnnotationMarkers();
+        // For EPUBs: keep markers in the DOM, the CSS class above hides
+        // them. For PDFs: hideAllAnnotationMarkers still removes them,
+        // since their layer is purpose-built.
+        if (annotationSystem.fileType !== 'epub') {
+            hideAllAnnotationMarkers();
+        }
         closeAnnotationPanel();
         removePdfEpubClickHandlers();
 
@@ -379,6 +397,7 @@ function toggleAnnotationMode() {
         detectCurrentFile();
         socket.emit('get_annotations', annotationSystem.currentFile);
         annotationSystem.active = true;
+        document.body.classList.remove('annot-off');
 
         $('#annotation_toggle_navbar').attr('src', 'capicon/svg/354.svg').show();
 
@@ -1555,22 +1574,48 @@ function _repositionEpubAnnotationsImpl(viewerId) {
     // Only act on the viewer whose file the annotation system is tracking.
     if (annotationSystem.currentFile !== viewer.epubPath) return;
 
-    if (!annotationSystem.active) {
-        $container.find('.annotation-marker').remove();
-        return;
+    var loc = viewer.rendition.currentLocation();
+    var currentChapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
+
+    // Compute the expected set of annotation IDs for the currently rendered
+    // chapter once, up-front. We use it both for the fast-path early return
+    // and (later) to know which markers we need to (re)create.
+    var expectedById = {};
+    var expectedCount = 0;
+    if (annotationSystem.annotations) {
+        annotationSystem.annotations.forEach(function(ann) {
+            if (!ann.cfi) return;
+            if (typeof ann.chapter === 'number' && currentChapter !== null && ann.chapter !== currentChapter) return;
+            expectedById[ann.id] = ann;
+            expectedCount++;
+        });
     }
 
-    // Clear existing markers EXCEPT the one currently being edited
+    // Fast path: if existing markers already correspond exactly to the
+    // expected set, do nothing. Annotation-mode toggling is handled by the
+    // body.annot-off CSS class, so re-running the build on every toggle
+    // would just be wasted DOM churn.
+    var existing = containerEl.querySelectorAll('.annotation-marker');
+    if (existing.length === expectedCount) {
+        var allMatch = true;
+        for (var i = 0; i < existing.length; i++) {
+            if (!expectedById[existing[i].getAttribute('data-annotation-id')]) {
+                allMatch = false;
+                break;
+            }
+        }
+        if (allMatch) return;
+    }
+
+    // Slow path: clear and rebuild. Clear existing markers EXCEPT the one
+    // currently being edited.
     if (annotationSystem.currentAnnotation && annotationSystem.currentAnnotation.id) {
         $container.find('.annotation-marker').not('[data-annotation-id="' + annotationSystem.currentAnnotation.id + '"]').remove();
     } else {
         $container.find('.annotation-marker').remove();
     }
 
-    if (!annotationSystem.annotations || annotationSystem.annotations.length === 0) return;
-
-    var loc = viewer.rendition.currentLocation();
-    var currentChapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
+    if (expectedCount === 0) return;
 
     var containerEl = $container[0];
 
