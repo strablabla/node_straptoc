@@ -42,26 +42,29 @@ function supported_ext(name) {
 function sort_list_pattern(array, list){
       /*
       Sort a list with patterns..
+      Multiple files can share the same pattern bucket (e.g. dpls_fev_ and pls_fev_),
+      so each bucket is an array; within a bucket, files are sorted alphabetically.
       */
-      var arr = new Array(array.length);
+      var buckets = []
+      for ( var k = 0; k < list.length; k++ ) buckets.push([])
       var supp_list = []
       for ( var i in array ){
           var ind = index_in_list(array[i], list)
           if ( ind != null ){
-              arr[ind] = array[i]
+              buckets[ind].push(array[i])
           }
           else{
              supp_list.push(array[i])
           }
       }
-      new_arr = []
-      for ( var i in arr ){
-          if ( arr[i].length >0 ){
-            new_arr.push(arr[i])
+      var new_arr = []
+      for ( var i = 0; i < buckets.length; i++ ){
+          if ( buckets[i].length > 0 ){
+              buckets[i].sort()
+              new_arr = new_arr.concat(buckets[i])
           }
       }
-      var arr = [...supp_list, ...new_arr]
-      return arr
+      return [...supp_list, ...new_arr]
     }
 
 var pdf_months = ['_janv_', '_fev_', '_mars_', '_avr_', '_mai_',
