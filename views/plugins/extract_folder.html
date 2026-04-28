@@ -1,4 +1,62 @@
 
+<style>
+.reading-status-buttons {
+    display: inline-block;
+    width: 0;
+    margin-right: 0;
+    overflow: hidden;
+    opacity: 0;
+    user-select: none;
+    vertical-align: middle;
+    white-space: nowrap;
+    transition: width 0.22s ease, margin-right 0.22s ease, opacity 0.22s ease;
+}
+li.rs-near-bullet .reading-status-buttons,
+li.reading-status-reading .reading-status-buttons {
+    width: 22px;
+    margin-right: 6px;
+    opacity: 1;
+}
+/* Force-collapse right after a deactivation click, until the mouse leaves */
+li.rs-suppress .reading-status-buttons {
+    width: 0 !important;
+    margin-right: 0 !important;
+    opacity: 0 !important;
+}
+.reading-status-buttons .rs-btn {
+    display: inline-block;
+    width: 20px;
+    height: 22px;
+    text-align: center;
+    line-height: 22px;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.1s;
+}
+.reading-status-buttons .rs-btn:hover {
+    opacity: 0.85;
+}
+.reading-status-buttons .rs-btn.rs-active {
+    opacity: 1;
+}
+.reading-status-buttons .rs-bookmark-icon {
+    width: 14px;
+    height: 18px;
+    vertical-align: middle;
+}
+
+/* Orange title styling for !fold items, matching the $pdf markdown style */
+li.fold_li > .embed_pdf {
+    color: #ff6600;
+    cursor: pointer;
+}
+li.fold_li > .embed_pdf a,
+li.fold_li > .embed_pdf .fold_toggle {
+    color: #ff6600;
+    text-decoration: none;
+}
+</style>
+
 <script>
 
 /*
@@ -8,6 +66,160 @@ Supports files (pdf, epub, djvu, images, videos) directly in folder,
 in subfolders, and recursively in sub-subfolders.
 
 */
+
+// Reading status: client-side cache filled by 'reading_statuses_loaded'.
+// Map: filePath -> 'reading' | 'finished' | 'to-read'
+window._reading_statuses = window._reading_statuses || {}
+window._reading_statuses_loaded = window._reading_statuses_loaded || false
+
+function apply_reading_status_class(li, status) {
+    li.removeClass('reading-status-reading reading-status-finished reading-status-to-read')
+    if (status) li.addClass('reading-status-' + status)
+}
+
+function build_reading_status_buttons(full_path) {
+    var current = window._reading_statuses[full_path] || null
+    var $wrap = $('<span/>').addClass('reading-status-buttons')
+                            .attr('data-rs-path', full_path)
+    var $btn = $('<span/>').addClass('rs-btn')
+                           .attr('data-status', 'reading')
+                           .attr('title', 'En cours de lecture')
+                           .append($('<img/>').addClass('rs-bookmark-icon')
+                                              .attr('src', 'capicon/svg/355.svg')
+                                              .attr('alt', ''))
+    if (current === 'reading') $btn.addClass('rs-active')
+    $btn.on('click', function(e) {
+        e.stopPropagation()
+        var $clicked = $(this)
+        var $group = $clicked.closest('.reading-status-buttons')
+        var $li = $group.closest('li')
+        var path = $group.attr('data-rs-path')
+        var was_active = $clicked.hasClass('rs-active')
+        var new_status = was_active ? null : 'reading'
+        // Optimistic UI update
+        if (new_status) {
+            $clicked.addClass('rs-active')
+            window._reading_statuses[path] = new_status
+            $li.removeClass('rs-suppress')
+        } else {
+            $clicked.removeClass('rs-active')
+            delete window._reading_statuses[path]
+            // Slide the title back toward the bullet right away, even though
+            // the cursor is still on the li. Lift the suppression on mouseleave.
+            $li.addClass('rs-suppress')
+            $li.one('mouseleave', function() {
+                $(this).removeClass('rs-suppress')
+            })
+        }
+        apply_reading_status_class($li, new_status)
+        socket.emit('set_reading_status', JSON.stringify({
+            filePath: path,
+            status: new_status
+        }))
+    })
+    $wrap.append($btn)
+    return $wrap
+}
+
+// Re-apply status to all currently rendered <li> that hold reading-status-buttons
+function refresh_all_reading_statuses() {
+    $('li > .reading-status-buttons').each(function() {
+        var $group = $(this)
+        var $li = $group.parent()
+        var path = $group.attr('data-rs-path')
+        var status = window._reading_statuses[path] || null
+        $group.find('.rs-btn').removeClass('rs-active')
+        if (status) $group.find('.rs-btn[data-status="' + status + '"]').addClass('rs-active')
+        apply_reading_status_class($li, status)
+    })
+}
+
+// Inject status buttons into <li> containing an <a class="pdf-link"> (markdown
+// $pdf syntax produced by straptoc.js). NOTE: !fold PDFs also wear .pdf-link
+// but on a <div class="embed_pdf"> — those are already handled by make_li_embed,
+// so we restrict the selector to anchors to avoid double-injection.
+function inject_reading_status_into_pdflinks() {
+    $('li > a.pdf-link').each(function() {
+        var $link = $(this)
+        var $li = $link.parent()
+        if ($li.find('.reading-status-buttons').length > 0) return
+        var path = $link.attr('data-pdf-path')
+        if (!path) return
+        var $buttons = build_reading_status_buttons(path)
+        $li.prepend($buttons)
+        apply_reading_status_class($li, window._reading_statuses[path] || null)
+        bind_rs_hover_detection($li)
+    })
+}
+
+// Reveal the buttons only when the cursor is near the start of the <li>
+// (i.e. close to the bullet), not when it's anywhere on the line.
+// Threshold widens once the buttons are visible so they don't collapse
+// when the cursor moves over them.
+function bind_rs_hover_detection($li) {
+    $li.on('mousemove.rs', function(e) {
+        if (this._rs_rect_x === undefined ||
+            this._rs_rect_seen !== this.offsetTop) {
+            this._rs_rect_x = this.getBoundingClientRect().left
+            this._rs_rect_seen = this.offsetTop
+        }
+        var cursorX = e.clientX - this._rs_rect_x
+        var $self = $(this)
+        var was_near = $self.hasClass('rs-near-bullet')
+        var threshold = was_near ? 60 : 30
+        if (cursorX <= threshold) {
+            if (!was_near) $self.addClass('rs-near-bullet')
+        } else {
+            if (was_near) $self.removeClass('rs-near-bullet')
+        }
+    })
+    $li.on('mouseleave.rs', function() {
+        $(this).removeClass('rs-near-bullet')
+        this._rs_rect_x = undefined
+    })
+}
+
+socket.on('reading_statuses_loaded', function(payload) {
+    try {
+        window._reading_statuses = JSON.parse(payload) || {}
+        // Flatten { path: { status, updated } } -> { path: status }
+        var flat = {}
+        for (var k in window._reading_statuses) {
+            var v = window._reading_statuses[k]
+            if (v && typeof v === 'object' && v.status) flat[k] = v.status
+            else if (typeof v === 'string') flat[k] = v
+        }
+        window._reading_statuses = flat
+        window._reading_statuses_loaded = true
+        inject_reading_status_into_pdflinks()
+        refresh_all_reading_statuses()
+    } catch (e) {
+        console.error('reading_statuses_loaded parse error', e)
+    }
+})
+
+socket.on('reading_status_updated', function(payload) {
+    try {
+        var data = JSON.parse(payload)
+        if (!data || !data.filePath) return
+        if (data.status) window._reading_statuses[data.filePath] = data.status
+        else delete window._reading_statuses[data.filePath]
+        // Update any rendered li for this path (filter handles paths with special chars)
+        $('.reading-status-buttons').filter(function() {
+            return $(this).attr('data-rs-path') === data.filePath
+        }).each(function() {
+            var $group = $(this)
+            $group.find('.rs-btn').removeClass('rs-active')
+            if (data.status) $group.find('.rs-btn[data-status="' + data.status + '"]').addClass('rs-active')
+            apply_reading_status_class($group.closest('li.fold_li'), data.status)
+        })
+    } catch (e) {
+        console.error('reading_status_updated parse error', e)
+    }
+})
+
+// Request statuses once per page load
+$(function() { socket.emit('get_reading_statuses') })
 
 // Define these variables and functions OUTSIDE of socket.on('make_elems')
 // to avoid re-registration issues
@@ -345,11 +557,12 @@ function relative_addr(addr, addr_short){
 
           // case pdf — opens in PDF.js modal on click, no inline embed
           if ( elem.search(/\.pdf$/i) != -1 ){
-              div_format.css('cursor', 'pointer')
-                        .attr('title', 'Open PDF')
+              div_format.attr('title', 'Open PDF')
                         .addClass('pdf-link')
                         .attr('data-pdf-path', full_path)
                         .on('click', function() {
+                            var $tog = $(this).find('.fold_toggle')
+                            $tog.text($tog.text().trim() === '[+]' ? ' [-]' : ' [+]')
                             if (window.annotationSystem) {
                                 window.annotationSystem.currentFile = full_path;
                                 window.annotationSystem.fileType = 'pdf';
@@ -367,8 +580,13 @@ function relative_addr(addr, addr_short){
                                 console.error('PDF.js viewer not available');
                             }
                         })
+              div_format.append($('<span/>').addClass('fold_toggle').text(' [+]'))
+              div_format.prepend(build_reading_status_buttons(full_path))
               var curr_li = $('<li/>').addClass('fold_li')
-              new_ul.append(curr_li.append(div_format))
+              curr_li.append(div_format)
+              apply_reading_status_class(curr_li, window._reading_statuses[full_path] || null)
+              bind_rs_hover_detection(curr_li)
+              new_ul.append(curr_li)
               return
           }
 
@@ -394,10 +612,14 @@ function relative_addr(addr, addr_short){
                         '</div><br>'
           }
 
+          div_format.prepend(build_reading_status_buttons(full_path))
           var divformat_plus = div_format.append(span_tog)
           var div_obj = $('<div/>').html(obj_html).hide()
           var curr_li = $('<li/>').addClass('fold_li')
-          new_ul.append( curr_li.append( divformat_plus.append( div_obj ) ) )
+          curr_li.append( divformat_plus.append( div_obj ) )
+          apply_reading_status_class(curr_li, window._reading_statuses[full_path] || null)
+          bind_rs_hover_detection(curr_li)
+          new_ul.append( curr_li )
     }
 
     function make_li_video(addr, elem, new_ul){

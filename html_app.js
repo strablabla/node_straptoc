@@ -23,6 +23,7 @@ var export_import = require('./static/js/export_import');
 var config = require('./lib/config');
 var annotations = require('./lib/annotations');
 var bookmarks = require('./lib/bookmarks');
+var reading_status = require('./lib/reading_status');
 var reminders = require('./lib/reminders');
 
 //--------------  Global error handlers (prevent server crash)
@@ -243,6 +244,7 @@ num_user = 0
 // Setup annotation handlers ONCE (not per connection)
 annotations.setupAnnotationHandlers(io)                              //---- annotations
 bookmarks.setupBookmarkHandlers(io)                                  //---- bookmarks
+reading_status.setupReadingStatusHandlers(io)                        //---- reading status
 
 // Set app instance for config module
 config.setApp(app)

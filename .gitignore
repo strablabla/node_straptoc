@@ -30,6 +30,7 @@ static/latex_voc.json
 static/addr_saved.json
 static/annotations.yaml
 static/bookmarks.yaml
+static/reading_status.yaml
 
 # User database
 static/js/strap_database.db
