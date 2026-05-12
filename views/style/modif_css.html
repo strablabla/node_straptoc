@@ -269,7 +269,11 @@ $('a').each(function(){
            var tag_a_to_text = $('<span/>').addClass('tag_a_to_text')
                                        .append(tag_a_to_text_icon)
 
-           if (!$(this).children().hasClass('::')){
+           // Skip the fold-toggle anchor (<a><span class="::">[+]</span></a>)
+           // and the inner anchor of nested PDF/video links built by straptoc.js
+           // (<a>title<a><span class="§§">[-]</span></a></a>) — otherwise the
+           // T icon is appended twice and a double T appears after the title.
+           if (!$(this).children().hasClass('::') && !$(this).parent().is('a')){
                $(this).append(tag_a_to_text) //
 
            }
