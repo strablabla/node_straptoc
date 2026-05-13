@@ -30,6 +30,7 @@
     z-index: 10010;  /* Above annotation markers (10002) so it covers them */
     min-width: 350px;
     max-width: 450px;
+    box-sizing: border-box;
 }
 
 #annotation_content {
@@ -74,6 +75,7 @@
     resize: vertical;
     margin-bottom: 10px;
     background-color: #fbf6ea;
+    box-sizing: border-box;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -114,8 +116,8 @@
 /* Annotation markers on content */
 .annotation-marker {
     position: absolute;
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff6b6b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>') no-repeat center;
     background-size: contain;
     cursor: pointer;
@@ -1239,8 +1241,8 @@ function setupPDFJSAnnotationHandlers() {
         var modalRelativeY = e.clientY - modalRect.top;
 
         var location = {
-            x: canvasX - 20,  // Apply -20px offset for star positioning (to the left)
-            y: canvasY - 20,  // Apply -20px offset for star positioning (higher)
+            x: canvasX - 13,  // Star positioning offset (to the left), scaled to 16px marker
+            y: canvasY - 13,  // Star positioning offset (higher), scaled to 16px marker
             width: 0,
             height: 0,
             page: window.PDFViewer ? window.PDFViewer.currentPage : 1,
@@ -1490,9 +1492,10 @@ function handleEpubDblClick(viewer, contents, view, e) {
     var chapter = (loc && loc.start && typeof loc.start.index === 'number') ? loc.start.index : null;
 
     // Marker position in .epub-container CONTENT coords (where it'll be
-    // placed via position:absolute).
-    var markerContentX = iframeOffset.x + rangeRect.left - 12;
-    var markerContentY = iframeOffset.y + rangeRect.top - 12;
+    // placed via position:absolute). Offset by half the marker size (16/2)
+    // so the star is centered on the clicked text.
+    var markerContentX = iframeOffset.x + rangeRect.left - 8;
+    var markerContentY = iframeOffset.y + rangeRect.top - 8;
 
     // Panel position in OUTER document VIEWPORT coords. Derive it from the
     // marker's visual position (which we know is correct because the star
@@ -1505,8 +1508,8 @@ function handleEpubDblClick(viewer, contents, view, e) {
         : iframeRect;
     var containerScrollLeft = epubContainerEl ? (epubContainerEl.scrollLeft || 0) : 0;
     var containerScrollTop = epubContainerEl ? (epubContainerEl.scrollTop || 0) : 0;
-    var clickViewportX = containerRect.left + markerContentX + 12 - containerScrollLeft;
-    var clickViewportY = containerRect.top + markerContentY + 12 - containerScrollTop;
+    var clickViewportX = containerRect.left + markerContentX + 8 - containerScrollLeft;
+    var clickViewportY = containerRect.top + markerContentY + 8 - containerScrollTop;
 
     var location = {
         x: markerContentX,
@@ -1641,8 +1644,8 @@ function _repositionEpubAnnotationsImpl(viewerId) {
         marker.title = job.ann.content ? job.ann.content.substring(0, 50) + '...' : 'Note';
         var s = marker.style;
         s.position = 'absolute';
-        s.left = (offset.x + job.left - 12) + 'px';
-        s.top = (offset.y + job.top - 12) + 'px';
+        s.left = (offset.x + job.left - 8) + 'px';
+        s.top = (offset.y + job.top - 8) + 'px';
         s.pointerEvents = 'auto';
 
         var ann = job.ann;
