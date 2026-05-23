@@ -2,28 +2,32 @@
 <style>
 .reading-status-buttons {
     display: inline-block;
+    position: relative;
     width: 0;
-    margin-right: 0;
-    overflow: hidden;
+    height: 0;
+    margin-left: 6px;
+    overflow: visible;
     opacity: 0;
+    pointer-events: none;
     user-select: none;
     vertical-align: middle;
     white-space: nowrap;
-    transition: width 0.22s ease, margin-right 0.22s ease, opacity 0.22s ease;
+    transition: opacity 0.22s ease;
 }
 li.rs-near-bullet .reading-status-buttons,
 li.reading-status-reading .reading-status-buttons {
-    width: 22px;
-    margin-right: 6px;
-    opacity: 1;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 /* Force-collapse right after a deactivation click, until the mouse leaves */
 li.rs-suppress .reading-status-buttons {
-    width: 0 !important;
-    margin-right: 0 !important;
     opacity: 0 !important;
+    pointer-events: none !important;
 }
 .reading-status-buttons .rs-btn {
+    position: absolute;
+    top: -8px;          /* slight downward overflow below the line */
+    left: 0;
     display: inline-block;
     width: 20px;
     height: 22px;
@@ -121,15 +125,21 @@ function build_reading_status_buttons(full_path) {
     return $wrap
 }
 
-// Re-apply status to all currently rendered <li> that hold reading-status-buttons
+// Re-apply status to all currently rendered <li> that hold reading-status-buttons.
+// Uses descendant selector + closest('li') so it also finds wrappers nested in
+// .embed_pdf (the !fold case), not just direct children of <li>.
 function refresh_all_reading_statuses() {
-    $('li > .reading-status-buttons').each(function() {
+    $('li .reading-status-buttons').each(function() {
         var $group = $(this)
-        var $li = $group.parent()
+        var $li = $group.closest('li')
         var path = $group.attr('data-rs-path')
         var status = window._reading_statuses[path] || null
         $group.find('.rs-btn').removeClass('rs-active')
         if (status) $group.find('.rs-btn[data-status="' + status + '"]').addClass('rs-active')
+        // Clear any inline display:none (e.g. accidentally set by some
+        // parent's .toggle() on a sibling collision) — visibility is then
+        // governed by our CSS opacity rules alone.
+        if ($group[0].style.display === 'none') $group[0].style.display = ''
         apply_reading_status_class($li, status)
     })
 }
@@ -146,28 +156,42 @@ function inject_reading_status_into_pdflinks() {
         var path = $link.attr('data-pdf-path')
         if (!path) return
         var $buttons = build_reading_status_buttons(path)
-        $li.prepend($buttons)
+        // Append INSIDE the <a>, not as sibling. straptoc.js binds a click
+        // handler to every <a> that does $(this).parent().next().toggle()
+        // (meant to toggle the EPUB embed <ul>) — if our wrapper sits next
+        // to the link, that toggle hides it (display:none) and nothing can
+        // bring it back via opacity. Placing it inside the link keeps it
+        // out of the .next() target.
+        $link.append($buttons)
         apply_reading_status_class($li, window._reading_statuses[path] || null)
         bind_rs_hover_detection($li)
     })
 }
 
-// Reveal the buttons only when the cursor is near the start of the <li>
-// (i.e. close to the bullet), not when it's anywhere on the line.
-// Threshold widens once the buttons are visible so they don't collapse
-// when the cursor moves over them.
+// Reveal the buttons only when the cursor is in a small zone around where
+// the button sits (end of the title line) — not whenever it's on the line.
+// Class name 'rs-near-bullet' kept for CSS compatibility.
 function bind_rs_hover_detection($li) {
     $li.on('mousemove.rs', function(e) {
-        if (this._rs_rect_x === undefined ||
-            this._rs_rect_seen !== this.offsetTop) {
-            this._rs_rect_x = this.getBoundingClientRect().left
-            this._rs_rect_seen = this.offsetTop
-        }
-        var cursorX = e.clientX - this._rs_rect_x
         var $self = $(this)
+        var $buttons = $self.find('.reading-status-buttons').first()
+        if (!$buttons.length) return
+        // Anchor on the element preceding the buttons (the [+] toggle or
+        // the title link). Its right edge tells us where the button starts.
+        var $anchor = $buttons.prev()
+        if (!$anchor.length || !$anchor[0].getBoundingClientRect) {
+            $anchor = $buttons.parent()
+        }
+        var rect = $anchor[0].getBoundingClientRect()
         var was_near = $self.hasClass('rs-near-bullet')
-        var threshold = was_near ? 60 : 30
-        if (cursorX <= threshold) {
+        // Hot zone: just to the right of the title, vertically tight around
+        // the line. Widens to include the visible button when already shown.
+        var x_min = rect.right - 4
+        var x_max = rect.right + (was_near ? 40 : 30)
+        var y_min = rect.top - 4
+        var y_max = rect.bottom + 16     // a bit below to cover overflow
+        var x = e.clientX, y = e.clientY
+        if (x >= x_min && x <= x_max && y >= y_min && y <= y_max) {
             if (!was_near) $self.addClass('rs-near-bullet')
         } else {
             if (was_near) $self.removeClass('rs-near-bullet')
@@ -175,7 +199,6 @@ function bind_rs_hover_detection($li) {
     })
     $li.on('mouseleave.rs', function() {
         $(this).removeClass('rs-near-bullet')
-        this._rs_rect_x = undefined
     })
 }
 
@@ -211,7 +234,7 @@ socket.on('reading_status_updated', function(payload) {
             var $group = $(this)
             $group.find('.rs-btn').removeClass('rs-active')
             if (data.status) $group.find('.rs-btn[data-status="' + data.status + '"]').addClass('rs-active')
-            apply_reading_status_class($group.closest('li.fold_li'), data.status)
+            apply_reading_status_class($group.closest('li'), data.status)
         })
     } catch (e) {
         console.error('reading_status_updated parse error', e)
@@ -220,6 +243,16 @@ socket.on('reading_status_updated', function(payload) {
 
 // Request statuses once per page load
 $(function() { socket.emit('get_reading_statuses') })
+
+// Safety net: after any click in the page, re-apply cached statuses. Keeps
+// the bookmark icon visible for files marked 'reading' even if some other
+// code path (PDF modal teardown, folder re-render, etc.) accidentally
+// strips the reading-status-* class from the <li>. Debounced.
+var rs_refresh_timer = null
+$(document).on('click.rs_refresh', function() {
+    clearTimeout(rs_refresh_timer)
+    rs_refresh_timer = setTimeout(refresh_all_reading_statuses, 300)
+})
 
 // Define these variables and functions OUTSIDE of socket.on('make_elems')
 // to avoid re-registration issues
@@ -581,7 +614,7 @@ function relative_addr(addr, addr_short){
                             }
                         })
               div_format.append($('<span/>').addClass('fold_toggle').text(' [+]'))
-              div_format.prepend(build_reading_status_buttons(full_path))
+              div_format.append(build_reading_status_buttons(full_path))
               var curr_li = $('<li/>').addClass('fold_li')
               curr_li.append(div_format)
               apply_reading_status_class(curr_li, window._reading_statuses[full_path] || null)
@@ -612,8 +645,7 @@ function relative_addr(addr, addr_short){
                         '</div><br>'
           }
 
-          div_format.prepend(build_reading_status_buttons(full_path))
-          var divformat_plus = div_format.append(span_tog)
+          var divformat_plus = div_format.append(span_tog).append(build_reading_status_buttons(full_path))
           var div_obj = $('<div/>').html(obj_html).hide()
           var curr_li = $('<li/>').addClass('fold_li')
           curr_li.append( divformat_plus.append( div_obj ) )
@@ -657,17 +689,20 @@ function relative_addr(addr, addr_short){
         $('.tog_elem').off('click').on('click', function(){
 
                 var taga = $(this).find('a')
-                var $videoContainer = $(this).next().find('.lazy-video-container')
-                var $epubContainer = $(this).next().find('.lazy-epub-container')
-                var $djvuContainer = $(this).next().find('.lazy-djvu-container')
+                // First next sibling that is NOT our reading-status-buttons wrapper.
+                // The wrapper now sits between .tog_elem and the lazy container.
+                var $wrapper = $(this).nextAll().not('.reading-status-buttons').first()
+                var $videoContainer = $wrapper.find('.lazy-video-container')
+                var $epubContainer = $wrapper.find('.lazy-epub-container')
+                var $djvuContainer = $wrapper.find('.lazy-djvu-container')
 
                 if (taga.text() == ' [-]'){
                     taga.text(' [+]')
-                    $(this).next().hide()
+                    $wrapper.hide()
 
                 } else {
                     taga.text(' [-]')
-                    $(this).next().show()
+                    $wrapper.show()
 
                     // Lazy load Video
                     if ($videoContainer.length > 0) {
