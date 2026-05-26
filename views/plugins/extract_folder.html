@@ -178,7 +178,13 @@ function bind_rs_hover_detection($li) {
         if (!$buttons.length) return
         // Anchor on the element preceding the buttons (the [+] toggle or
         // the title link). Its right edge tells us where the button starts.
-        var $anchor = $buttons.prev()
+        // Skip zero-sized siblings (e.g. the hidden .tag_a_to_text span
+        // injected by modif_css.html), otherwise the hot zone collapses to (0,0).
+        var $anchor = $buttons.prevAll().filter(function() {
+            if (!this.getBoundingClientRect) return false
+            var r = this.getBoundingClientRect()
+            return r.width > 0 && r.height > 0
+        }).first()
         if (!$anchor.length || !$anchor[0].getBoundingClientRect) {
             $anchor = $buttons.parent()
         }
