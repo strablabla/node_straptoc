@@ -21,6 +21,31 @@ var oneByOneIndex = 0
 var oneByOnePhotos = [] // List of portfolio photo src
 var oneByOnePosition = null // Saved position for navigation
 var oneByOneMaxDim = null // Saved max dimension for navigation
+var oneByOneScope = null // Portfolio row scoping one-by-one navigation
+
+// Resolve the .row portfolio container that owns a given bigpic.
+// Falls back to a src-based lookup if the bigpic wasn't tagged at creation.
+function getPortfolioScope(bigpic){
+    if (!bigpic || bigpic.length === 0) return null
+    var row = bigpic.data('portfolio-row')
+    if (row && row.length) return row
+    var src = bigpic.find('img').attr('src')
+    if (src){
+        var thumb = $('.thumbnail img').filter(function(){
+            return $(this).attr('src') === src
+        }).first()
+        var thumbRow = thumb.closest('.row')
+        if (thumbRow.length){
+            bigpic.data('portfolio-row', thumbRow)
+            return thumbRow
+        }
+    }
+    return null
+}
+
+function portfolioThumbnails(scope){
+    return scope ? scope.find('.thumbnail figure img') : $('.thumbnail figure img')
+}
 
 function make_big_pic(wpic, hpic, idpic){
 
@@ -106,9 +131,10 @@ function make_big_pic(wpic, hpic, idpic){
     ).click(function(e){
         e.stopPropagation()
         menuDropdown.hide()
+        var scope = getPortfolioScope($(this).closest('.bigpic')) || oneByOneScope
         if (oneByOneMode) {
             exitOneByOneMode()
-            openAllPhotosWithLayout(applyCascadeLayout)
+            openAllPhotosWithLayout(applyCascadeLayout, scope)
         } else if (carouselContainer) {
             exitCarouselMode()
             applyCascadeLayout()
@@ -127,9 +153,10 @@ function make_big_pic(wpic, hpic, idpic){
     ).click(function(e){
         e.stopPropagation()
         menuDropdown.hide()
+        var scope = getPortfolioScope($(this).closest('.bigpic')) || oneByOneScope
         if (oneByOneMode) {
             exitOneByOneMode()
-            openAllPhotosWithLayout(applyCircleLayout)
+            openAllPhotosWithLayout(applyCircleLayout, scope)
         } else if (carouselContainer) {
             exitCarouselMode()
             applyCircleLayout()
@@ -148,9 +175,10 @@ function make_big_pic(wpic, hpic, idpic){
     ).click(function(e){
         e.stopPropagation()
         menuDropdown.hide()
+        var scope = getPortfolioScope($(this).closest('.bigpic')) || oneByOneScope
         if (oneByOneMode) {
             exitOneByOneMode()
-            openAllPhotosWithLayout(applyCarouselLayout)
+            openAllPhotosWithLayout(applyCarouselLayout, scope)
         } else {
             applyCarouselLayout()
         }
@@ -168,11 +196,12 @@ function make_big_pic(wpic, hpic, idpic){
         menuDropdown.hide()
         var currentPic = $(this).closest('.bigpic')
         var currentSrc = currentPic.find('img').attr('src')
+        var scope = getPortfolioScope(currentPic)
         if (carouselContainer) {
             // Exit carousel mode and enter one-by-one mode
             exitCarouselMode()
             // Start one-by-one mode from the current image
-            startOneByOneFromSrc(currentSrc)
+            startOneByOneFromSrc(currentSrc, scope)
         } else {
             applyOneByOneLayout(currentPic)
         }
@@ -276,7 +305,8 @@ function make_big_pic(wpic, hpic, idpic){
         function(){ $(this).css('background', 'white') }
     ).click(function(e){
         e.stopPropagation()
-        openAllPhotos()
+        var scope = getPortfolioScope($(this).closest('.bigpic')) || oneByOneScope
+        openAllPhotos(scope)
         menuDropdown.hide()
     })
 
@@ -481,14 +511,25 @@ function adapt_pic_dim(new_pic){
       save_wh_xy(new_pic)
 }
 
-function add_new_bigpic(addr_pic){
+function add_new_bigpic(addr_pic, sourceRow){
 
     //alert('oppp')
     pic_yet_open.push(addr_pic)
     nb_bpics += 1
     id_new_pic = 'bp' + nb_bpics
-    list_big_pics.push( make_big_pic(wpic, hpic, id_new_pic) )
+    var bigpic = make_big_pic(wpic, hpic, id_new_pic)
+    list_big_pics.push(bigpic)
     list_big_pics[pic_yet_open.length-1].show()
+    // Tag the bigpic with its portfolio row so menu actions stay scoped
+    if (sourceRow && sourceRow.length) {
+        bigpic.data('portfolio-row', sourceRow)
+    } else {
+        var thumb = $('.thumbnail img').filter(function(){
+            return $(this).attr('src') === addr_pic
+        }).first()
+        var thumbRow = thumb.closest('.row')
+        if (thumbRow.length) bigpic.data('portfolio-row', thumbRow)
+    }
     // <img/> object..
     var new_pic = $('#imbp_' + id_new_pic)
     // add the src..
@@ -656,12 +697,12 @@ function save_pos_drag(){
 }
 
 // Open all photos from the portfolio with a specific layout callback
-function openAllPhotosWithLayout(layoutCallback){
+function openAllPhotosWithLayout(layoutCallback, scope){
     // Reset everything first
     reset_bigpic()
 
-    // Get all portfolio photos (thumbnails)
-    var thumbnails = $('.thumbnail figure img')
+    // Get all portfolio photos (thumbnails) within the active portfolio scope
+    var thumbnails = portfolioThumbnails(scope)
     if (thumbnails.length === 0) return
 
     var photosToOpen = []
@@ -676,7 +717,7 @@ function openAllPhotosWithLayout(layoutCallback){
 
     // Open each photo and wait for all to load
     photosToOpen.forEach(function(addr_pic){
-        add_new_bigpic(addr_pic)
+        add_new_bigpic(addr_pic, scope)
         hook_slider('bp' + nb_bpics)
         save_pos_drag()
 
@@ -700,9 +741,9 @@ function openAllPhotosWithLayout(layoutCallback){
 }
 
 // Open all photos from the portfolio
-function openAllPhotos(){
-    // Get all portfolio photos (thumbnails)
-    var thumbnails = $('.thumbnail figure img')
+function openAllPhotos(scope){
+    // Get all portfolio photos (thumbnails) within the active portfolio scope
+    var thumbnails = portfolioThumbnails(scope)
     if (thumbnails.length === 0) return
 
     var photosToOpen = []
@@ -724,7 +765,7 @@ function openAllPhotos(){
 
     // Open each photo and wait for all to load
     photosToOpen.forEach(function(addr_pic){
-        add_new_bigpic(addr_pic)
+        add_new_bigpic(addr_pic, scope)
         hook_slider('bp' + nb_bpics)
         save_pos_drag()
 
@@ -1073,6 +1114,7 @@ function keepThisImage(pic){
     // Get current image source
     var img = pic.find('img')
     var addr_pic = img.attr('src')
+    var sourceRow = getPortfolioScope(pic)
 
     // Completely reset everything (equivalent to closing all)
     exitCarouselMode()
@@ -1083,7 +1125,7 @@ function keepThisImage(pic){
     exitOneByOneMode()
 
     // Reopen only this image fresh
-    add_new_bigpic(addr_pic)
+    add_new_bigpic(addr_pic, sourceRow)
     hook_slider('bp' + nb_bpics)
     save_pos_drag()
 
@@ -1183,9 +1225,12 @@ function applyStandardSize(pic){
 
 // One by one layout
 function applyOneByOneLayout(currentPic){
-    // Get all portfolio photos (thumbnails)
+    // Restrict navigation to the portfolio the clicked image belongs to
+    var scope = getPortfolioScope(currentPic)
+
+    // Get portfolio photos (thumbnails) within scope
     oneByOnePhotos = []
-    $('.thumbnail figure img').each(function(){
+    portfolioThumbnails(scope).each(function(){
         oneByOnePhotos.push($(this).attr('src'))
     })
 
@@ -1216,6 +1261,7 @@ function applyOneByOneLayout(currentPic){
     oneByOneMode = true
     oneByOnePosition = savedPosition
     oneByOneMaxDim = savedMaxDim
+    oneByOneScope = scope
 
     // Open current photo
     showOneByOnePhoto(oneByOneIndex)
@@ -1255,7 +1301,7 @@ function showOneByOnePhoto(index){
     oneByOneIndex = index
 
     // Open new photo
-    add_new_bigpic(addr_pic)
+    add_new_bigpic(addr_pic, oneByOneScope)
     hook_slider('bp' + nb_bpics)
     save_pos_drag()
 
@@ -1387,14 +1433,15 @@ function exitOneByOneMode(){
     oneByOneMode = false
     oneByOnePosition = null
     oneByOneMaxDim = null
+    oneByOneScope = null
     $('#onebyone-prev, #onebyone-next, #onebyone-overlay').remove()
 }
 
 // Start one-by-one mode from a specific image source
-function startOneByOneFromSrc(src){
-    // Get all portfolio photos (thumbnails)
+function startOneByOneFromSrc(src, scope){
+    // Get portfolio photos (thumbnails) within the active portfolio scope
     oneByOnePhotos = []
-    $('.thumbnail figure img').each(function(){
+    portfolioThumbnails(scope).each(function(){
         oneByOnePhotos.push($(this).attr('src'))
     })
 
@@ -1411,6 +1458,7 @@ function startOneByOneFromSrc(src){
     oneByOneMode = true
     oneByOnePosition = null  // Will center
     oneByOneMaxDim = targetMaxDim  // Standard size
+    oneByOneScope = scope
 
     // Open current photo
     showOneByOnePhoto(oneByOneIndex)
@@ -1427,11 +1475,12 @@ $(document).on('click', '.thumbnail img', function(e){
     e.stopPropagation()
     var addr_pic = $(this).attr('src')
     if (!addr_pic) return
+    var sourceRow = $(this).closest('.row')
     if (one_img){
         reset_bigpic()
     }
     if ( pic_yet_open.indexOf(addr_pic) == -1 ){
-        add_new_bigpic(addr_pic)
+        add_new_bigpic(addr_pic, sourceRow)
         hook_slider('bp' + nb_bpics)
         save_pos_drag()
     }
