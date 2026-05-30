@@ -429,9 +429,14 @@ socket.on('folder_scan', function(strap_addr){
     }
 
     // Replace the original element
+    // Preserve the inline display:none set by the :: fold mechanism in straptoc.js
+    // (otherwise wrapping a !fold inside a ::-folded list would render expanded)
     var target_li = entry.li
     if (target_li) {
-        target_li.parent().replaceWith(container_ul)
+        var oldParent = target_li.parent()
+        var wasHidden = oldParent.length > 0 && oldParent[0].style.display === 'none'
+        oldParent.replaceWith(container_ul)
+        if (wasHidden) container_ul.hide()
     }
 
     // Bind toggle for this batch
