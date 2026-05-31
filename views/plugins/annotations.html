@@ -132,6 +132,11 @@
     transform: scale(1.2);
 }
 
+/* When a note is open, the other markers fade back so the clicked one stands out */
+.annotation-marker.annotation-dimmed {
+    opacity: 0.5 !important;
+}
+
 /* Canvas overlay for drawing annotations */
 .annotation-canvas-overlay {
     position: absolute;
@@ -966,10 +971,25 @@ function showAnnotationPanel(x, y, title, isViewportCoords) {
     // Focus the textarea after the panel is on-screen.
     var ta = document.getElementById('annotation_textarea');
     if (ta) ta.focus();
+
+    // Fade every other star on the page so the one whose note is open stands
+    // out. The clicked star keeps its normal opacity. closeAnnotationPanel()
+    // removes the class again, restoring the previous look.
+    var curId = annotationSystem.currentAnnotation && annotationSystem.currentAnnotation.id;
+    $('.annotation-marker').each(function() {
+        if (!curId || $(this).attr('data-annotation-id') !== curId) {
+            $(this).addClass('annotation-dimmed');
+        } else {
+            $(this).removeClass('annotation-dimmed');
+        }
+    });
 }
 
 // Close annotation panel
 function closeAnnotationPanel() {
+    // Restore the other stars that were faded while the note was open.
+    $('.annotation-marker').removeClass('annotation-dimmed');
+
     // Only remove the marker if it's a temporary annotation (not yet saved)
     // Check if the annotation is temporary by:
     // 1. ID starts with "temp-" (newly created)
