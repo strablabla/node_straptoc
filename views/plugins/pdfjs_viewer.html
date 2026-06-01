@@ -771,6 +771,7 @@ function buildViewerUI(container) {
                 <svg title="Zoom" viewBox="0 0 24 24" style="margin-left: 20px; width: 20px; height: 20px; vertical-align: middle;" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6" style="fill: none; stroke: white; stroke-width: 2.5px; cursor: default;"></circle><polygon points="21,19 14.5,14.5 19,21" style="fill: white; stroke: white; stroke-width: 1.5px; stroke-linejoin: round;"></polygon></svg>
                 <button id="pdfjs-zoom-out">−</button>
                 <select id="pdfjs-scale">
+                    <option value="0.25">25%</option>
                     <option value="0.5">50%</option>
                     <option value="0.75">75%</option>
                     <option value="1.0">100%</option>
@@ -779,6 +780,9 @@ function buildViewerUI(container) {
                     <option value="1.75">175%</option>
                     <option value="2.0">200%</option>
                     <option value="2.5">250%</option>
+                    <option value="3.0">300%</option>
+                    <option value="3.5">350%</option>
+                    <option value="4.0">400%</option>
                 </select>
                 <button id="pdfjs-zoom-in">+</button>
                 <button id="pdfjs-bookmark-toggle" class="pdfjs-bookmark-btn" title="Bookmarks"><img src="capicon/svg/355.svg" alt="Bookmarks" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
