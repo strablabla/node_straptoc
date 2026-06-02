@@ -41,9 +41,17 @@ function dblclick_to_text(socket, elem, index, addr_chann){
             e.preventDefault();
             e.stopPropagation();
 
+            // If the double-click landed on a PDF link (§§ / $pdf), flip using the
+            // link itself: pattern_and_flip derives the pattern from its title,
+            // not from the noisy enclosing <li> text. This handler stops
+            // propagation, so the delegated .pdf-link handler never sees the
+            // event for li-nested links — we must resolve it here.
+            var $pdfLink = $(e.target).closest('.pdf-link');
+            var flipTarget = $pdfLink.length ? $pdfLink : $(this);
+
             if (!text_blocked){
                 console.log('[dblclick_to_text] Text not blocked, calling pattern_and_flip');
-                pattern_and_flip(socket, $(this), index, addr_chann)
+                pattern_and_flip(socket, flipTarget, index, addr_chann)
 
               } else {
                 console.log('[dblclick_to_text] Text blocked, preventing navigation');
@@ -168,6 +176,14 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
     else if (elem.is('h2') || elem.is('h3') || elem.is('h4') || elem.is('h5') || elem.is('h6')){
         var patt = elem.text().trim()
         console.log('[pattern_and_flip] Element is heading, pattern:', patt);
+    }
+    else if (elem.is('.pdf-link')){
+        // PDF link (§§ / $pdf syntax): the visible title is the direct text node
+        // of the element. Strip child elements first (nested [-] toggle <a><span §§>,
+        // .fold_toggle, .reading-status-buttons) so only the title remains — that
+        // title is what appears in the markdown source line we want to flip to.
+        var patt = elem.clone().children().remove().end().text().split('\n')[0].trim()
+        console.log('[pattern_and_flip] Element is .pdf-link, pattern:', patt);
     }
 
     // ------------ flip to text

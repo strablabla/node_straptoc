@@ -48,6 +48,19 @@ function init_dblclick_handlers() {
         Object.entries(dic_modes_switch).forEach(([elem, i]) =>
             dblclick_to_text(socket, $(elem), i, addr_chann)
         )
+
+        // PDF links: double-click flips to text mode like a sentence (single
+        // click still opens the PDF viewer). Delegated so it also catches
+        // pdf-links rendered dynamically (folder browsing, lazy embeds).
+        $(document).off('dblclick.pdflink', '.pdf-link')
+                   .on('dblclick.pdflink', '.pdf-link', function(e){
+            e.preventDefault()
+            e.stopPropagation()
+            if (!text_blocked){
+                pattern_and_flip(socket, $(this), 0, addr_chann)
+            }
+            return false
+        })
     } else {
         console.log('[scroll_socket] dic_text_id not ready yet, waiting...')
     }
