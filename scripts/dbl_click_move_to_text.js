@@ -80,8 +80,15 @@ function pattern_and_flip(socket, elem, take_elem, addr_chann){
     var patt_next = null;  // Pattern for line after
 
     if (elem.is('li')){
-        // Clone element and remove lazy video lists to get clean text
+        // Clone element and remove lazy video lists to get clean text.
+        // Also drop nested child lists (ul): a PDF link / video / embed shown
+        // as a sub-bullet "below" the sentence lives inside the child ul, so
+        // without this its title (e.g. "title [-]") would get glued onto the
+        // sentence's own pattern, the source search would then find nothing,
+        // and the flip-to-text would land at the wrong place. The context
+        // extraction below already strips children('ul') for the same reason.
         var elemClone = elem.clone()
+        elemClone.children('ul').remove()
         elemClone.find('.vid-lazy-list, .vid-lazy-item, .strapvid, span.\\:\\:').remove()
         var patt = elemClone.text().split('\n')[0]
         console.log('[pattern_and_flip] Element is <li>, pattern:', patt);
