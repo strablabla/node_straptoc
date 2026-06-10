@@ -246,6 +246,11 @@ socket.on('reading_statuses_loaded', function(payload) {
         window._reading_statuses_loaded = true
         inject_reading_status_into_pdflinks()
         refresh_all_reading_statuses()
+        // Statuses may arrive AFTER the !fold blocks were already built (the two
+        // socket round-trips race). folder_scan's own surface call would have
+        // early-returned while _reading_statuses_loaded was still false, so
+        // re-run it now that the data is here and roots are registered.
+        surface_reading_books()
     } catch (e) {
         console.error('reading_statuses_loaded parse error', e)
     }
@@ -266,6 +271,10 @@ socket.on('reading_status_updated', function(payload) {
             if (data.status) $group.find('.rs-btn[data-status="' + data.status + '"]').addClass('rs-active')
             apply_reading_status_class($group.closest('li'), data.status)
         })
+        // Keep surfaced books in sync: a book turning 'reading' in a collapsed
+        // subfolder should appear, and one leaving 'reading' should disappear.
+        // The rebuild is idempotent so this is safe to call on every update.
+        surface_reading_books()
     } catch (e) {
         console.error('reading_status_updated parse error', e)
     }
@@ -360,9 +369,13 @@ function index_in_list(a, list){
 
 // Global state for folder_scan
 var fold_scan_count = 0
-var fold_scan_data = {}       // count -> { li, addr, addr_abs }
+var fold_scan_data = {}       // count -> { li, addr, addr_abs, isRoot }
 var fold_scan_initialized = false
 var fold_scan_processed = {}  // Guard against duplicates
+
+// Visible top-level !fold containers, used to "surface" reading books that live
+// in collapsed (lazy, unloaded) subfolders. Each entry: { addr_abs, $container }.
+window._fold_surface_roots = window._fold_surface_roots || []
 
 // =====================================================================
 // folder_scan listener — handles typed entries (f: files, d: directories)
@@ -414,6 +427,12 @@ socket.on('folder_scan', function(strap_addr){
         var dir_addr = entry.addr + '/' + dir_name
         var dir_addr_abs = entry.addr_abs + '/' + dir_name
 
+        // Stamp the folder's web path on the <li> itself. The inner <ul> carries
+        // data-fold-addr-abs too, but lazy loading replaceWith's that <ul> away,
+        // dropping the attribute — whereas this <li> survives, so book-surfacing
+        // can still locate the right folder after it has been expanded once.
+        dir_li.attr('data-subfolder-abs', dir_addr_abs)
+
         // Title with [+] toggle
         var title_span = $('<span/>').text(dir_name + ' ')
         var toggle_a = $('<a/>').append($('<span/>').addClass('funf-scan').text('[+]'))
@@ -463,10 +482,24 @@ socket.on('folder_scan', function(strap_addr){
         if (wasHidden) container_ul.hide()
     }
 
+    // Register this as a surfacing root only for top-level !fold blocks (not
+    // lazy subfolder expansions): its container stays visible, so reading
+    // books from its collapsed subfolders can be lifted into it without
+    // expanding anything. addr_abs is the folder's web path — a prefix of the
+    // full paths under which reading_status keys the books inside it.
+    if (entry.isRoot) {
+        window._fold_surface_roots.push({ addr_abs: entry.addr_abs, $container: container_ul })
+    }
+
     // Bind toggle for this batch
     bind_fold_scan_toggles()
     // Also bind file toggles
     toggle_elem()
+
+    // Now that this folder's direct files are in the DOM, (re)surface reading
+    // books from still-collapsed subfolders. Runs after every scan so expanding
+    // a subfolder later de-duplicates the surfaced copy automatically.
+    surface_reading_books()
 
 }) // socket.on folder_scan
 
@@ -478,10 +511,19 @@ function bind_fold_scan_toggles(){
     $('.funf-scan').off('click').on('click', function(e){
         e.stopPropagation()
         var toggle_span = $(this)
-        var sub_ul = toggle_span.closest('li').children('ul')
+        var $li = toggle_span.closest('li')
+        // The real fold container — every <ul> child EXCEPT the visible
+        // .reading-surfaced-ul we may have appended to this same <li>. We can't
+        // key on [data-fold-addr] because lazy loading replaceWith's the original
+        // <ul> with a fresh container that no longer carries that attribute, and
+        // we'd then fail to hide it on collapse.
+        var sub_ul = $li.children('ul').not('.reading-surfaced-ul')
 
         if (toggle_span.text() === '[+]') {
             toggle_span.text('[-]')
+            // Opening the folder shows the real files (incl. the reading book),
+            // so drop the surfaced copy to avoid a duplicate.
+            $li.children('.reading-surfaced-ul').remove()
             sub_ul.show()
 
             // Lazy load if not yet loaded
@@ -506,6 +548,9 @@ function bind_fold_scan_toggles(){
         } else {
             toggle_span.text('[+]')
             sub_ul.hide()
+            // Collapsing hides the real (loaded) files again — re-surface any
+            // reading book so it stays visible under this folder's name.
+            surface_reading_books()
         }
     })
 }
@@ -549,7 +594,8 @@ socket.on('make_elems', function(){
             fold_scan_data[count] = {
                 li: $(this),
                 addr: addr,
-                addr_abs: addr_abs
+                addr_abs: addr_abs,
+                isRoot: true
             }
             fold_scan_count++
             socket.emit('folder_scan', addr + '§§' + count)
@@ -687,6 +733,93 @@ function relative_addr(addr, addr_short){
           apply_reading_status_class(curr_li, window._reading_statuses[full_path] || null)
           bind_rs_hover_detection(curr_li)
           new_ul.append( curr_li )
+    }
+
+    // Lift reading books out of collapsed (unloaded) !fold subfolders WITHOUT
+    // expanding anything. We already know each reading book's full path from
+    // window._reading_statuses, so we render it directly with make_li_embed into
+    // the visible top-level !fold container that owns its path. Rebuilt from
+    // scratch each call (idempotent): all previously surfaced lists are dropped
+    // first, and a book that is already rendered normally (direct file, or in a
+    // subfolder the user expanded) is left alone so we never duplicate it.
+    function surface_reading_books(){
+        if (!window._reading_statuses_loaded) return
+        // Drop roots whose container was detached (page re-render).
+        window._fold_surface_roots = (window._fold_surface_roots || []).filter(function(r){
+            return r.$container && r.$container.closest('body').length > 0
+        })
+        var roots = window._fold_surface_roots
+        if (!roots.length) return
+
+        // Clear prior surfaced lists so the "already rendered elsewhere" test
+        // below only sees genuine, in-place renderings.
+        $('.reading-surfaced-ul').remove()
+
+        var readingPaths = Object.keys(window._reading_statuses).filter(function(p){
+            return window._reading_statuses[p] === 'reading'
+        })
+
+        readingPaths.forEach(function(path){
+            // Most specific root containing this book (longest matching prefix).
+            var root = null
+            roots.forEach(function(r){
+                if (path.indexOf(r.addr_abs + '/') === 0 &&
+                    (!root || r.addr_abs.length > root.addr_abs.length)) {
+                    root = r
+                }
+            })
+            if (!root) return
+
+            // Already rendered AND VISIBLE in place (direct file or an expanded
+            // subfolder)? Leave it. We test visibility of the ROW (li.fold_li),
+            // not of the attribute-bearing element: for epub/djvu the
+            // data-epub-path / data-djvu-path sits on the .lazy-*-container which
+            // lives inside a permanently-hidden viewer <div>, so :visible on it
+            // would always be false and we'd duplicate the book on every pass.
+            // Testing the row also keeps the intended behaviour for collapsed
+            // subfolders (row hidden -> not deduped -> surfaced). PDFs carry
+            // data-pdf-path on their visible row directly.
+            var already = false
+            $('[data-pdf-path],[data-epub-path],[data-djvu-path]').each(function(){
+                var $e = $(this)
+                var $row = $e.closest('li.fold_li')
+                var visible = $row.length ? $row.is(':visible') : $e.is(':visible')
+                if (!visible) return
+                if ($e.attr('data-pdf-path') === path ||
+                    $e.attr('data-epub-path') === path ||
+                    $e.attr('data-djvu-path') === path) already = true
+            })
+            if (already) return
+
+            var elem = path.split('/').pop()
+            var dir = path.slice(0, path.length - elem.length - 1)
+
+            // Hang the book off the ORIGINAL subfolder element so it shows under
+            // that folder's existing name — no synthetic folder <li>. Find the
+            // deepest already-rendered subfolder <li> whose path is a prefix of
+            // the book's dir and attach a visible list to it. We match on the
+            // <li>'s data-subfolder-abs (survives lazy-load), not the inner
+            // <ul>'s data-fold-addr-abs (destroyed by replaceWith on expand). If
+            // no subfolder is rendered yet (e.g. book sits directly under the
+            // root), fall back to the root container.
+            var $host = root.$container
+            var bestLen = -1
+            root.$container.find('li[data-subfolder-abs]').each(function(){
+                var a = $(this).attr('data-subfolder-abs')
+                if ((dir === a || dir.indexOf(a + '/') === 0) && a.length > bestLen) {
+                    bestLen = a.length
+                    $host = $(this)
+                }
+            })
+
+            // One visible surfaced list per host, reused across its books.
+            var $surf = $host.children('.reading-surfaced-ul').first()
+            if (!$surf.length) {
+                $surf = $('<ul/>').addClass('reading-surfaced-ul')
+                $host.append($surf)
+            }
+            make_li_embed(dir, elem, $surf)
+        })
     }
 
     function make_li_video(addr, elem, new_ul){
