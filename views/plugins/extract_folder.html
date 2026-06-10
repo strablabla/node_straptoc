@@ -79,6 +79,31 @@ window._reading_statuses_loaded = window._reading_statuses_loaded || false
 function apply_reading_status_class(li, status) {
     li.removeClass('reading-status-reading reading-status-finished reading-status-to-read')
     if (status) li.addClass('reading-status-' + status)
+    // A book that's being read should show its notes: reveal any '::' fold on
+    // its own line so what's written after the double-colon isn't hidden while
+    // reading. This re-asserts on every status refresh (incl. the click-driven
+    // safety net), so the notes stay visible as long as the book is 'reading';
+    // clearing the status leaves the fold wherever the reader left it.
+    if (status === 'reading') reveal_colon_fold_for_reading(li)
+}
+
+// Open the '::' fold that belongs to this <li> (the book's own line). straptoc.js
+// renders the fold as <a><span class="::">[+]</span></a> sitting right before the
+// folded <ul>, and closes that <ul> by default; here we show the <ul> and flip the
+// indicator to [-], mirroring straptoc.js's own toggle. Scoped to the li's direct
+// <a> (or a direct child <p>'s <a>, the code-block case) so nested folds belonging
+// to descendant items stay as authored.
+function reveal_colon_fold_for_reading($li) {
+    var $anchors = $li.children('a').add($li.children('p').children('a'))
+    $anchors.each(function() {
+        var $a = $(this)
+        var $ind = $a.find('span.\\:\\:')
+        if (!$ind.length) return
+        var $next = $a.next()
+        if (!$next.is('ul')) $next = $a.parent().next()
+        if ($next.is('ul')) $next.show()
+        $ind.text(' [-]')
+    })
 }
 
 function build_reading_status_buttons(full_path) {
