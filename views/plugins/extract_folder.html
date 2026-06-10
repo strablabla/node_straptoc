@@ -79,29 +79,28 @@ window._reading_statuses_loaded = window._reading_statuses_loaded || false
 function apply_reading_status_class(li, status) {
     li.removeClass('reading-status-reading reading-status-finished reading-status-to-read')
     if (status) li.addClass('reading-status-' + status)
-    // A book that's being read should show its notes: reveal any '::' fold on
-    // its own line so what's written after the double-colon isn't hidden while
-    // reading. This re-asserts on every status refresh (incl. the click-driven
-    // safety net), so the notes stay visible as long as the book is 'reading';
-    // clearing the status leaves the fold wherever the reader left it.
+    // A book that's being read must stay visible: open every enclosing '::'
+    // fold (parent lists collapsed by default would otherwise hide it), plus
+    // any fold on its own line. This re-asserts on every status refresh (incl.
+    // the click-driven safety net), so the book stays revealed as long as it's
+    // 'reading'; clearing the status leaves the folds wherever the reader left them.
     if (status === 'reading') reveal_colon_fold_for_reading(li)
 }
 
-// Open the '::' fold that belongs to this <li> (the book's own line). straptoc.js
-// renders the fold as <a><span class="::">[+]</span></a> sitting right before the
-// folded <ul>, and closes that <ul> by default; here we show the <ul> and flip the
-// indicator to [-], mirroring straptoc.js's own toggle. Scoped to the li's direct
-// <a> (or a direct child <p>'s <a>, the code-block case) so nested folds belonging
-// to descendant items stay as authored.
+// Reveal a reading book that's tucked inside collapsed '::' folds. The book's
+// <li> is nested in the folded <ul> of one or more ANCESTOR '::' lines, so we
+// walk from the book's li up through every enclosing li and open each one that
+// carries a '::' fold. straptoc.js renders a fold as <a><span class="::">[+]
+// </span></a> (sometimes inside a <p>, the code-block case) next to the <li>'s
+// child <ul>, which it hides by default; here we show that <ul> and flip the
+// indicator to [-], mirroring straptoc.js's own toggle. The book's own line is
+// included too, so notes folded directly under it open as well.
 function reveal_colon_fold_for_reading($li) {
-    var $anchors = $li.children('a').add($li.children('p').children('a'))
-    $anchors.each(function() {
-        var $a = $(this)
-        var $ind = $a.find('span.\\:\\:')
-        if (!$ind.length) return
-        var $next = $a.next()
-        if (!$next.is('ul')) $next = $a.parent().next()
-        if ($next.is('ul')) $next.show()
+    $li.add($li.parents('li')).each(function() {
+        var $foldLi = $(this)
+        var $ind = $foldLi.children('a, p').find('span.\\:\\:').first()
+        if (!$ind.length) return  // not a '::' fold line — leave it alone
+        $foldLi.children('ul').show()
         $ind.text(' [-]')
     })
 }
