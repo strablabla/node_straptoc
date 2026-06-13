@@ -330,7 +330,12 @@ window.initEpubViewer = function(container, addr) {
     const rendition = book.renderTo(renderId, {
         flow: 'scrolled-doc',
         width: RENDER_W,
-        height: RENDER_H
+        height: RENDER_H,
+        // Keep a single page at every zoom level. Without this, epub.js uses
+        // spread:'auto' (minSpreadWidth 800px) and switches to a two-page
+        // spread once the zoomed width crosses ~800px (~135%), which abruptly
+        // halves the page size mid-zoom.
+        spread: 'none'
     });
 
     // Per-viewer state. Stored in EPUBViewers so other modules
