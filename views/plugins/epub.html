@@ -252,6 +252,14 @@ const FONT_SIZE_DEFAULT = 100;
 const FONT_SIZE_MIN = 50;
 const FONT_SIZE_MAX = 300;
 
+// Base rendition viewport (the visible .epubjs-viewer-render box). For
+// reflowable books zoom changes the font size; for fixed-layout (pre-paginated)
+// comics/BDs there is no text to scale, so we zoom by resizing the rendition to
+// a multiple of this base — epub.js then re-fits the page image and the 600×660
+// container scrolls.
+const RENDER_W = 600;
+const RENDER_H = 660;
+
 // Index of live EPUB viewers, keyed by their container DOM id, so the
 // annotation system can reach the rendition + path without duplicating state.
 window.EPUBViewers = window.EPUBViewers || {};
@@ -321,8 +329,8 @@ window.initEpubViewer = function(container, addr) {
     const book = ePub(addr);
     const rendition = book.renderTo(renderId, {
         flow: 'scrolled-doc',
-        width: 600,
-        height: 660
+        width: RENDER_W,
+        height: RENDER_H
     });
 
     // Per-viewer state. Stored in EPUBViewers so other modules
@@ -334,6 +342,9 @@ window.initEpubViewer = function(container, addr) {
         book: book,
         rendition: rendition,
         currentSize: FONT_SIZE_DEFAULT,
+        // Set once book.ready resolves; pre-paginated (comics/BD) books can't be
+        // zoomed via font-size, so applyFontSize() resizes the rendition instead.
+        fixedLayout: false,
         named: [],
         ready: false,
         // Last-CFI save debounce
@@ -366,8 +377,24 @@ window.initEpubViewer = function(container, addr) {
     // ----- font size helpers (per-viewer) -----
 
     function applyFontSize() {
-        rendition.themes.fontSize(state.currentSize + '%');
-        $fontPct.text(state.currentSize + ' %');
+        const pct = state.currentSize;
+        if (state.fixedLayout) {
+            // No text to scale — zoom by resizing the rendition viewport. epub.js
+            // re-fits the fixed page (image) to the new size; the 600×660
+            // container keeps overflow:auto so the enlarged page scrolls.
+            const f = pct / 100;
+            // resize() can snap back to the first page, so remember where we are
+            // and restore it afterwards.
+            const loc = rendition.currentLocation();
+            const target = (loc && loc.start)
+                ? (loc.start.cfi || (typeof loc.start.index === 'number' ? loc.start.index : null))
+                : null;
+            rendition.resize(Math.round(RENDER_W * f), Math.round(RENDER_H * f));
+            if (target != null) rendition.display(target);
+        } else {
+            rendition.themes.fontSize(pct + '%');
+        }
+        $fontPct.text(pct + ' %');
     }
 
     function persistFontSize() {
@@ -543,6 +570,15 @@ window.initEpubViewer = function(container, addr) {
         $pageTotal.text(total);
         if (typeof total === 'number') {
             $pageInput.attr('max', total);
+        }
+        // Detect fixed-layout (pre-paginated) books — comics/BDs. The layout is
+        // only known once packaging is parsed, which can be after the first
+        // applyFontSize() in applyInitialState(), so re-apply the zoom here using
+        // the correct mode.
+        const layout = book.packaging && book.packaging.metadata && book.packaging.metadata.layout;
+        if (layout === 'pre-paginated') {
+            state.fixedLayout = true;
+            if (state.currentSize !== FONT_SIZE_DEFAULT) applyFontSize();
         }
         state.ready = true;
     });
