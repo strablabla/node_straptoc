@@ -51,3 +51,6 @@ views/md/*
 !views/md/example1_md.html
 !views/md/example2_md.html
 views/*.html
+
+# Trop volumineux pour GitHub (69 Mo) - ajouté par erreur
+public/epubs/Tanger_sous_la_pluie_Grolleau_de_Bruxelles.epub
