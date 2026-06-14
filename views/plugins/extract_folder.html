@@ -559,7 +559,7 @@ function bind_fold_scan_toggles(){
 // make_elems — initial scan of !fold patterns in the document
 // =====================================================================
 
-socket.on('make_elems', function(){
+function run_fold_scan(){
 
     // Guard: only run once per page load
     if (fold_scan_initialized) return
@@ -604,7 +604,19 @@ socket.on('make_elems', function(){
 
     }) // li each
 
-}) // socket.on('make_elems')
+}
+
+// Trigger the scan. The DOM (built synchronously by maketoc) is already in
+// place by the time this script runs, so we don't actually need the server.
+// Previously the scan ran ONLY on the 'make_elems' echo bounced back by the
+// server (list_folders_for_extract.html -> server -> here). That round-trip is
+// fire-and-forget with no retry: if the echo is ever lost (socket reconnect,
+// polling->websocket upgrade, timing), the scan never ran and !fold stayed
+// literal until a manual page reload. We now drive it directly on DOM-ready and
+// keep the echo as a harmless fallback; the fold_scan_initialized guard makes
+// sure it still runs exactly once.
+socket.on('make_elems', run_fold_scan)   // legacy server echo (fallback)
+$(function(){ run_fold_scan() })          // direct, reload-proof trigger
 
 // =====================================================================
 // File display helpers
