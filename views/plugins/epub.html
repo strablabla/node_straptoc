@@ -355,6 +355,9 @@ window.initEpubViewer = function(container, addr) {
         // Last-CFI save debounce
         cfiSaveTimer: null,
         cfiPendingSave: null,
+        // Live within-page scroll offset, reapplied when the viewer is hidden
+        // then re-shown via the fold toggle (no re-init in that path).
+        lastScrollPos: null,
         // Updated by syncAllEpubAnnotBtnStates when annotation mode toggles
         syncAnnotBtnState: null
     };
@@ -424,6 +427,112 @@ window.initEpubViewer = function(container, addr) {
             window.socket.emit('save_last_cfi', JSON.stringify(state.cfiPendingSave));
             state.cfiPendingSave = null;
         }, CFI_DEBOUNCE_MS);
+    }
+
+    // ----- scroll-within-page persistence (server, stored next to lastCfi) -----
+    // epub.js (flow:scrolled-doc) keeps the real scroll offset on the inner
+    // .epub-container, while a CFI only restores to PAGE granularity. So the
+    // vertical position INSIDE a tall page (comics/BD images) is lost on reopen
+    // — the page is right but the scrollbar jumps back to the top. We persist
+    // that raw offset alongside lastCfi (bookmarks.yaml) and reapply it once the
+    // page has laid out.
+    // state.lastScrollPos is the user-INTENDED position and the single source of
+    // truth. Two flags suppress capture so it never gets clobbered by scrolls we
+    // didn't intend:
+    //   scrollRestoring — during our own programmatic restore
+    //   scrollLocked    — while the viewer is hidden and during the re-show
+    //                     settle, when epub.js snaps the scroller back to 0
+    let scrollRestoring = false;
+    let scrollLocked = false;
+
+    function getScroller() {
+        const rel = document.getElementById(renderId);
+        return rel ? rel.querySelector('.epub-container') : null;
+    }
+
+    // Persist the intended position, NOT the live scroller (epub.js transiently
+    // resets the scroller to 0 on re-render, which would save a bogus 0).
+    function saveScroll() {
+        if (!window.socket || !state.lastScrollPos) return;
+        window.socket.emit('save_last_scroll', JSON.stringify({
+            filePath: state.epubPath,
+            top: state.lastScrollPos.top,
+            left: state.lastScrollPos.left
+        }));
+    }
+
+    function restoreScroll(saved, onDone) {
+        const done = () => { if (onDone) onDone(); };
+        if (!saved || (!saved.top && !saved.left)) { done(); return; }
+
+        scrollRestoring = true;
+        const rel = document.getElementById(renderId);
+        // Bail out the moment the user takes over, so we never yank them back.
+        const userEvents = ['wheel', 'touchstart', 'keydown', 'mousedown'];
+        let aborted = false;
+        const onUser = () => { aborted = true; };
+        if (rel) userEvents.forEach(ev => rel.addEventListener(ev, onUser, { capture: true, passive: true }));
+        const cleanup = () => {
+            scrollRestoring = false;
+            if (rel) userEvents.forEach(ev => rel.removeEventListener(ev, onUser, true));
+            done();
+        };
+
+        // The page image grows scrollHeight as it loads, so the browser clamps
+        // scrollTop until the content is tall enough. Re-apply on a short retry
+        // loop until we reach the saved offset (or give up after ~2.5 s).
+        let tries = 0;
+        (function apply() {
+            if (aborted) { cleanup(); return; }
+            const sc = getScroller();
+            if (sc) {
+                if (saved.left) sc.scrollLeft = saved.left;
+                sc.scrollTop = saved.top || 0;
+            }
+            const reached = sc && sc.scrollTop >= (saved.top || 0) - 2;
+            if (!reached && tries < 25) { tries++; setTimeout(apply, 100); }
+            else cleanup();
+        })();
+    }
+
+    // Scroll doesn't bubble, but a capture-phase listener on the stable render
+    // box still catches the inner .epub-container scroll (epub.js recreates it
+    // per section). Capture only genuine user scrolls into state.lastScrollPos.
+    let scrollSaveTimer = null;
+    const renderElForScroll = document.getElementById(renderId);
+    if (renderElForScroll) {
+        renderElForScroll.addEventListener('scroll', () => {
+            if (scrollLocked || scrollRestoring) return;   // ignore programmatic / reset-to-0 scrolls
+            const sc = getScroller();
+            if (!sc) return;
+            state.lastScrollPos = { top: sc.scrollTop, left: sc.scrollLeft };
+            clearTimeout(scrollSaveTimer);
+            scrollSaveTimer = setTimeout(saveScroll, 400);
+        }, true);
+
+        // Reopen case: the fold toggle ([-]/[+]) only hides/shows this viewer —
+        // it does NOT re-run initEpubViewer (isLoaded stays true), so the
+        // server-based restore in applyInitialState never fires again. epub.js
+        // re-renders on the hidden→visible size change and snaps the scroller to
+        // 0. Lock capture on hide (so that reset can't clobber the saved
+        // position), then restore + unlock when the box is shown again.
+        if (typeof ResizeObserver !== 'undefined') {
+            let wasVisible = renderElForScroll.clientHeight > 0;
+            const ro = new ResizeObserver(() => {
+                const visibleNow = renderElForScroll.clientHeight > 0;
+                if (!visibleNow && wasVisible) {
+                    scrollLocked = true;
+                    clearTimeout(scrollSaveTimer);
+                    saveScroll();                 // flush intended position before it can be lost
+                } else if (visibleNow && !wasVisible) {
+                    restoreScroll(state.lastScrollPos, () => {
+                        setTimeout(() => { scrollLocked = false; }, 300);
+                    });
+                }
+                wasVisible = visibleNow;
+            });
+            ro.observe(renderElForScroll);
+        }
     }
 
     // ----- bookmark list rendering -----
@@ -560,9 +669,15 @@ window.initEpubViewer = function(container, addr) {
         }
         applyFontSize();
 
-        // Display: prefer saved CFI, otherwise default open (chapter 0).
+        // Display: prefer saved CFI, otherwise default open (chapter 0). After
+        // the page is rendered, restore the within-page scroll offset that the
+        // CFI alone can't capture (tall image pages).
         if (typeof parsed.lastCfi === 'string' && parsed.lastCfi.length > 0) {
-            rendition.display(parsed.lastCfi);
+            // Seed the in-memory position so a later [-]/[+] reopen can restore
+            // it even if the user never scrolled this session.
+            if (parsed.lastScroll) state.lastScrollPos = parsed.lastScroll;
+            Promise.resolve(rendition.display(parsed.lastCfi))
+                   .then(() => restoreScroll(parsed.lastScroll));
         } else {
             rendition.display();
         }
