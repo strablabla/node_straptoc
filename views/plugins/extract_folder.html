@@ -559,64 +559,74 @@ function bind_fold_scan_toggles(){
 // make_elems — initial scan of !fold patterns in the document
 // =====================================================================
 
-function run_fold_scan(){
+// Issue a folder_scan request for one <li> that still carries a literal
+// "!fold <path>" marker on its first line. Stamps the <li> with the time the
+// request went out so the (idempotent) scanner can tell an in-flight request
+// from a lost one.
+function process_fold_li($li){
 
-    // Guard: only run once per page load
-    if (fold_scan_initialized) return
-    fold_scan_initialized = true
+    /*
+    Replace !fold by the folder content.
+    Now handles everything: files directly, subfolders, sub-subfolders (recursively).
+    !inside is no longer needed.
+    */
 
-    var all_li = $('li');
+    var txt = $li.html().split('\n')[0]
+    if ( !txt.match(/\!fold/) ) return
 
-    all_li.each(function(){
+    // Extract path — strip !inside if present (backward compat)
+    var addr = txt.split('!fold')[1]
+    if (addr.indexOf('!inside') !== -1) {
+        addr = addr.split('!inside')[0]
+    }
+    addr = addr.trim()
 
-        /*
-        Replace !fold by the folder content.
-        Now handles everything: files directly, subfolders, sub-subfolders (recursively).
-        !inside is no longer needed.
-        */
+    var addr_abs = absolute_addr(addr)
 
-        var reg = /\!fold/
-        var txt = $(this).html().split('\n')[0]
+    $li.data('fold-queued-at', Date.now())
 
-        if ( txt.match(reg) ){
-
-            // Extract path — strip !inside if present (backward compat)
-            var addr = txt.split('!fold')[1]
-            if (addr.indexOf('!inside') !== -1) {
-                addr = addr.split('!inside')[0]
-            }
-            addr = addr.trim()
-
-            var addr_short = addr.split('/').slice(1).join('/')
-            var addr_abs = absolute_addr(addr)
-
-            var count = fold_scan_count
-            fold_scan_data[count] = {
-                li: $(this),
-                addr: addr,
-                addr_abs: addr_abs,
-                isRoot: true
-            }
-            fold_scan_count++
-            socket.emit('folder_scan', addr + '§§' + count)
-
-        } // if text.match
-
-    }) // li each
-
+    var count = fold_scan_count
+    fold_scan_data[count] = {
+        li: $li,
+        addr: addr,
+        addr_abs: addr_abs,
+        isRoot: true
+    }
+    fold_scan_count++
+    socket.emit('folder_scan', addr + '§§' + count)
 }
 
-// Trigger the scan. The DOM (built synchronously by maketoc) is already in
-// place by the time this script runs, so we don't actually need the server.
-// Previously the scan ran ONLY on the 'make_elems' echo bounced back by the
-// server (list_folders_for_extract.html -> server -> here). That round-trip is
-// fire-and-forget with no retry: if the echo is ever lost (socket reconnect,
-// polling->websocket upgrade, timing), the scan never ran and !fold stayed
-// literal until a manual page reload. We now drive it directly on DOM-ready and
-// keep the echo as a harmless fallback; the fold_scan_initialized guard makes
-// sure it still runs exactly once.
-socket.on('make_elems', run_fold_scan)   // legacy server echo (fallback)
-$(function(){ run_fold_scan() })          // direct, reload-proof trigger
+// Scan the document for un-expanded !fold markers and (re)issue their requests.
+// The literal "!fold ..." text is the source of truth: once a folder has been
+// expanded the marker is gone from the DOM, so re-running this never touches an
+// already-expanded fold and never double-processes. A <li> whose request went
+// out less than 2.5 s ago is left alone (still in flight); anything older is
+// re-issued, which self-heals a folder_scan request or response that was lost
+// in transit (dropped socket event during a reconnect / polling->websocket
+// upgrade — the original intermittent "have to reload the page" symptom).
+function run_fold_scan(force){
+    var now = Date.now()
+    $('li').each(function(){
+        var $li = $(this)
+        if ( !$li.html().split('\n')[0].match(/\!fold/) ) return   // not a marker / already expanded
+        var queued_at = $li.data('fold-queued-at')
+        if (!force && queued_at && (now - queued_at) < 2500) return // request still in flight
+        process_fold_li($li)
+    })
+}
+
+// Trigger the scan. The DOM (built synchronously by maketoc) is already in place
+// by the time this script runs, so we don't actually need the server. Previously
+// the scan ran ONLY on the 'make_elems' echo bounced back by the server
+// (list_folders_for_extract.html -> server -> here) — a fire-and-forget
+// round-trip with no retry. We now drive it directly on DOM-ready, keep the echo
+// as a harmless fallback, and add two delayed verification passes that re-issue
+// any marker still left literal. run_fold_scan is idempotent, so the overlap is
+// safe.
+socket.on('make_elems', function(){ run_fold_scan() })   // legacy server echo (fallback)
+$(function(){ run_fold_scan() })                          // direct, reload-proof trigger
+setTimeout(function(){ run_fold_scan() }, 3000)           // re-issue a lost first request
+setTimeout(function(){ run_fold_scan() }, 6000)           // last-chance retry
 
 // =====================================================================
 // File display helpers
