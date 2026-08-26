@@ -25,6 +25,7 @@ var annotations = require('./lib/annotations');
 var bookmarks = require('./lib/bookmarks');
 var reading_status = require('./lib/reading_status');
 var reminders = require('./lib/reminders');
+var cbz = require('./lib/cbz');
 
 //--------------  Global error handlers (prevent server crash)
 
@@ -106,6 +107,7 @@ init.feed_page(app, page_main);
 app.get('/text', function(req, res){ res.render('struct/text.html'); });
 
 export_import.setupRoutes(app);
+cbz.setupRoutes(app);          // /cbz/pages and /cbz/page, one comic page at a time
 
 // Route proxy pour PDFs externes (contournement CORS)
 app.get('/proxy-pdf', async (req, res) => {

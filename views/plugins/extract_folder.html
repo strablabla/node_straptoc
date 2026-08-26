@@ -66,7 +66,7 @@ li.fold_li > .embed_pdf .fold_toggle {
 /*
 
 Deal with a given folder — unified !fold handler.
-Supports files (pdf, epub, djvu, images, videos) directly in folder,
+Supports files (pdf, epub, djvu, cbz, images, videos) directly in folder,
 in subfolders, and recursively in sub-subfolders.
 
 */
@@ -305,7 +305,7 @@ String.prototype.format = function () {
 
 // ebook extension
 function ebook_ext(name) {
-  return /\.(pdf|djvu|epub)$/i.test(name);
+  return /\.(pdf|djvu|epub|cbz)$/i.test(name);
 }
 
 // image extension
@@ -687,7 +687,7 @@ function relative_addr(addr, addr_short){
           var full_path = addr + '/' + elem
 
           // Extract name without extension for any ebook type
-          var display_name = elem.replace(/\.(pdf|epub|djvu)$/i, '')
+          var display_name = elem.replace(/\.(pdf|epub|djvu|cbz)$/i, '')
 
           var div_format = $('<div/>').text(display_name).addClass('embed_pdf')
 
@@ -747,6 +747,14 @@ function relative_addr(addr, addr_short){
                         '<div class="lazy-djvu-viewer" style="display: none;"></div>' +
                         '</div><br>'
           }
+          // case cbz
+          else if ( elem.search(/\.cbz$/i ) != -1){
+              a_deploy.addClass('fold_cbz')
+              var viewerId = 'cbz-viewer-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
+              obj_html = '<br><div class="lazy-cbz-container" id="' + viewerId + '" data-cbz-path="' + full_path + '" data-loaded="false" style="width: 100%; margin: 10px 0;">' +
+                        '<div class="lazy-cbz-viewer" style="display: none;"></div>' +
+                        '</div><br>'
+          }
 
           var divformat_plus = div_format.append(span_tog).append(build_reading_status_buttons(full_path))
           var div_obj = $('<div/>').html(obj_html).hide()
@@ -794,22 +802,24 @@ function relative_addr(addr, addr_short){
 
             // Already rendered AND VISIBLE in place (direct file or an expanded
             // subfolder)? Leave it. We test visibility of the ROW (li.fold_li),
-            // not of the attribute-bearing element: for epub/djvu the
-            // data-epub-path / data-djvu-path sits on the .lazy-*-container which
-            // lives inside a permanently-hidden viewer <div>, so :visible on it
-            // would always be false and we'd duplicate the book on every pass.
+            // not of the attribute-bearing element: for epub/djvu/cbz the
+            // data-epub-path / data-djvu-path / data-cbz-path sits on the
+            // .lazy-*-container, which lives inside a permanently-hidden viewer
+            // <div>, so :visible on it would always be false and we'd duplicate
+            // the book on every pass.
             // Testing the row also keeps the intended behaviour for collapsed
             // subfolders (row hidden -> not deduped -> surfaced). PDFs carry
             // data-pdf-path on their visible row directly.
             var already = false
-            $('[data-pdf-path],[data-epub-path],[data-djvu-path]').each(function(){
+            $('[data-pdf-path],[data-epub-path],[data-djvu-path],[data-cbz-path]').each(function(){
                 var $e = $(this)
                 var $row = $e.closest('li.fold_li')
                 var visible = $row.length ? $row.is(':visible') : $e.is(':visible')
                 if (!visible) return
                 if ($e.attr('data-pdf-path') === path ||
                     $e.attr('data-epub-path') === path ||
-                    $e.attr('data-djvu-path') === path) already = true
+                    $e.attr('data-djvu-path') === path ||
+                    $e.attr('data-cbz-path') === path) already = true
             })
             if (already) return
 
@@ -872,7 +882,7 @@ function relative_addr(addr, addr_short){
     function toggle_elem(){
 
         /*
-        Code for closing, opening the pdfs, videos, epubs and djvus.
+        Code for closing, opening the pdfs, videos, epubs, djvus and cbzs.
         Lazy loading: content is loaded when user clicks [+] to open
         */
 
@@ -885,6 +895,7 @@ function relative_addr(addr, addr_short){
                 var $videoContainer = $wrapper.find('.lazy-video-container')
                 var $epubContainer = $wrapper.find('.lazy-epub-container')
                 var $djvuContainer = $wrapper.find('.lazy-djvu-container')
+                var $cbzContainer = $wrapper.find('.lazy-cbz-container')
 
                 if (taga.text() == ' [-]'){
                     taga.text(' [+]')
@@ -942,6 +953,20 @@ function relative_addr(addr, addr_short){
                             }
 
                             $djvuContainer.data('loaded', 'true')
+                        }
+                    }
+
+                    // Lazy load CBZ
+                    if ($cbzContainer.length > 0) {
+                        var isLoaded = $cbzContainer.data('loaded')
+                        if (!isLoaded || isLoaded === 'false') {
+                            var cbzPath = $cbzContainer.data('cbz-path')
+                            var $viewer = $cbzContainer.find('.lazy-cbz-viewer')
+                            $viewer.empty().show()
+                            if (window.initCbzViewer) {
+                                window.initCbzViewer($viewer[0], cbzPath)
+                            }
+                            $cbzContainer.data('loaded', 'true')
                         }
                     }
                 }

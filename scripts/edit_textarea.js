@@ -57,7 +57,7 @@ function find_suffix(expr){
      if (expr.match(/youtube/)){suff = ' ;;'}
      else if (expr.match(/(\.mp4)$|(\.mp3)$/)){suff = ' %%'}
      else if (expr.match(/(\.txt)$/)){suff = ' ,,'}
-     else if (expr.match(/(\.pdf)$|(\.djvu)$/)){suff = ' §§'}
+     else if (expr.match(/(\.pdf)$|(\.djvu)$|(\.epub)$|(\.cbz)$/)){suff = ' §§'}
 
      return suff
 

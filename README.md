@@ -24,6 +24,7 @@ Node Straptoc is a sophisticated personal information management system that com
 - **PDF Viewer**: Built-in PDF document viewer
 - **DJVU Reader**: View DJVU format documents
 - **EPUB Reader**: Read e-books in EPUB format
+- **CBZ Reader**: Read comics and BDs in CBZ format; pages are unzipped one at a time on the server, so a large album never has to be downloaded whole
 - **Image Galleries**: Portfolio management with carousels and multiple visualization modes (cascade, circle, one-by-one navigation)
 - **Audio Playback**: Integrated audio player
 
@@ -67,6 +68,7 @@ Node Straptoc is a sophisticated personal information management system that com
 - **MathLive** - Mathematical notation rendering
 - **Artyom.js** - Voice recognition
 - **DJVU.js**, **EPUB.js** - Document readers
+- **adm-zip** - CBZ page extraction, server side
 - **Alertify.js** - Notifications
 - **Font Awesome** - Icons
 
@@ -239,7 +241,7 @@ The core [lib/straptoc.js](lib/straptoc.js) library extends markdown with:
 - Video and PDF embedding
 - Interactive portfolios and carousels
 - Folding lists (with deep fold mode via Alt+Q)
-- `!fold` command for automatic folder content extraction (PDFs, EPUBs, DJVUs, images, videos) with recursive subfolder support
+- `!fold` command for automatic folder content extraction (PDFs, EPUBs, DJVUs, CBZs, images, videos) with recursive subfolder support
 - `$tab <id>` inline editable mini-tables (data persisted in [static/tables.yaml](static/tables.yaml))
 - Tooltips and text hiding
 - Image sizing and captions
@@ -504,7 +506,7 @@ Use the extended markdown syntax to embed:
 
 ### Folder Content Extraction (`!fold`)
 
-The `!fold` command automatically extracts and displays the content of a folder. It supports PDFs, EPUBs, DJVUs, images (PNG, JPG, WEBP), and videos (MP4, WEBM, OGG, MKV, AVI).
+The `!fold` command automatically extracts and displays the content of a folder. It supports PDFs, EPUBs, DJVUs, CBZs, images (PNG, JPG, WEBP), and videos (MP4, WEBM, OGG, MKV, AVI).
 
 #### Usage
 
@@ -516,7 +518,7 @@ In your markdown, write a list item with `!fold` followed by a folder path:
 
 #### Behavior
 
-- **Files** directly in the folder are displayed with their appropriate viewers (embed for PDFs, lazy-load for EPUBs/DJVUs, gallery for images, player for videos)
+- **Files** directly in the folder are displayed with their appropriate viewers (embed for PDFs, lazy-load for EPUBs/DJVUs/CBZs, gallery for images, player for videos)
 - **Subfolders** appear as expandable items with `[+]`/`[-]` toggles
 - **Recursive**: clicking `[+]` on a subfolder lazily loads its content, which can itself contain files and further subfolders — works at any depth
 - All content is **lazy-loaded**: files and subfolders are only fetched from the server when the user expands them

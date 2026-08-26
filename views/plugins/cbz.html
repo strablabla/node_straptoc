@@ -1,0 +1,630 @@
+<style>
+
+/* CBZ viewer — toolbar styled to match the EPUB and PDF.js viewers */
+
+.cbz-viewer-wrap {
+    display: inline-block;
+    margin: 10px 0;
+    position: relative;  /* anchor for the bookmark panel */
+}
+
+.cbz-viewer-controls {
+    background: #323232;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    width: 600px;
+    box-sizing: border-box;
+}
+
+.cbz-viewer-controls button {
+    background: transparent;
+    color: white;
+    border: 1px solid transparent;
+    height: 30px;
+    line-height: 28px;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.cbz-viewer-controls button:hover,
+.cbz-viewer-controls button:focus {
+    background: #454545;
+}
+
+.cbz-viewer-controls input.cbz-page-num {
+    background: transparent;
+    color: white;
+    border: 1px solid transparent;
+    height: 30px;
+    padding: 0 4px;
+    padding-right: 2px;
+    margin: -10px 0;
+    border-radius: 3px;
+    font-size: 14px;
+    box-sizing: border-box;
+    direction: rtl;
+    text-align: right;
+    transform: translateY(-2px);
+    transition: width 0.15s ease;
+}
+
+.cbz-viewer-controls input.cbz-page-num:hover,
+.cbz-viewer-controls input.cbz-page-num:focus {
+    background: #454545;
+}
+
+.cbz-viewer-controls input.cbz-page-num::-webkit-inner-spin-button,
+.cbz-viewer-controls input.cbz-page-num::-webkit-outer-spin-button {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.cbz-viewer-controls input.cbz-page-num:hover::-webkit-inner-spin-button,
+.cbz-viewer-controls input.cbz-page-num:focus::-webkit-inner-spin-button {
+    opacity: 1;
+}
+
+.cbz-viewer-controls .cbz-page-info {
+    color: white;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.cbz-viewer-controls .cbz-zoom-pct {
+    color: white;
+    font-size: 12px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.cbz-viewer-controls .cbz-zoom-label {
+    margin-left: 20px;
+}
+
+.cbz-viewer-controls .cbz-bookmark-btn {
+    margin-left: 6px;
+    font-size: 16px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cbz-viewer-render {
+    width: 600px;
+    height: 660px;
+    background: #1b1b1b;   /* comics read better against a dark mat */
+    overflow: auto;
+    position: relative;
+    outline: none;         /* focused for the arrow keys, but no focus ring */
+}
+
+.cbz-viewer-render img.cbz-page-img {
+    display: block;
+    transition: opacity 0.12s ease;
+}
+
+.cbz-viewer-render img.cbz-page-img.loading {
+    opacity: 0.35;
+}
+
+.cbz-viewer-message {
+    color: #ddd;
+    font-size: 13px;
+    text-align: center;
+    padding: 30px 20px;
+    font-family: sans-serif;
+}
+
+/* Bookmark panel (mirrors the EPUB / PDF.js bookmark panel look) */
+
+.cbz-bookmark-panel {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: 260px;
+    background: #323232;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    padding: 10px;
+    z-index: 100;
+    display: none;
+}
+
+.cbz-bookmark-panel.visible {
+    display: block;
+}
+
+.cbz-bookmark-add {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.cbz-bookmark-add input {
+    flex: 1;
+    background: #454545;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 0 6px;
+    height: 28px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.cbz-bookmark-add button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0 10px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.cbz-bookmark-add button:hover {
+    background: #45a049;
+}
+
+.cbz-bookmark-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.cbz-bookmark-list li {
+    display: flex;
+    align-items: center;
+    padding: 6px 4px;
+    border-bottom: 1px solid #454545;
+    font-size: 13px;
+}
+
+.cbz-bookmark-list li:hover {
+    background: #3f3f3f;
+}
+
+.cbz-bookmark-name {
+    cursor: pointer;
+    flex: 1;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cbz-bookmark-name:hover {
+    color: #87CEEB;
+}
+
+.cbz-bookmark-page {
+    color: #aaa;
+    font-size: 11px;
+    margin: 0 8px;
+    flex-shrink: 0;
+}
+
+.cbz-bookmark-del {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.cbz-bookmark-del:hover {
+    color: #ff6b6b;
+}
+
+.cbz-bookmark-empty {
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px;
+    font-style: italic;
+}
+
+</style>
+
+<script>
+
+/*
+
+CBZ viewer.
+
+A .cbz is a zip of images, one per page. The server (lib/cbz.js) unzips a
+single page per request, so this viewer is only ever holding one <img>: no
+archive in the tab's memory, and the browser does the caching and decoding.
+
+Position, zoom and named bookmarks go through the same socket protocol as the
+PDF viewer — page-numbered, since a comic page IS the unit of position.
+
+*/
+
+// Base width of the visible .cbz-viewer-render box; zoom 100 % fits a page to it.
+const CBZ_RENDER_W = 600;
+
+const CBZ_ZOOM_STEP = 10;
+const CBZ_ZOOM_DEFAULT = 100;
+const CBZ_ZOOM_MIN = 30;
+const CBZ_ZOOM_MAX = 400;
+
+// Index of live CBZ viewers, keyed by their container DOM id.
+window.CBZViewers = window.CBZViewers || {};
+
+// Initialize a CBZ viewer into a container element.
+// container: HTMLElement (will be cleared and filled)
+// addr: web path of the .cbz
+window.initCbzViewer = function(container, addr) {
+
+    const viewerId = 'cbz-render-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+
+    container.innerHTML = `
+        <div class="cbz-viewer-wrap" data-viewer-id="${viewerId}">
+            <div class="cbz-viewer-controls">
+                <button class="cbz-prev" title="Previous page">◀</button>
+                <span class="cbz-page-info">
+                    <input type="number" class="cbz-page-num" min="1" value="1">
+                    <span>/ <span class="cbz-page-total">?</span></span>
+                </span>
+                <button class="cbz-next" title="Next page">▶</button>
+                <button class="cbz-zoom-down cbz-zoom-label" title="Zoom out">−</button>
+                <span class="cbz-zoom-pct">100 %</span>
+                <button class="cbz-zoom-up" title="Zoom in">+</button>
+                <button class="cbz-bookmark-btn" title="Bookmarks"><img src="capicon/svg/355.svg" alt="Bookmarks" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
+            </div>
+            <div id="${viewerId}" class="cbz-viewer-render" tabindex="0"></div>
+            <div class="cbz-bookmark-panel">
+                <div class="cbz-bookmark-add">
+                    <input type="text" class="cbz-bookmark-name-input" placeholder="Bookmark name" maxlength="40">
+                    <button class="cbz-bookmark-add-btn">+</button>
+                </div>
+                <ul class="cbz-bookmark-list"></ul>
+            </div>
+        </div>
+    `;
+
+    const $wrap = $(container).find('.cbz-viewer-wrap');
+    const $render = $wrap.find('.cbz-viewer-render');
+    const $prev = $wrap.find('.cbz-prev');
+    const $next = $wrap.find('.cbz-next');
+    const $pageInput = $wrap.find('.cbz-page-num');
+    const $pageTotal = $wrap.find('.cbz-page-total');
+    const $zoomPct = $wrap.find('.cbz-zoom-pct');
+    const $zoomUp = $wrap.find('.cbz-zoom-up');
+    const $zoomDown = $wrap.find('.cbz-zoom-down');
+    const $bmToggle = $wrap.find('.cbz-bookmark-btn');
+    const $bmPanel = $wrap.find('.cbz-bookmark-panel');
+    const $bmNameInput = $wrap.find('.cbz-bookmark-name-input');
+    const $bmAddBtn = $wrap.find('.cbz-bookmark-add-btn');
+    const $bmList = $wrap.find('.cbz-bookmark-list');
+
+    // Per-viewer state, exposed like EPUBViewers so other modules can find it.
+    const state = {
+        viewerId: viewerId,
+        cbzPath: addr,
+        page: 1,          // 1-based, like lastPage in bookmarks.yaml
+        total: 0,
+        zoom: CBZ_ZOOM_DEFAULT,
+        named: [],
+        ready: false,
+        pageSaveTimer: null,
+        scrollSaveTimer: null,
+        // Restored once, after the first page has laid out: an <img> has no
+        // scrollable height until it is decoded.
+        pendingScroll: null
+    };
+    window.CBZViewers[viewerId] = state;
+
+    const $img = $('<img/>').addClass('cbz-page-img');
+    const $message = $('<div/>').addClass('cbz-viewer-message');
+
+    const updatePageNumWidth = () => {
+        const digits = String($pageInput.val() || '1').length;
+        $pageInput[0].style.width = (digits + 3) + 'ch';
+    };
+    updatePageNumWidth();
+
+    function showMessage(text) {
+        $render.empty().append($message.text(text));
+    }
+
+    // ----- page display -----
+
+    function pageUrl(n) {
+        return '/cbz/page?file=' + encodeURIComponent(addr) + '&i=' + (n - 1);
+    }
+
+    function applyZoom() {
+        $img.css('width', Math.round(CBZ_RENDER_W * state.zoom / 100) + 'px');
+        $zoomPct.text(state.zoom + ' %');
+    }
+
+    function persistZoom() {
+        if (!window.socket) return;
+        window.socket.emit('save_zoom_level', JSON.stringify({
+            filePath: state.cbzPath,
+            scale: state.zoom / 100
+        }));
+    }
+
+    function scheduleSavePage() {
+        if (!window.socket) return;
+        clearTimeout(state.pageSaveTimer);
+        state.pageSaveTimer = setTimeout(() => {
+            window.socket.emit('save_last_page', JSON.stringify({
+                filePath: state.cbzPath,
+                page: state.page
+            }));
+        }, 600);
+    }
+
+    // Keep the next page warm: turning pages is the whole interaction, and the
+    // browser cache makes the second visit free.
+    function prefetch(n) {
+        if (n < 1 || n > state.total) return;
+        const img = new Image();
+        img.src = pageUrl(n);
+    }
+
+    function showPage(n, keepScroll) {
+        if (!state.total) return;
+        n = Math.max(1, Math.min(state.total, n));
+        // A previous error message replaced the image; put it back, so one
+        // unreadable page doesn't strand the whole album.
+        if (!$img.parent().length) $render.empty().append($img);
+        state.page = n;
+        $pageInput.val(n);
+        updatePageNumWidth();
+        $img.addClass('loading').attr('src', pageUrl(n));
+        if (!keepScroll) $render.scrollTop(0).scrollLeft(0);
+        scheduleSavePage();
+        prefetch(n + 1);
+    }
+
+    $img.on('load', function(){
+        $img.removeClass('loading');
+        if (state.pendingScroll) {
+            const saved = state.pendingScroll;
+            state.pendingScroll = null;
+            $render.scrollTop(saved.top || 0).scrollLeft(saved.left || 0);
+        }
+    });
+
+    $img.on('error', function(){
+        $img.removeClass('loading');
+        showMessage('Page ' + state.page + ' could not be read from the archive.');
+    });
+
+    // ----- within-page scroll persistence -----
+    // A zoomed page is taller than the box, so the position inside the page is
+    // as much "where I am" as the page number is. Stored like the EPUB one.
+
+    $render.on('scroll', function(){
+        if (!state.ready) return;
+        clearTimeout(state.scrollSaveTimer);
+        state.scrollSaveTimer = setTimeout(() => {
+            if (!window.socket) return;
+            window.socket.emit('save_last_scroll', JSON.stringify({
+                filePath: state.cbzPath,
+                top: $render.scrollTop(),
+                left: $render.scrollLeft()
+            }));
+        }, 400);
+    });
+
+    // ----- navigation -----
+
+    $prev.on('click', () => showPage(state.page - 1));
+    $next.on('click', () => showPage(state.page + 1));
+    $pageInput.on('change', () => {
+        const n = parseInt($pageInput.val(), 10);
+        if (Number.isFinite(n)) showPage(n);
+    });
+    $zoomUp.on('click', () => {
+        state.zoom = Math.min(CBZ_ZOOM_MAX, state.zoom + CBZ_ZOOM_STEP);
+        applyZoom();
+        persistZoom();
+    });
+    $zoomDown.on('click', () => {
+        state.zoom = Math.max(CBZ_ZOOM_MIN, state.zoom - CBZ_ZOOM_STEP);
+        applyZoom();
+        persistZoom();
+    });
+
+    // Arrow keys, but only while the render box itself has focus — the page
+    // has global shortcuts (keymaster) that we must not shadow.
+    $render.on('keydown', function(e){
+        let handled = true;
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') showPage(state.page - 1);
+        else if (e.key === 'ArrowRight' || e.key === 'PageDown') showPage(state.page + 1);
+        else if (e.key === 'Home') showPage(1);
+        else if (e.key === 'End') showPage(state.total);
+        else handled = false;
+        if (handled) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+    $render.on('mousedown', function(){ $render.focus(); });
+
+    // ----- bookmarks -----
+
+    function renderBookmarkList() {
+        $bmList.empty();
+        const named = state.named || [];
+        if (named.length === 0) {
+            $bmList.append('<li class="cbz-bookmark-empty">No bookmarks yet</li>');
+            return;
+        }
+        named.forEach(bm => {
+            const $name = $('<span class="cbz-bookmark-name"></span>')
+                .text(bm.name).attr('title', bm.name);
+            const $page = $('<span class="cbz-bookmark-page"></span>')
+                .text(Number.isFinite(bm.page) ? ('p.' + bm.page) : '');
+            const $del = $('<button class="cbz-bookmark-del" title="Delete">×</button>');
+            $name.on('click', () => {
+                if (Number.isFinite(bm.page)) showPage(bm.page);
+                $bmPanel.removeClass('visible');
+            });
+            $del.on('click', (e) => {
+                e.stopPropagation();
+                if (!window.socket) return;
+                window.socket.emit('delete_named_bookmark', JSON.stringify({
+                    filePath: state.cbzPath,
+                    bookmarkId: bm.id
+                }));
+            });
+            $('<li/>').append($name).append($page).append($del).appendTo($bmList);
+        });
+    }
+
+    function addCurrentPageAsBookmark() {
+        const name = ($bmNameInput.val() || '').trim();
+        if (!name || !window.socket || !state.total) return;
+        window.socket.emit('save_named_bookmark', JSON.stringify({
+            filePath: state.cbzPath,
+            bookmark: { name: name, page: state.page }
+        }));
+        $bmNameInput.val('');
+    }
+
+    $bmToggle.on('click', (e) => {
+        e.stopPropagation();
+        const wasVisible = $bmPanel.hasClass('visible');
+        $bmPanel.toggleClass('visible');
+        if (!wasVisible) {
+            renderBookmarkList();
+            $bmNameInput.focus();
+        }
+    });
+    $bmAddBtn.on('click', addCurrentPageAsBookmark);
+    $bmNameInput.on('keydown', (e) => {
+        e.stopPropagation();   // the name may contain arrows / digits
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCurrentPageAsBookmark();
+        }
+    });
+    // Click outside the panel closes it. Scoped per-viewer with a namespace.
+    $(document).on('click.cbz-bm-' + viewerId, (e) => {
+        if (!$bmPanel.hasClass('visible')) return;
+        if ($(e.target).closest($bmPanel).length === 0 &&
+            $(e.target).closest($bmToggle).length === 0) {
+            $bmPanel.removeClass('visible');
+        }
+    });
+
+    function onNamedSavedOrDeleted(data) {
+        try {
+            const parsed = JSON.parse(data);
+            if (parsed.filePath !== state.cbzPath) return;
+            state.named = parsed.named || [];
+            if ($bmPanel.hasClass('visible')) renderBookmarkList();
+        } catch (err) {}
+    }
+    if (window.socket) {
+        window.socket.on('named_bookmark_saved', onNamedSavedOrDeleted);
+        window.socket.on('named_bookmark_deleted', onNamedSavedOrDeleted);
+    }
+
+    // ----- initial load: page count, then saved position -----
+
+    function fetchSavedState() {
+        return new Promise((resolve) => {
+            if (!window.socket) { resolve({}); return; }
+            let done = false;
+            const finish = (parsed) => {
+                if (done) return;
+                done = true;
+                window.socket.off('bookmarks_loaded', handler);
+                resolve(parsed || {});
+            };
+            // Filter by filePath — several viewers can be initializing at once
+            // and the PDF and EPUB viewers listen to `bookmarks_loaded` too.
+            const handler = (data) => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.filePath !== state.cbzPath) return;
+                    finish(parsed);
+                } catch (err) { /* keep waiting */ }
+            };
+            window.socket.on('bookmarks_loaded', handler);
+            window.socket.emit('get_bookmarks', state.cbzPath);
+            // Safety net so the viewer always opens even if the server is mute.
+            setTimeout(() => finish({}), 2000);
+        });
+    }
+
+    showMessage('Opening the archive…');
+
+    fetch('/cbz/pages?file=' + encodeURIComponent(addr))
+        .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(new Error(e.error || r.status))))
+        .then(info => {
+            state.total = info.pages || 0;
+            if (!state.total) { showMessage('No image found in this archive.'); return; }
+            $pageTotal.text(state.total);
+            $pageInput.attr('max', state.total);
+            $render.empty().append($img);
+            return fetchSavedState().then(saved => {
+                state.named = saved.named || [];
+                const savedZoom = Math.round((parseFloat(saved.scale) || 0) * 100);
+                if (savedZoom >= CBZ_ZOOM_MIN && savedZoom <= CBZ_ZOOM_MAX) state.zoom = savedZoom;
+                applyZoom();
+                const savedPage = parseInt(saved.lastPage, 10);
+                state.pendingScroll = saved.lastScroll || null;
+                showPage(Number.isFinite(savedPage) ? savedPage : 1, true);
+                state.ready = true;
+            });
+        })
+        .catch(err => {
+            console.error('[cbz] ' + addr + ': ' + err.message);
+            showMessage('Could not open this CBZ: ' + err.message);
+        });
+
+    return { viewerId, state };
+};
+
+// Replaces an <li> with the viewer — the §§ link path, mirroring make_epub.
+// Deferred: the epub and djvu plugins bind their own §§ handler on the same
+// click and read the <object> out of that same <li>, so let them look before
+// we take it away.
+function make_cbz(li, addr){
+    setTimeout(function(){
+        const wrap = document.createElement('div');
+        $(li).replaceWith(wrap);
+        window.initCbzViewer(wrap, addr);
+    }, 0);
+}
+
+$('.§§').click(function(){
+
+  var ul = $(this).parent().parent().next()
+  var obj = ul.find('object')
+  var addr = obj.attr('data')
+  var li = ul.find('li')
+
+  if (addr && addr.search(/\.cbz$/i) != -1){
+
+      make_cbz(li, addr)
+
+  }
+
+})
+
+</script>
