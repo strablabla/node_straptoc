@@ -559,6 +559,14 @@ function bind_fold_scan_toggles(){
 // make_elems — initial scan of !fold patterns in the document
 // =====================================================================
 
+// First source line of an <li>, as markdown wrote it. A markdown hard break
+// (two or more trailing spaces) renders as <br> and eats the newline, so the
+// next source line would otherwise be read as part of this one — and its markup
+// would end up inside the folder path.
+function fold_first_line($li){
+    return $li.html().replace(/<br\s*\/?>/gi, '\n').split('\n')[0]
+}
+
 // Issue a folder_scan request for one <li> that still carries a literal
 // "!fold <path>" marker on its first line. Stamps the <li> with the time the
 // request went out so the (idempotent) scanner can tell an in-flight request
@@ -571,7 +579,7 @@ function process_fold_li($li){
     !inside is no longer needed.
     */
 
-    var txt = $li.html().split('\n')[0]
+    var txt = fold_first_line($li)
     if ( !txt.match(/\!fold/) ) return
 
     // Extract path — strip !inside if present (backward compat)
@@ -608,7 +616,7 @@ function run_fold_scan(force){
     var now = Date.now()
     $('li').each(function(){
         var $li = $(this)
-        if ( !$li.html().split('\n')[0].match(/\!fold/) ) return   // not a marker / already expanded
+        if ( !fold_first_line($li).match(/\!fold/) ) return         // not a marker / already expanded
         var queued_at = $li.data('fold-queued-at')
         if (!force && queued_at && (now - queued_at) < 2500) return // request still in flight
         process_fold_li($li)
