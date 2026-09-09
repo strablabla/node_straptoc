@@ -166,14 +166,19 @@
     background: rgba(85,85,85,0.92);
 }
 
+.pdfjs-page-arrow.offscreen {
+    display: none !important;
+}
+
 .pdfjs-page-arrow.disabled {
     opacity: 0.1;
     cursor: default;
     pointer-events: none;
 }
 
-#pdfjs-page-arrow-up   { top: 6px; }
-#pdfjs-page-arrow-down { bottom: 6px; }
+/* top is set by positionPageArrows(): the scrollport is a hard 800px inside a
+   modal only 90% of the window tall that clips what overflows, so its own
+   bottom edge sits off-screen and an arrow anchored there is unreachable. */
 
 .pdfjs-content-wrap.pdfjs-arrows-on .pdfjs-page-arrow {
     display: block;
@@ -843,7 +848,59 @@ function syncPageArrows() {
     if (!up || !down) return;
     up.classList.toggle('disabled', window.PDFViewer.currentPage <= 1);
     down.classList.toggle('disabled', window.PDFViewer.currentPage >= window.PDFViewer.totalPages);
+    positionPageArrows();
 }
+
+// Put each arrow against the visible edge of the reading area rather than the
+// scrollport's own edge. The scrollport is a fixed 800px while the modal that
+// holds it is 90% of the window and hides its overflow, so the bottom edge is
+// typically a hundred-odd pixels past the clip and an arrow pinned to it can
+// be neither seen nor clicked. Offsets are expressed against .pdfjs-content-wrap:
+// the modal carries a transform, which would make position:fixed resolve
+// against the modal instead of the viewport.
+function positionPageArrows() {
+    const content = document.getElementById('pdfjs-viewer-content');
+    const wrap = document.querySelector('.pdfjs-content-wrap');
+    const up = document.getElementById('pdfjs-page-arrow-up');
+    const down = document.getElementById('pdfjs-page-arrow-down');
+    if (!content || !wrap || !up || !down) return;
+    if (!wrap.classList.contains('pdfjs-arrows-on')) return;
+
+    const r = content.getBoundingClientRect();
+    let top = r.top, bottom = r.bottom;
+
+    // Clip against every ancestor that hides or scrolls its overflow.
+    for (let el = content.parentElement; el; el = el.parentElement) {
+        const st = getComputedStyle(el);
+        if (st.overflow === 'visible' && st.overflowY === 'visible') continue;
+        const b = el.getBoundingClientRect();
+        top = Math.max(top, b.top);
+        bottom = Math.min(bottom, b.bottom);
+    }
+    top = Math.max(top, 0);
+    bottom = Math.min(bottom, window.innerHeight);
+
+    const wrapTop = wrap.getBoundingClientRect().top;
+    const tooTight = (bottom - top) < 70;
+    up.classList.toggle('offscreen', tooTight);
+    down.classList.toggle('offscreen', tooTight);
+    if (tooTight) return;
+
+    up.style.top = (top - wrapTop + 6) + 'px';
+    down.style.top = (bottom - wrapTop - 28) + 'px';
+}
+
+// Keep them against the edge while anything between them and the window moves.
+let arrowReposition = null;
+function scheduleArrowReposition() {
+    if (arrowReposition) return;
+    arrowReposition = requestAnimationFrame(() => {
+        arrowReposition = null;
+        positionPageArrows();
+    });
+}
+window.addEventListener('resize', scheduleArrowReposition);
+document.addEventListener('scroll', scheduleArrowReposition, true);
 
 // Build viewer UI
 function buildViewerUI(container) {
