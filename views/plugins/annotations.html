@@ -31,7 +31,13 @@
     display: none;
     position: fixed;
     background-color: #fbf6ea;
-    padding: 20px;
+    /* The base the whole panel is measured from. Its furniture — title,
+       buttons, paddings, gaps — is sized in em, so asking for bigger note text
+       scales the panel around it instead of leaving a large note rattling
+       inside small chrome. Only the width stays in px: the reader sets that
+       by hand and it has no business moving when the text size does. */
+    font-size: var(--note-font-size);
+    padding: 1.5em;
     box-shadow: none;
     border: none;
     border-radius: 5px;
@@ -50,23 +56,23 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    font-size: 14px;
+    margin-bottom: 1.15em;
+    font-size: 1.08em;
     font-weight: bold;
 }
 
 .annotation-controls {
     display: flex;
-    gap: 5px;
+    gap: 0.4em;
 }
 
 .annotation-btn {
     cursor: pointer;
     background: transparent;
     border: none;
-    padding: 2px 6px;
+    padding: 0.15em 0.45em;
     border-radius: 3px;
-    font-size: 12px;
+    font-size: 0.92em;
 }
 
 .annotation-btn:hover {
@@ -89,8 +95,8 @@
     cursor: default;
 }
 
-#annotation_size_smaller { font-size: 11px; }
-#annotation_size_bigger  { font-size: 15px; }
+#annotation_size_smaller { font-size: 0.85em; }
+#annotation_size_bigger  { font-size: 1.15em; }
 
 #annotation_textarea {
     width: var(--note-width);
@@ -98,14 +104,14 @@
     /* Grows with the text: a fixed 120px turns into three cramped lines once
        the reader asks for a larger size. */
     min-height: max(120px, calc(var(--note-font-size) * 8));
-    padding: 10px;
+    padding: 0.75em;
     border: none;
     border-radius: 4px;
     font-family: monospace;
     font-size: var(--note-font-size);
     line-height: 1.45;
     resize: both;
-    margin-bottom: 10px;
+    margin-bottom: 0.75em;
     background-color: #fbf6ea;
     box-sizing: border-box;
     display: block !important;
@@ -123,20 +129,20 @@
 
 .annotation-footer {
     display: flex;
-    gap: 10px;
+    gap: 0.75em;
     justify-content: flex-end;
 }
 
 .annotation-save-btn,
 .annotation-delete-btn {
-    padding: 4px 10px;
+    padding: 0.3em 0.75em;
     background: #fbf6ea;
     color: black;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 1.38em;
     line-height: 1;
 }
 
