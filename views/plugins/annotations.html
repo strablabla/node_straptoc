@@ -24,6 +24,10 @@
        server-side. Held on the panel so anything else that shows note text
        inherits it rather than having to be updated in step. */
     --note-font-size: 13px;
+    /* Inner width of the note. The panel hugs it, so dragging the grip at the
+       corner of the text area widens the whole panel. 410px is what the old
+       fixed 450px panel left once its padding was taken off. */
+    --note-width: 410px;
     display: none;
     position: fixed;
     background-color: #fbf6ea;
@@ -32,8 +36,9 @@
     border: none;
     border-radius: 5px;
     z-index: 10010;  /* Above annotation markers (10002) so it covers them */
+    width: fit-content;
     min-width: 350px;
-    max-width: 450px;
+    max-width: min(1440px, 94vw);
     box-sizing: border-box;
 }
 
@@ -88,7 +93,8 @@
 #annotation_size_bigger  { font-size: 15px; }
 
 #annotation_textarea {
-    width: 100%;
+    width: var(--note-width);
+    max-width: min(1400px, 90vw);
     /* Grows with the text: a fixed 120px turns into three cramped lines once
        the reader asks for a larger size. */
     min-height: max(120px, calc(var(--note-font-size) * 8));
@@ -98,7 +104,7 @@
     font-family: monospace;
     font-size: var(--note-font-size);
     line-height: 1.45;
-    resize: vertical;
+    resize: both;
     margin-bottom: 10px;
     background-color: #fbf6ea;
     box-sizing: border-box;
@@ -589,54 +595,105 @@ function removePdfEpubClickHandlers() {
 }
 
 // Load annotations from server
-// ---------- Reading size of the note ----------
+// ---------- How the note reads: text size and width ----------
 // One setting for every file type: the same panel edits PDF and EPUB notes.
-// The server owns it, so it survives a reload and follows the reader from one
-// document to the next.
+// The server owns both, so they survive a reload and follow the reader from
+// one document to the next.
+//
+// Every plugin is injected into the page twice, so the panel, its buttons and
+// its text area each exist in duplicate. Address them all rather than the
+// first match, and namespace the click handlers so the second injection
+// replaces the first instead of adding to it — otherwise one click would step
+// the size twice.
 
 var NOTE_FONT_MIN = 9;
 var NOTE_FONT_MAX = 32;
-var noteFontSize = 13;
+var NOTE_WIDTH_MIN = 280;
+var NOTE_WIDTH_MAX = 1400;
+var noteSettings = { fontSize: 13, width: 410 };
 
-// Every plugin is injected into the page twice, so the panel and its buttons
-// each exist in duplicate. Address them all rather than the first match, and
-// namespace the click handlers so the second injection replaces the first
-// instead of adding to it — otherwise one click would step the size twice.
-function applyNoteFontSize(size) {
-    noteFontSize = Math.min(NOTE_FONT_MAX, Math.max(NOTE_FONT_MIN, parseInt(size, 10) || 13));
+function clampNote(value, lo, hi, fallback) {
+    var n = parseInt(value, 10);
+    return isNaN(n) ? fallback : Math.min(hi, Math.max(lo, n));
+}
+
+function applyNoteSettings(next) {
+    noteSettings.fontSize = clampNote(next.fontSize, NOTE_FONT_MIN, NOTE_FONT_MAX, noteSettings.fontSize);
+    noteSettings.width = clampNote(next.width, NOTE_WIDTH_MIN, NOTE_WIDTH_MAX, noteSettings.width);
+
     document.querySelectorAll('#annotation_panel').forEach(function(panel) {
-        panel.style.setProperty('--note-font-size', noteFontSize + 'px');
+        panel.style.setProperty('--note-font-size', noteSettings.fontSize + 'px');
+        panel.style.setProperty('--note-width', noteSettings.width + 'px');
+    });
+    // Dragging the grip leaves an inline width behind; drop it so the variable
+    // stays the single source of truth. The height is left alone — a vertical
+    // drag is the reader's business for as long as the panel is open.
+    document.querySelectorAll('#annotation_textarea').forEach(function(ta) {
+        ta.style.width = '';
     });
     document.querySelectorAll('#annotation_size_smaller').forEach(function(el) {
-        el.classList.toggle('at-limit', noteFontSize <= NOTE_FONT_MIN);
+        el.classList.toggle('at-limit', noteSettings.fontSize <= NOTE_FONT_MIN);
     });
     document.querySelectorAll('#annotation_size_bigger').forEach(function(el) {
-        el.classList.toggle('at-limit', noteFontSize >= NOTE_FONT_MAX);
+        el.classList.toggle('at-limit', noteSettings.fontSize >= NOTE_FONT_MAX);
     });
 }
 
 function stepNoteFontSize(delta) {
-    var wanted = noteFontSize + delta;
+    var wanted = noteSettings.fontSize + delta;
     if (wanted < NOTE_FONT_MIN || wanted > NOTE_FONT_MAX) return;
-    applyNoteFontSize(wanted);            // move now, persist in the background
-    socket.emit('set_note_font_size', noteFontSize);
+    applyNoteSettings({ fontSize: wanted });   // move now, persist in the background
+    socket.emit('set_note_settings', JSON.stringify({ fontSize: noteSettings.fontSize }));
 }
 
-$(document).off('click.notefontsize')
-    .on('click.notefontsize', '#annotation_size_smaller', function(e) {
+$(document).off('click.notesettings')
+    .on('click.notesettings', '#annotation_size_smaller', function(e) {
         e.stopPropagation();
         stepNoteFontSize(-1);
     })
-    .on('click.notefontsize', '#annotation_size_bigger', function(e) {
+    .on('click.notesettings', '#annotation_size_bigger', function(e) {
         e.stopPropagation();
         stepNoteFontSize(1);
     });
 
-socket.on('note_font_size_loaded', function(size) {
-    applyNoteFontSize(size);
+// Widening is done by dragging the grip at the corner of the text area, which
+// is the gesture already there for the height. Watch for the result and record
+// it, debounced so a drag saves once rather than at every frame.
+var noteWidthTimer = null;
+function watchNoteWidth() {
+    if (typeof ResizeObserver === 'undefined') return;
+    var observer = new ResizeObserver(function(entries) {
+        // offsetWidth, not contentRect: the variable sets a border-box width,
+        // and contentRect leaves out the padding and the scrollbar, so feeding
+        // it back would shave a few pixels off on every round trip.
+        var target = entries[entries.length - 1].target;
+        // The panel starts hidden, and a hidden element measures zero. Recording
+        // that would clamp the width to its minimum and wipe the reader's choice
+        // on the next page load, so only a rendered note is worth listening to.
+        if (!target.offsetParent) return;
+        var width = Math.round(target.offsetWidth);
+        if (!width || width === noteSettings.width) return;   // our own doing, not a drag
+        clearTimeout(noteWidthTimer);
+        noteWidthTimer = setTimeout(function() {
+            if (width === noteSettings.width) return;
+            noteSettings.width = clampNote(width, NOTE_WIDTH_MIN, NOTE_WIDTH_MAX, noteSettings.width);
+            socket.emit('set_note_settings', JSON.stringify({ width: noteSettings.width }));
+        }, 400);
+    });
+    document.querySelectorAll('#annotation_textarea').forEach(function(ta) {
+        observer.observe(ta);
+    });
+}
+
+socket.on('note_settings_loaded', function(payload) {
+    try { applyNoteSettings(JSON.parse(payload)); }
+    catch (e) { console.error('note_settings_loaded parse error', e); }
 });
 
-$(function() { socket.emit('get_note_font_size'); });
+$(function() {
+    socket.emit('get_note_settings');
+    watchNoteWidth();
+});
 
 socket.on('annotations_loaded', function(data) {
     var result = JSON.parse(data);
