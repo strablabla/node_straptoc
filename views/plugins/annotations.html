@@ -20,6 +20,10 @@
 }
 
 #annotation_panel {
+    /* Reading size of the note, driven by the A- / A+ buttons and remembered
+       server-side. Held on the panel so anything else that shows note text
+       inherits it rather than having to be updated in step. */
+    --note-font-size: 13px;
     display: none;
     position: fixed;
     background-color: #fbf6ea;
@@ -64,14 +68,36 @@
     background: #f0f0f0;
 }
 
+.annotation-btn.annotation-size-btn {
+    font-weight: bold;
+    opacity: 0.55;
+    min-width: 20px;
+    text-align: center;
+}
+
+.annotation-btn.annotation-size-btn:hover {
+    opacity: 1;
+}
+
+.annotation-btn.annotation-size-btn.at-limit {
+    opacity: 0.18;
+    cursor: default;
+}
+
+#annotation_size_smaller { font-size: 11px; }
+#annotation_size_bigger  { font-size: 15px; }
+
 #annotation_textarea {
     width: 100%;
-    min-height: 120px;
+    /* Grows with the text: a fixed 120px turns into three cramped lines once
+       the reader asks for a larger size. */
+    min-height: max(120px, calc(var(--note-font-size) * 8));
     padding: 10px;
     border: none;
     border-radius: 4px;
     font-family: monospace;
-    font-size: 13px;
+    font-size: var(--note-font-size);
+    line-height: 1.45;
     resize: vertical;
     margin-bottom: 10px;
     background-color: #fbf6ea;
@@ -154,6 +180,8 @@
     <div class="annotation-header">
         <span id="annotation_title">New Note</span>
         <div class="annotation-controls">
+            <span class="annotation-btn annotation-size-btn" id="annotation_size_smaller" title="Réduire le texte de la note">A</span>
+            <span class="annotation-btn annotation-size-btn" id="annotation_size_bigger" title="Agrandir le texte de la note">A</span>
             <span class="annotation-btn" id="annotation_close" title="Close">×</span>
         </div>
     </div>
@@ -561,6 +589,55 @@ function removePdfEpubClickHandlers() {
 }
 
 // Load annotations from server
+// ---------- Reading size of the note ----------
+// One setting for every file type: the same panel edits PDF and EPUB notes.
+// The server owns it, so it survives a reload and follows the reader from one
+// document to the next.
+
+var NOTE_FONT_MIN = 9;
+var NOTE_FONT_MAX = 32;
+var noteFontSize = 13;
+
+// Every plugin is injected into the page twice, so the panel and its buttons
+// each exist in duplicate. Address them all rather than the first match, and
+// namespace the click handlers so the second injection replaces the first
+// instead of adding to it — otherwise one click would step the size twice.
+function applyNoteFontSize(size) {
+    noteFontSize = Math.min(NOTE_FONT_MAX, Math.max(NOTE_FONT_MIN, parseInt(size, 10) || 13));
+    document.querySelectorAll('#annotation_panel').forEach(function(panel) {
+        panel.style.setProperty('--note-font-size', noteFontSize + 'px');
+    });
+    document.querySelectorAll('#annotation_size_smaller').forEach(function(el) {
+        el.classList.toggle('at-limit', noteFontSize <= NOTE_FONT_MIN);
+    });
+    document.querySelectorAll('#annotation_size_bigger').forEach(function(el) {
+        el.classList.toggle('at-limit', noteFontSize >= NOTE_FONT_MAX);
+    });
+}
+
+function stepNoteFontSize(delta) {
+    var wanted = noteFontSize + delta;
+    if (wanted < NOTE_FONT_MIN || wanted > NOTE_FONT_MAX) return;
+    applyNoteFontSize(wanted);            // move now, persist in the background
+    socket.emit('set_note_font_size', noteFontSize);
+}
+
+$(document).off('click.notefontsize')
+    .on('click.notefontsize', '#annotation_size_smaller', function(e) {
+        e.stopPropagation();
+        stepNoteFontSize(-1);
+    })
+    .on('click.notefontsize', '#annotation_size_bigger', function(e) {
+        e.stopPropagation();
+        stepNoteFontSize(1);
+    });
+
+socket.on('note_font_size_loaded', function(size) {
+    applyNoteFontSize(size);
+});
+
+$(function() { socket.emit('get_note_font_size'); });
+
 socket.on('annotations_loaded', function(data) {
     var result = JSON.parse(data);
     annotationSystem.annotations = result.annotations || [];
