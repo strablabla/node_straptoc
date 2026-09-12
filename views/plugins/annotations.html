@@ -257,7 +257,15 @@ function initAnnotationSystem() {
     var panelEl = $('#annotation_panel');
     if (panelEl.length && !panelEl.data('ui-draggable')) {
         panelEl.draggable({
-            cancel: '.annotation-btn, .annotation-save-btn, .annotation-delete-btn, #annotation_textarea, button, textarea'
+            cancel: '.annotation-btn, .annotation-save-btn, .annotation-delete-btn, #annotation_textarea, button, textarea',
+            // jQuery UI pins the panel's width and height while dragging it.
+            // Left in place they outlive the move and freeze the frame, so
+            // give them back to the note the moment the panel is dropped.
+            stop: function() {
+                var ta = this.querySelector('#annotation_textarea');
+                this.style.height = '';
+                if (ta) fitPanelToNote(ta); else this.style.width = '';
+            }
         });
     }
 
@@ -658,6 +666,21 @@ function applyNoteSettings(next) {
     document.querySelectorAll('#annotation_size_bigger').forEach(function(el) {
         el.classList.toggle('at-limit', noteSettings.fontSize >= NOTE_FONT_MAX);
     });
+    document.querySelectorAll('#annotation_textarea').forEach(fitPanelToNote);
+}
+
+// Size the panel to the note, here and now. Relying on fit-content alone is
+// not enough: jQuery UI stamps an explicit width and height onto the panel the
+// first time it is dragged anywhere, and from then on the frame stays frozen
+// while the note grows straight out of it. Clearing the height hands it back
+// to the content; the width we set ourselves.
+function fitPanelToNote(ta) {
+    var panel = ta.closest ? ta.closest('#annotation_panel') : null;
+    if (!panel) return;
+    var cs = getComputedStyle(panel);
+    var padding = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+    panel.style.width = Math.round(ta.offsetWidth + padding) + 'px';
+    panel.style.height = '';
 }
 
 function stepNoteFontSize(delta) {
@@ -688,6 +711,7 @@ function watchNoteWidth() {
         // and contentRect leaves out the padding and the scrollbar, so feeding
         // it back would shave a few pixels off on every round trip.
         var target = entries[entries.length - 1].target;
+        fitPanelToNote(target);        // every frame of the drag, not just the end
         // The panel starts hidden, and a hidden element measures zero. Recording
         // that would clamp the width to its minimum and wipe the reader's choice
         // on the next page load, so only a rendered note is worth listening to.
