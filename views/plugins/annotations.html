@@ -43,7 +43,6 @@
     border-radius: 5px;
     z-index: 10010;  /* Above annotation markers (10002) so it covers them */
     width: fit-content;
-    min-width: 350px;
     max-width: min(1440px, 94vw);
     box-sizing: border-box;
 }
@@ -59,11 +58,26 @@
     margin-bottom: 1.15em;
     font-size: 1.08em;
     font-weight: bold;
+    gap: 0.8em;
+}
+
+#annotation_title {
+    /* Capped against the note. The panel is sized to fit its widest child, and
+       neither overflow:hidden nor a zero flex-basis keeps a long title out of
+       that measure — it counts its full length and props the panel open well
+       past the note. 7em is the room the three buttons and the gap need beside
+       it, measured rather than guessed. */
+    max-width: calc(var(--note-width) - 7em);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .annotation-controls {
     display: flex;
     gap: 0.4em;
+    flex: none;          /* the buttons keep their size; the title gives way */
 }
 
 .annotation-btn {
@@ -100,6 +114,7 @@
 
 #annotation_textarea {
     width: var(--note-width);
+    min-width: 280px;
     max-width: min(1400px, 90vw);
     /* Grows with the text: a fixed 120px turns into three cramped lines once
        the reader asks for a larger size. */
