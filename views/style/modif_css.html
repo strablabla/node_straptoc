@@ -58,7 +58,18 @@ $('#vid_name').click(function(){   // offset when clicking on th video link..
 
 //------------- Title page up left..
 
-var title_page = $('#toc li:first-child').text().split('[-]')[0]
+// Label of a TOC entry, without its fold arrow. Cutting the text at '[-]' used
+// to do this, but the arrow reads [+] when the list is closed and [-] when it
+// is open, so anything keyed to one of them falls apart in the other state.
+// Drop the arrow's span rather than guess what it currently says.
+function toc_label($el){
+    return $el.clone().find('span.li_h1, span.li_h2, span.li_h3').remove().end().text().trim()
+}
+
+// The entry's own anchor, not the whole <li>: the <li> carries the entire
+// folded subtree beneath it, and .text() would run every heading of the page
+// together into the title.
+var title_page = toc_label($('#toc li:first-child').children('a').first())
 tit_page_h2 = $('<h2/>').text(title_page)
                       .addClass('tit_page_in_nav')
                       .css({'position':'fixed', 'top':'-12px',
@@ -114,7 +125,7 @@ $(window).scroll(function() {
 
      $('.lev1>li>a').css( {'font-size':'100%'} )  // {'color':'#d9230f'}
      $('#toc').find('a').each(function(){
-         var txt = $(this).text().split('[-]')[0].trim()
+         var txt = toc_label($(this))
          //alert(txt)
          if (txt == text.trim()){
 
