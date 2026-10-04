@@ -45,6 +45,12 @@ const configPath = './static/config.yaml';
 let serverConfig = {
   port: 3001,
   host: '0.0.0.0',
+  // Seconds to wait, after the last browser tab goes away, before stopping.
+  // Long enough that a reload or a hop between pages — both of which drop the
+  // socket for a second or two — does not take the server down under the
+  // reader's feet. Set to 0 in config.yaml to keep the old behaviour of
+  // running until killed by hand.
+  idle_shutdown_sec: 120,
   ssl: {
     key: 'key.pem',
     cert: 'server.crt'
@@ -58,6 +64,8 @@ try {
     serverConfig = {
       port: fullConfig.server.port || 3001,
       host: fullConfig.server.host || '0.0.0.0',
+      idle_shutdown_sec: fullConfig.server.idle_shutdown_sec === undefined
+                         ? 120 : Number(fullConfig.server.idle_shutdown_sec),
       ssl: {
         key: (fullConfig.server.ssl && fullConfig.server.ssl.key) || 'key.pem',
         cert: (fullConfig.server.ssl && fullConfig.server.ssl.cert) || 'server.crt'
@@ -251,8 +259,45 @@ reading_status.setupReadingStatusHandlers(io)                        //---- read
 // Set app instance for config module
 config.setApp(app)
 
+// ---------- Stop once the last tab is gone ----------
+// Closing the browser used to leave the server running for ever — a ghost
+// holding port 3007, which the next start then collides with. It now counts
+// its clients and bows out when none are left.
+//
+// Two guards. The countdown is re-checked when it fires rather than trusted
+// from the moment it was armed, so a reconnection in between simply cancels
+// it. And nothing is armed until a first client has actually connected: a
+// server whose browser failed to open must stay up, not exit immediately.
+var idleShutdownTimer = null;
+var everHadClient = false;
+
+function clientCount() {
+    return io.sockets.sockets ? io.sockets.sockets.size : 0;
+}
+
+function cancelIdleShutdown() {
+    if (idleShutdownTimer) {
+        clearTimeout(idleShutdownTimer);
+        idleShutdownTimer = null;
+    }
+}
+
+function armIdleShutdown() {
+    var delay = Number(serverConfig.idle_shutdown_sec);
+    if (!everHadClient || !delay || delay <= 0) return;
+    cancelIdleShutdown();
+    idleShutdownTimer = setTimeout(function() {
+        idleShutdownTimer = null;
+        if (clientCount() > 0) return;      // someone came back meanwhile
+        console.log('No client left for ' + delay + 's — stopping the server.');
+        process.exit(0);
+    }, delay * 1000);
+}
+
 // socket system... 
 io.sockets.on('connection', function (socket) {
+      everHadClient = true;
+      cancelIdleShutdown();
       socket.on('new_user', function(name_user){
           users[socket.id] =  name_user        // parseInt((num_user-1)/2)
           num_user += 1
@@ -369,6 +414,7 @@ io.sockets.on('connection', function (socket) {
       socket.on('disconnect', () => {
         console.log('Client disconnected');
         delete users[socket.id];
+        armIdleShutdown();
       });
 
 

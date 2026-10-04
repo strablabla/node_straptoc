@@ -1243,6 +1243,14 @@ async function renderPage(pageNum) {
         container.innerHTML = '';
         container.appendChild(canvasContainer);
 
+        // Start the new page at its top. Without this the scroll offset of the
+        // page we just left is kept, so turning a page from the toolbar, the
+        // page box or a bookmark drops the reader into the middle of the next
+        // one. The wheel is the exception that proves the rule: it sets the
+        // offset itself afterwards, landing at the bottom when paging back, so
+        // that reading up through a boundary stays continuous.
+        container.scrollTop = 0;
+
         const pageInput = document.getElementById('pdfjs-page-num');
         pageInput.value = pageNum;
         const hovering = document.activeElement === pageInput || pageInput.matches(':hover');

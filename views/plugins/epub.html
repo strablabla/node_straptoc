@@ -44,8 +44,7 @@
     color: white;
     border: 1px solid transparent;
     height: 30px;
-    padding: 0 4px;
-    padding-right: 2px;
+    padding: 0 2px 0 4px;
     margin: -10px 0;
     border-radius: 3px;
     font-size: 14px;
@@ -317,7 +316,13 @@ window.initEpubViewer = function(container, addr) {
 
     const updatePageNumWidth = () => {
         const digits = String($pageInput.val() || '0').length;
-        $pageInput[0].style.width = (digits + 3) + 'ch';
+        // direction:rtl parks the spin buttons against the left edge of the
+        // content box while the digits sit right-aligned against its right
+        // edge, so the two collide unless the box is wide enough to hold both.
+        // Padding does not help — it shifts the arrows along with everything
+        // else — hence the width in ch for the digits plus a fixed strip for
+        // the arrows and the gap after them.
+        $pageInput[0].style.width = 'calc(' + digits + 'ch + 30px)';
     };
     updatePageNumWidth();
 

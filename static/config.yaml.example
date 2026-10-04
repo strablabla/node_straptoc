@@ -340,6 +340,11 @@ subtitles_path: ../../../../../../media/sdata/Films/Very_Good
 server:
   port: 3007
   host: 0.0.0.0
+  # Seconds to wait after the last browser tab closes before stopping, so a
+  # closed browser does not leave a server holding the port. A reload or a hop
+  # between pages drops the socket for a second or two, hence the delay rather
+  # than an immediate exit. Set to 0 to run until stopped by hand.
+  idle_shutdown_sec: 120
   ssl:
     key: key.pem
     cert: server.crt
