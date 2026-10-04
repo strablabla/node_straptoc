@@ -113,6 +113,45 @@
     position: relative;  /* anchor for absolute-positioned annotation markers */
 }
 
+/* The page does not scroll in the box above but in .epub-container, the div
+   epub.js builds inside it. On Linux that div gets an overlay scrollbar, which
+   fades away when idle — so the bar only ever showed itself while the wheel
+   was turning, and there was nothing to grab. Naming scrollbar-color pins a
+   classic bar that stays put. It is kept faint so it does not sit heavily
+   beside the text, and comes up as soon as the pointer is over the page.
+   The two syntaxes cover Firefox and the Chromium family. */
+
+.epubjs-viewer-render .epub-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(130, 130, 130, 0.35) transparent;
+    transition: scrollbar-color 0.18s ease;
+}
+
+.epubjs-viewer-render:hover .epub-container {
+    scrollbar-color: rgba(90, 90, 90, 0.85) transparent;
+}
+
+.epubjs-viewer-render .epub-container::-webkit-scrollbar {
+    width: 11px;
+}
+
+.epubjs-viewer-render .epub-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.epubjs-viewer-render .epub-container::-webkit-scrollbar-thumb {
+    background: rgba(130, 130, 130, 0.35);
+    background-clip: content-box;
+    border: 3px solid transparent;   /* inset, so the bar reads as a slim pill */
+    border-radius: 6px;
+    transition: background 0.18s ease;
+}
+
+.epubjs-viewer-render:hover .epub-container::-webkit-scrollbar-thumb {
+    background: rgba(90, 90, 90, 0.85);
+    background-clip: content-box;
+}
+
 /* Bookmark panel (mirrors the PDF.js bookmark panel look) */
 
 .epubjs-bookmark-panel {
