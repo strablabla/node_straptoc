@@ -113,43 +113,63 @@
     position: relative;  /* anchor for absolute-positioned annotation markers */
 }
 
-/* The page does not scroll in the box above but in .epub-container, the div
-   epub.js builds inside it. On Linux that div gets an overlay scrollbar, which
-   fades away when idle — so the bar only ever showed itself while the wheel
-   was turning, and there was nothing to grab. Naming scrollbar-color pins a
-   classic bar that stays put. It is kept faint so it does not sit heavily
-   beside the text, and comes up as soon as the pointer is over the page.
-   The two syntaxes cover Firefox and the Chromium family. */
+/* The page scrolls in .epub-container, the div epub.js builds inside the box
+   above. On this desktop that div gets an overlay scrollbar which fades out
+   when idle, so it only ever showed while the wheel was turning and there was
+   nothing left to grab. scrollbar-color merely recolours it: the auto-hide
+   comes from a system setting (org.gnome.desktop.interface overlay-scrolling)
+   that a page cannot override and that is not ours to flip for every
+   application on the machine. So the native bar is taken out of the way and a
+   plain one drawn in its place, which answers to the pointer whatever the
+   platform has decided. */
 
 .epubjs-viewer-render .epub-container {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(130, 130, 130, 0.35) transparent;
-    transition: scrollbar-color 0.18s ease;
-}
-
-.epubjs-viewer-render:hover .epub-container {
-    scrollbar-color: rgba(90, 90, 90, 0.85) transparent;
+    scrollbar-width: none;                       /* Firefox */
 }
 
 .epubjs-viewer-render .epub-container::-webkit-scrollbar {
-    width: 11px;
+    width: 0;
+    height: 0;
 }
 
-.epubjs-viewer-render .epub-container::-webkit-scrollbar-track {
-    background: transparent;
+.epubjs-render-holder {
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
 }
 
-.epubjs-viewer-render .epub-container::-webkit-scrollbar-thumb {
-    background: rgba(130, 130, 130, 0.35);
-    background-clip: content-box;
-    border: 3px solid transparent;   /* inset, so the bar reads as a slim pill */
-    border-radius: 6px;
-    transition: background 0.18s ease;
+.epubjs-scrollbar {
+    position: absolute;
+    top: 4px;
+    right: 3px;
+    bottom: 4px;
+    width: 10px;
+    border-radius: 5px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+    z-index: 5;
 }
 
-.epubjs-viewer-render:hover .epub-container::-webkit-scrollbar-thumb {
-    background: rgba(90, 90, 90, 0.85);
-    background-clip: content-box;
+.epubjs-render-holder:hover .epubjs-scrollbar,
+.epubjs-scrollbar.epubjs-dragging {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.epubjs-scrollbar-thumb {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    min-height: 24px;
+    border-radius: 5px;
+    background: rgba(110, 110, 110, 0.45);
+    transition: background 0.15s ease;
+}
+
+.epubjs-scrollbar:hover .epubjs-scrollbar-thumb,
+.epubjs-scrollbar.epubjs-dragging .epubjs-scrollbar-thumb {
+    background: rgba(70, 70, 70, 0.85);
 }
 
 /* Bookmark panel (mirrors the PDF.js bookmark panel look) */
@@ -327,7 +347,10 @@ window.initEpubViewer = function(container, addr) {
                 <button class="epubjs-bookmark-btn" title="Bookmarks"><img src="capicon/svg/355.svg" alt="Bookmarks" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
                 <button class="epubjs-annot-btn" title="Toggle annotations"><img src="capicon/svg/354.svg" alt="Annotate" style="width: 16px; height: 16px; filter: invert(1); vertical-align: middle;"></button>
             </div>
-            <div id="${renderId}" class="epubjs-viewer-render"></div>
+            <div class="epubjs-render-holder">
+                <div id="${renderId}" class="epubjs-viewer-render"></div>
+                <div class="epubjs-scrollbar"><div class="epubjs-scrollbar-thumb"></div></div>
+            </div>
             <div class="epubjs-bookmark-panel">
                 <div class="epubjs-bookmark-add">
                     <input type="text" class="epubjs-bookmark-name-input" placeholder="Bookmark name" maxlength="40">
@@ -542,10 +565,88 @@ window.initEpubViewer = function(container, addr) {
     // Scroll doesn't bubble, but a capture-phase listener on the stable render
     // box still catches the inner .epub-container scroll (epub.js recreates it
     // per section). Capture only genuine user scrolls into state.lastScrollPos.
+    // ----- the scrollbar we draw ourselves -----
+    // See the CSS note above: the platform's bar auto-hides and a page cannot
+    // pin it. This one reads .epub-container, which epub.js rebuilds for every
+    // section — hence getScroller() on each sync rather than a held reference.
+
+    const $bar = $wrap.find('.epubjs-scrollbar');
+    const $thumb = $wrap.find('.epubjs-scrollbar-thumb');
+
+    function syncScrollbar() {
+        const sc = getScroller();
+        const track = $bar[0];
+        if (!sc || !track) return;
+        const ratio = sc.clientHeight / sc.scrollHeight;
+        if (!isFinite(ratio) || ratio >= 1) {        // nothing to scroll
+            $bar.css('visibility', 'hidden');
+            return;
+        }
+        $bar.css('visibility', '');
+        const trackH = track.clientHeight;
+        const thumbH = Math.max(24, Math.round(trackH * ratio));
+        const span = trackH - thumbH;
+        const maxScroll = sc.scrollHeight - sc.clientHeight;
+        const top = maxScroll > 0 ? Math.round(span * (sc.scrollTop / maxScroll)) : 0;
+        $thumb.css({ height: thumbH + 'px', top: top + 'px' });
+    }
+
+    let barDrag = null;
+
+    $thumb.on('mousedown', function(e) {
+        const sc = getScroller();
+        if (!sc) return;
+        e.preventDefault();                      // no text selection while dragging
+        barDrag = { y: e.clientY, top: sc.scrollTop };
+        $bar.addClass('epubjs-dragging');
+    });
+
+    $(document).on('mousemove.epubbar-' + viewerId, function(e) {
+        if (!barDrag) return;
+        const sc = getScroller();
+        const track = $bar[0];
+        if (!sc || !track) return;
+        const span = track.clientHeight - $thumb[0].offsetHeight;
+        if (span <= 0) return;
+        const maxScroll = sc.scrollHeight - sc.clientHeight;
+        sc.scrollTop = barDrag.top + (e.clientY - barDrag.y) * (maxScroll / span);
+        syncScrollbar();
+    });
+
+    $(document).on('mouseup.epubbar-' + viewerId, function() {
+        if (!barDrag) return;
+        barDrag = null;
+        $bar.removeClass('epubjs-dragging');
+    });
+
+    // A click in the gutter brings the thumb to the pointer.
+    $bar.on('mousedown', function(e) {
+        if (e.target !== this) return;           // the thumb handles its own
+        const sc = getScroller();
+        if (!sc) return;
+        const rect = this.getBoundingClientRect();
+        const thumbH = $thumb[0].offsetHeight;
+        const span = rect.height - thumbH;
+        if (span <= 0) return;
+        const wanted = (e.clientY - rect.top - thumbH / 2) / span;
+        sc.scrollTop = Math.max(0, Math.min(1, wanted)) * (sc.scrollHeight - sc.clientHeight);
+        syncScrollbar();
+    });
+
+    // The page is re-laid out by font changes, page turns and the fold toggle;
+    // watch the box rather than try to name every one of them.
+    if (typeof ResizeObserver !== 'undefined') {
+        const holder = document.getElementById(renderId);
+        if (holder) new ResizeObserver(() => syncScrollbar()).observe(holder);
+    }
+    setInterval(syncScrollbar, 1000);            // epub.js swaps sections silently
+
     let scrollSaveTimer = null;
     const renderElForScroll = document.getElementById(renderId);
     if (renderElForScroll) {
         renderElForScroll.addEventListener('scroll', () => {
+            syncScrollbar();                     // before the guards: the bar must
+                                                 // follow even a programmatic scroll
             if (scrollLocked || scrollRestoring) return;   // ignore programmatic / reset-to-0 scrolls
             const sc = getScroller();
             if (!sc) return;
