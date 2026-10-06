@@ -573,6 +573,46 @@ window.initEpubViewer = function(container, addr) {
     const $bar = $wrap.find('.epubjs-scrollbar');
     const $thumb = $wrap.find('.epubjs-scrollbar-thumb');
 
+    // The last lines of a section were unreachable: .epub-view is overflow:hidden
+    // and was ending up shorter than what it holds. Two distinct causes, measured
+    // on a book:
+    //   - the iframe sized from a measurement taken before the section settled,
+    //     96px tall around a 120px document;
+    //   - a 40px top margin epub.js puts on the iframe but forgets when sizing
+    //     the view around it, so the foot of every such page fell off the end.
+    // Paging away and back forced a fresh measure, which is the workaround the
+    // reader had found.
+    //
+    // The two must be repaired separately, and that is the whole difficulty: the
+    // iframe is sized from its OWN document, the view from the iframe's margin
+    // box. Driving both to the same figure makes the view chase a margin it can
+    // never catch — measured at a steady 40px of growth per second, for ever.
+    function fixClippedTail() {
+        const root = document.getElementById(renderId);
+        if (!root) return;
+        root.querySelectorAll('.epub-view').forEach(view => {
+            const ifr = view.querySelector('iframe');
+            let needed = view.scrollHeight;
+            if (ifr) {
+                const cs = getComputedStyle(ifr);
+                const marges = (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+                let docH = 0;
+                try {
+                    const d = ifr.contentDocument;
+                    if (d) docH = Math.max(
+                        d.documentElement ? d.documentElement.scrollHeight : 0,
+                        d.body ? d.body.scrollHeight : 0);
+                } catch (e) { /* document out of reach: the outer measure stands */ }
+                // The iframe answers to its document, never to the view.
+                if (docH > ifr.offsetHeight + 1) ifr.style.height = docH + 'px';
+                needed = Math.max(needed, Math.max(docH, ifr.offsetHeight) + marges);
+            }
+            // The +1 absorbs sub-pixel rounding; without it the height would be
+            // rewritten on every tick and never settle.
+            if (needed > view.clientHeight + 1) view.style.height = needed + 'px';
+        });
+    }
+
     function syncScrollbar() {
         const sc = getScroller();
         const track = $bar[0];
@@ -637,9 +677,12 @@ window.initEpubViewer = function(container, addr) {
     // watch the box rather than try to name every one of them.
     if (typeof ResizeObserver !== 'undefined') {
         const holder = document.getElementById(renderId);
-        if (holder) new ResizeObserver(() => syncScrollbar()).observe(holder);
+        if (holder) new ResizeObserver(() => { fixClippedTail(); syncScrollbar(); }).observe(holder);
     }
-    setInterval(syncScrollbar, 1000);            // epub.js swaps sections silently
+    setInterval(() => {                          // epub.js swaps sections silently
+        fixClippedTail();                        // images arriving late grow the page
+        syncScrollbar();
+    }, 1000);
 
     let scrollSaveTimer = null;
     const renderElForScroll = document.getElementById(renderId);
@@ -903,6 +946,12 @@ window.initEpubViewer = function(container, addr) {
     // rendition when the user toggles annotation mode.
     rendition.on('rendered', () => {
         window.activeEpubViewerId = viewerId;
+        // Three passes rather than one: the text is laid out almost at once,
+        // but web fonts and images land later and push the real height further.
+        [60, 400, 1200].forEach(ms => setTimeout(() => {
+            fixClippedTail();
+            syncScrollbar();
+        }, ms));
     });
 
     // Annotation system hooks: registers a content hook on the rendition
