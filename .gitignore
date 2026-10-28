@@ -54,3 +54,6 @@ views/*.html
 
 # Trop volumineux pour GitHub (69 Mo) - ajouté par erreur
 public/epubs/Tanger_sous_la_pluie_Grolleau_de_Bruxelles.epub
+
+# Offline copies of NAS documents (see lib/offline.js)
+offline/

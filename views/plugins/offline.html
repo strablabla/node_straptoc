@@ -1,0 +1,191 @@
+<style>
+/* Offline toggle, next to the reading-status bookmark (see extract_folder.html) */
+.reading-status-buttons .rs-btn.rs-offline {
+    left: 20px;
+    color: #555;
+    opacity: 0.7;
+}
+.reading-status-buttons .rs-btn.rs-offline:hover,
+.reading-status-buttons .rs-btn.rs-offline.rs-has-local {
+    opacity: 1;
+}
+.reading-status-buttons .rs-offline svg {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+}
+.reading-status-buttons .rs-offline.rs-copying svg {
+    animation: rs-offline-spin 1s linear infinite;
+}
+@keyframes rs-offline-spin { to { transform: rotate(360deg); } }
+/* States sit on the group itself, not on its <li>: a book's <li> is nested
+   in its author's, and an "li:not(...) ..." rule would match through the
+   outer one. rs-title-hover: pointer on the title line. rs-has-copy: a copy
+   exists, so its circle stays in sight. */
+.reading-status-buttons .rs-offline:not(.rs-has-local):not(.rs-copying) {
+    visibility: hidden;
+}
+.reading-status-buttons.rs-title-hover .rs-btn.rs-offline {   /* outranks the rule above */
+    visibility: visible;
+}
+.reading-status-buttons .rs-btn.rs-offline.rs-has-local {
+    color: #4a7fc1;
+}
+.reading-status-buttons.rs-title-hover,
+.reading-status-buttons.rs-has-copy {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* Shown for the offline button only: the bookmark keeps its own rule */
+.reading-status-buttons.rs-title-hover .rs-btn:not(.rs-offline),
+.reading-status-buttons.rs-has-copy .rs-btn:not(.rs-offline) {
+    visibility: hidden;
+}
+li.rs-near-bullet .reading-status-buttons .rs-btn:not(.rs-offline),
+li.reading-status-reading .reading-status-buttons .rs-btn:not(.rs-offline) {
+    visibility: visible;
+}
+</style>
+
+<script>
+
+/*
+
+Offline copies of NAS books (server side: lib/offline.js).
+
+Each document's reading-status group gets a second button: the first click
+copies the file from the NAS to the laptop, the next one removes the copy.
+Copies are keyed by the URL path the viewers fetch, the same key the server
+files them under, so a copy answers the very link it was made from.
+
+*/
+
+window._offline_files = window._offline_files || {}     // key -> 'available' | 'copying'
+
+// Inline, so they owe nothing to an icon font that a page may not load.
+// Styles rather than attributes: the page's own CSS styles every svg circle
+// and path (d3 graphs), and a stylesheet rule beats a presentation attribute.
+var OFFLINE_ICONS = {
+    absent: '<svg viewBox="0 0 16 16"><path style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" d="M8 2v8M4.5 6.5 8 10l3.5-3.5M3 13.5h10"/></svg>',
+    copying: '<svg viewBox="0 0 16 16"><path style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round" d="M8 2a6 6 0 1 1-6 6"/></svg>',
+    available: '<svg viewBox="0 0 16 16"><circle style="fill:none;stroke:currentColor;stroke-width:1.8;cursor:pointer" cx="8" cy="8" r="6.5"/></svg>'
+}
+
+// The URL path a document is fetched from, without its leading slash; null
+// for links that never touch the NAS (http:, blob:...).
+function offline_key(doc_path) {
+    if (!doc_path || /^[a-z][a-z0-9+.-]*:/i.test(doc_path)) return null
+    var pathname = new URL(doc_path, window.location.href).pathname
+    try { pathname = decodeURIComponent(pathname) } catch (e) { /* keep it raw */ }
+    return pathname.replace(/^\/+/, '') || null
+}
+
+function paint_offline_button($btn) {
+    var state = window._offline_files[$btn.attr('data-offline-key')] || null
+    $btn.toggleClass('rs-has-local', state === 'available')   // not rs-active: extract_folder.html strips that one from the whole group
+    $btn.toggleClass('rs-copying', state === 'copying')
+    $btn.html(OFFLINE_ICONS[state || 'absent'])
+    $btn.attr('title', state === 'copying' ? 'Copie en cours…'
+                     : state === 'available' ? 'Disponible hors ligne (cliquer pour retirer la copie)'
+                     : 'Garder une copie sur cet ordinateur, pour lire sans le NAS')
+    $btn.closest('.reading-status-buttons').toggleClass('rs-has-copy', state === 'available')
+}
+
+function build_offline_button(doc_path) {
+    var key = offline_key(doc_path)
+    if (!key) return $()
+    var $btn = $('<span/>').addClass('rs-btn rs-offline')
+                           .attr('data-offline-key', key)
+    $btn.on('click', function(e) {
+        e.stopPropagation()
+        var state = window._offline_files[key]
+        if (state === 'copying') return
+        if (state === 'available') {
+            // notifications.html swaps window.confirm for its own dialog, which
+            // answers with a Promise — truthy at once, whatever the reader picks.
+            // Waiting on it works for that one and for the native boolean alike.
+            Promise.resolve(confirm('Retirer la copie locale de ce document ?')).then(function(ok) {
+                if (ok) socket.emit('offline_remove', '/' + key)
+            })
+        } else {
+            socket.emit('offline_add', '/' + key)
+        }
+    })
+    paint_offline_button($btn)
+    return $btn
+}
+
+function refresh_offline_buttons(key) {
+    $('.rs-offline').filter(function() {
+        return key === undefined || $(this).attr('data-offline-key') === key
+    }).each(function() { paint_offline_button($(this)) })
+}
+
+socket.on('offline_list', function(payload) {
+    try {
+        window._offline_files = {}
+        JSON.parse(payload).forEach(function(key) { window._offline_files[key] = 'available' })
+        refresh_offline_buttons()
+    } catch (e) {
+        console.error('offline_list parse error', e)
+    }
+})
+
+socket.on('offline_updated', function(payload) {
+    try {
+        var data = JSON.parse(payload)
+        if (data.state === 'available' || data.state === 'copying') window._offline_files[data.path] = data.state
+        else delete window._offline_files[data.path]
+        if (data.state === 'error') {
+            var msg = 'Copie hors ligne impossible : ' + data.message
+            if (window.alertify) alertify.error(msg); else alert(msg)
+            socket.emit('offline_list')   // the disk, not our guess, says what is left
+        }
+        refresh_offline_buttons(data.path)
+    } catch (e) {
+        console.error('offline_updated parse error', e)
+    }
+})
+
+// Mark the status group of the title line under the pointer with rs-title-hover.
+// The line, not the <li>: an open book or its nested notes sit in the same
+// <li> and must not bring the arrow up.
+var offline_hover_li = null
+var offline_hover_frame = null
+
+function own_status_group($li) {
+    return $li.find('.reading-status-buttons').filter(function() {
+        return $(this).closest('li')[0] === $li[0]
+    }).first()
+}
+
+function on_title_line($li, y) {
+    var $group = own_status_group($li)
+    if (!$group.length) return false
+    var title = $group.parent()[0]
+    var r = title.getBoundingClientRect()
+    var line = parseFloat(getComputedStyle(title).lineHeight) || r.height
+    return y >= r.top - 2 && y <= r.top + Math.min(line, r.height) + 2
+}
+
+function set_offline_hover(li) {
+    if (li === offline_hover_li) return
+    if (offline_hover_li) own_status_group($(offline_hover_li)).removeClass('rs-title-hover')
+    offline_hover_li = li
+    if (li) own_status_group($(li)).addClass('rs-title-hover')
+}
+
+$(document).on('mousemove.offline', function(e) {
+    if (offline_hover_frame) return
+    var target = e.target, y = e.clientY
+    offline_hover_frame = requestAnimationFrame(function() {
+        offline_hover_frame = null
+        var $li = $(target).closest('li')
+        set_offline_hover($li.length && on_title_line($li, y) ? $li[0] : null)
+    })
+})
+$(document).on('mouseleave.offline', function() { set_offline_hover(null) })
+
+$(function() { socket.emit('offline_list') })
+
+</script>

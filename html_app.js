@@ -26,6 +26,7 @@ var bookmarks = require('./lib/bookmarks');
 var reading_status = require('./lib/reading_status');
 var reminders = require('./lib/reminders');
 var cbz = require('./lib/cbz');
+var offline = require('./lib/offline');
 
 //--------------  Global error handlers (prevent server crash)
 
@@ -255,6 +256,7 @@ num_user = 0
 annotations.setupAnnotationHandlers(io)                              //---- annotations
 bookmarks.setupBookmarkHandlers(io)                                  //---- bookmarks
 reading_status.setupReadingStatusHandlers(io)                        //---- reading status
+offline.setupOfflineHandlers(io)                                     //---- offline copies of NAS books
 
 // Set app instance for config module
 config.setApp(app)

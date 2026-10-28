@@ -146,6 +146,8 @@ function build_reading_status_buttons(full_path) {
         }))
     })
     $wrap.append($btn)
+    // offline copy toggle — views/plugins/offline.html
+    if (window.build_offline_button) $wrap.append(window.build_offline_button(full_path))
     return $wrap
 }
 
@@ -217,7 +219,7 @@ function bind_rs_hover_detection($li) {
         // Hot zone: just to the right of the title, vertically tight around
         // the line. Widens to include the visible button when already shown.
         var x_min = rect.right - 4
-        var x_max = rect.right + (was_near ? 40 : 30)
+        var x_max = rect.right + (was_near ? 50 : 30)   // 50: room for the offline button too
         var y_min = rect.top - 4
         var y_max = rect.bottom + 16     // a bit below to cover overflow
         var x = e.clientX, y = e.clientY

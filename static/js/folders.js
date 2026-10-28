@@ -8,6 +8,7 @@ Handle folders.
 var fs = require('fs');
 var path = require('path');
 var yaml = require('js-yaml');
+var offline = require('../../lib/offline');
 
 // Load registered addresses from config.yaml
 var registered_addresses = [];
@@ -37,23 +38,57 @@ function load_registered_addresses() {
 // Load addresses at module initialization
 load_registered_addresses();
 
+// The web path absolute_addr() in extract_folder.html gives a folder.
+function web_addr(addr) {
+    var m = addr.match(/sdata\/\w+.+/) || addr.match(/public\/(.+)/);
+    return m ? (m[1] || m[0]) : addr;
+}
+
+// Where the offline copies of a folder's books sit, if any were made.
+function offline_folder(folder_path) {
+    var candidates = [folder_path, web_addr(folder_path)];
+    if (path.isAbsolute(folder_path)) {
+        // an absolute path under a root also has a web path relative to it
+        candidates = registered_addresses
+            .map(addr => path.relative(path.resolve(addr), folder_path))
+            .filter(rel => rel && !rel.startsWith('..') && !path.isAbsolute(rel));
+    }
+    for (var c of candidates) {
+        var rel = offline.web_rel(c);
+        var dir = rel && path.join(offline.OFFLINE_DIR, rel);
+        if (dir && fs.existsSync(dir)) return dir;
+    }
+    return null;
+}
+
 function resolve_folder_path(folder_path) {
     /*
     Resolve folder path:
     - If absolute, return as-is
     - If relative, search in registered addresses
+    A NAS that does not answer is never looked into (a stat there hangs);
+    the offline copies stand in for it.
     */
     if (path.isAbsolute(folder_path)) {
-        return folder_path;
+        if (offline.reachable(folder_path)) return folder_path;
+        // nowhere that exists: readdir fails at once instead of hanging on the NAS
+        return offline_folder(folder_path) || path.join(offline.OFFLINE_DIR, '.nas-away');
     }
 
     // Search in registered addresses
     for (var addr of registered_addresses) {
+        if (!offline.reachable(addr)) continue;
         var full_path = path.join(addr, folder_path);
         if (fs.existsSync(full_path)) {
             console.log('[folders] Resolved "' + folder_path + '" to "' + full_path + '"');
             return full_path;
         }
+    }
+
+    var local = offline_folder(folder_path);
+    if (local) {
+        console.log('[folders] Resolved "' + folder_path + '" to its offline copies "' + local + '"');
+        return local;
     }
 
     // Fallback: return as-is
