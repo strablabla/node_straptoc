@@ -1,0 +1,13 @@
+/* Josefin Sans (SIL Open Font License 1.1), served locally instead of
+   fonts.googleapis.com: simplex.min.css imported it from there, and on a
+   network that does not answer the import held the theme back and kept the
+   page's load event from firing (modif_css.html waits on it).
+   One variable font file covers weights 300 to 700; latin subset, as Google
+   Fonts serves it, which covers French. */
+@font-face {
+  font-family: 'Josefin Sans';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url(josefin-sans-v34-latin-variable.woff2) format('woff2');
+}
