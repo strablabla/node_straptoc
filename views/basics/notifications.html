@@ -275,25 +275,28 @@
 
         // Position dialog near the clicked element
         if (lastClickedElement) {
+            // The overlay is position:fixed, so the dialog inside it is placed
+            // in viewport coordinates: adding the page's scroll would push it
+            // off screen on a long page, leaving only the invisible overlay.
             var rect = lastClickedElement.getBoundingClientRect();
-            var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
 
             // Position to the right and slightly below the clicked element
-            var top = rect.bottom + scrollTop + 5;
-            var left = rect.left + scrollLeft;
+            var top = rect.bottom + 5;
+            var left = rect.left;
 
             // Adjust if it would go off-screen
             var dialogWidth = 250; // Approximate width
             var dialogHeight = 80; // Approximate height
 
-            if (left + dialogWidth > window.innerWidth + scrollLeft) {
-                left = rect.right + scrollLeft - dialogWidth;
+            if (left + dialogWidth > window.innerWidth) {
+                left = rect.right - dialogWidth;
             }
 
-            if (top + dialogHeight > window.innerHeight + scrollTop) {
-                top = rect.top + scrollTop - dialogHeight - 5;
+            if (top + dialogHeight > window.innerHeight) {
+                top = rect.top - dialogHeight - 5;
             }
+            top = Math.max(5, top);
+            left = Math.max(5, left);
 
             dialog.style.top = top + 'px';
             dialog.style.left = left + 'px';
