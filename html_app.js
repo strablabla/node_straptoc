@@ -81,10 +81,19 @@ try {
 
 //--------------  Server
 
-const options = {
-  key: fs.readFileSync(serverConfig.ssl.key),
-  cert: fs.readFileSync(serverConfig.ssl.cert)
-};
+// key.pem and server.crt are kept out of git: say how to get them rather
+// than dying on a bare ENOENT.
+var options;
+try {
+  options = {
+    key: fs.readFileSync(serverConfig.ssl.key),
+    cert: fs.readFileSync(serverConfig.ssl.cert)
+  };
+} catch (err) {
+  console.error('[server] Cannot read the SSL key/certificate: ' + err.message);
+  console.error('[server] Create a self-signed pair with:  npm run cert');
+  process.exit(1);
+}
 
 var app = express()
 var server =  https.createServer(options, app)

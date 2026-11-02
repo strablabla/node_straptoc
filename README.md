@@ -110,17 +110,21 @@ cd ..
      - Voice command vocabulary
      - UI settings
 
-5. **Generate SSL certificates** for HTTPS:
+5. **SSL certificates** for HTTPS: `npm install` creates a self-signed
+   `key.pem` / `server.crt` pair when none exists (on any OS, no `openssl`
+   needed). To create it again later, delete both files and run:
 ```bash
-openssl genrsa -out key.pem 2048
-openssl req -new -key key.pem -out csr.pem
-openssl x509 -req -days 365 -in csr.pem -signkey key.pem -out server.crt
+npm run cert
 ```
 
 6. **Start the server**:
 ```bash
 node html_app.js
 ```
+   Or create a desktop launcher:
+   - Linux: `./create_launcher.sh`
+   - Windows: `powershell -ExecutionPolicy Bypass -File create_launcher.ps1`
+     (or double-click `start_straptoc.bat` directly).
 
 7. **Access the application**:
    - Open your browser and navigate to `https://localhost:3001` (or your configured port)
