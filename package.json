@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "cert": "node lib/make_cert.js",
-    "postinstall": "node lib/make_cert.js"
+    "postinstall": "node lib/setup.js"
   },
   "repository": {
     "type": "git",
