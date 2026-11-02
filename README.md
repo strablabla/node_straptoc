@@ -123,8 +123,8 @@ node html_app.js
 ```
    Or create a desktop launcher:
    - Linux: `./create_launcher.sh`
-   - Windows: `powershell -ExecutionPolicy Bypass -File create_launcher.ps1`
-     (or double-click `start_straptoc.bat` directly).
+   - Windows: double-click `create_launcher.bat` (a shortcut appears on the
+     Desktop), or double-click `start_straptoc.bat` directly.
 
 7. **Access the application**:
    - Open your browser and navigate to `https://localhost:3001` (or your configured port)
