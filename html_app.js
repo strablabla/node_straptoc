@@ -426,10 +426,13 @@ io.sockets.on('connection', function (socket) {
 var port = serverConfig.port;
 var host = serverConfig.host;
 server.listen(port, host, function() {
-    var addr = 'https://{}'.format(host) + ':{}/'.format(port)
+    // 0.0.0.0 (or ::) means "listen on every interface", not a place to go:
+    // Linux browsers tolerate it, Windows ones refuse it. Browse to localhost.
+    var browseHost = (host === '0.0.0.0' || host === '::') ? 'localhost' : host
+    var addr = 'https://{}'.format(browseHost) + ':{}/'.format(port)
     console.log('Server running at {}'.format(addr));
     console.log('Port: {} | Host: {}'.format(port, host));
-    open(addr,"node-strap");
+    open(addr);
 });
 server.on('error', function(err) {
     console.error('[server] Server error:', err.message);
