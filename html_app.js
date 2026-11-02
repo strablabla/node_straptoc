@@ -436,8 +436,10 @@ var port = serverConfig.port;
 var host = serverConfig.host;
 server.listen(port, host, function() {
     // 0.0.0.0 (or ::) means "listen on every interface", not a place to go:
-    // Linux browsers tolerate it, Windows ones refuse it. Browse to localhost.
-    var browseHost = (host === '0.0.0.0' || host === '::') ? 'localhost' : host
+    // Linux browsers tolerate it, Windows ones refuse it. Browse to 127.0.0.1
+    // rather than localhost: Windows resolves localhost to ::1 first, which an
+    // IPv4 listener refuses, and it waits ~2 s before falling back, per request.
+    var browseHost = (host === '0.0.0.0' || host === '::') ? '127.0.0.1' : host
     var addr = 'https://{}'.format(browseHost) + ':{}/'.format(port)
     console.log('Server running at {}'.format(addr));
     console.log('Port: {} | Host: {}'.format(port, host));
