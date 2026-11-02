@@ -91,16 +91,9 @@ cd node_straptoc
 npm install
 ```
 
-3. **Create your configuration files** (copy from templates):
-```bash
-cd static/
-cp config.yaml.example config.yaml
-cp agenda.yaml.example agenda.yaml
-cp notes.json.example notes.json
-cp pages.json.example pages.json
-cp drawing_state.json.example drawing_state.json
-cd ..
-```
+3. **Configuration files**: `npm install` (step 2) creates `config.yaml`,
+   `agenda.yaml`, `notes.json` and `pages.json` in `static/` from their
+   `.example` templates, when they are missing. Existing files are kept.
 
 4. **Edit your configuration**:
    - Open [static/config.yaml](static/config.yaml) and customize:
