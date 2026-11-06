@@ -30,7 +30,23 @@ var offline = require('./lib/offline');
 
 //--------------  Global error handlers (prevent server crash)
 
+// When the window the server was started from goes away, stdout/stderr point
+// at nothing and every write fails with EBADF (or EPIPE). With no listener,
+// that failure surfaced as an uncaught exception, whose handler below logged
+// it, which failed again: an endless loop pinning a core, the server alive
+// on its port but answering nobody. A dead console is now simply ignored.
+function isDeadConsoleError(err) {
+    return err && (err.code === 'EBADF' || err.code === 'EPIPE' ||
+                   err.code === 'ERR_STREAM_DESTROYED');
+}
+[process.stdout, process.stderr].forEach(function(stream) {
+    stream.on('error', function(err) {
+        if (!isDeadConsoleError(err)) throw err;
+    });
+});
+
 process.on('uncaughtException', function(err) {
+    if (isDeadConsoleError(err)) return;   // logging it would fail the same way
     console.error('[UNCAUGHT EXCEPTION]', err.message);
     console.error(err.stack);
 });
