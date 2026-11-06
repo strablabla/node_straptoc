@@ -12,7 +12,7 @@ Type=Application
 Name=$APP_NAME
 Comment=Lance l’application Node.js Straptoc
 Exec=gnome-terminal -- bash -c 'cd \"$APP_DIR\" && node html_app.js; exec bash'
-Icon=calibre-ebook-edit
+Icon=$APP_DIR/icons/straptoc.png
 Terminal=true
 Categories=Utility;" > "$DESKTOP_FILE"
 

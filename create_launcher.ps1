@@ -14,6 +14,8 @@ $Shortcut = $Shell.CreateShortcut($Link)
 $Shortcut.TargetPath       = Join-Path $AppDir "start_straptoc.bat"
 $Shortcut.WorkingDirectory = $AppDir
 $Shortcut.Description      = "Launch the Straptoc Node.js application"
+# without it, Windows shows the generic gears of a .bat file
+$Shortcut.IconLocation     = (Join-Path $AppDir "icons\straptoc.ico") + ",0"
 $Shortcut.Save()
 
 Write-Host "Shortcut created on the Desktop: $Link"
