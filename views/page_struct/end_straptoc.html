@@ -12,6 +12,21 @@ if (Object.keys(straptoc_aliases).length > 0){
         xmpEl.textContent = md;
     }
 }
+
+// The marked bundled in strapdown 0.2 refuses any blank in a link target, so
+// [doc §§](my file.pdf) stayed plain text, and $pdf / +++ blocks, which only
+// keep <a> elements, then dropped it. Encode those blanks as %20 (the server
+// decodes them back). A trailing "title" or 'title' is left untouched.
+(function(){
+    var xmpEl = document.getElementsByTagName('xmp')[0];
+    if (!xmpEl) return;
+    xmpEl.textContent = xmpEl.textContent.replace(/\]\(([^)\n]*)\)/g, function(all, target){
+        var m = target.match(/^(.*?)(\s+(?:"[^"]*"|'[^']*'))?\s*$/);
+        var url = m[1].trim(), title = m[2] || '';
+        if (url.indexOf(' ') === -1) return all;
+        return '](' + url.replace(/ /g, '%20') + title + ')';
+    });
+})();
 </script>
 <script src="v/0.2/strapdown.js" ></script>
 <script> maketoc() </script>
