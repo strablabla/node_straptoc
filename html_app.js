@@ -245,12 +245,20 @@ function safeStringify(arg) {
   catch(e) { return '[Object]'; }
 }
 
+// The last lines, sent to each page as it connects: started from a launcher,
+// the server has no window, and the Terminal tab of the debug panel
+// (Ctrl+Shift+D) is where its messages are read, the startup ones included.
+var TERMINAL_HISTORY_MAX = 1000;
+var terminalHistory = [];
+
 function interceptConsole(original, prefix) {
   return function() {
     original.apply(console, arguments);
     try {
-      var message = Array.prototype.slice.call(arguments).map(safeStringify).join(' ');
-      io.sockets.emit('terminal_output', prefix + message);
+      var message = prefix + Array.prototype.slice.call(arguments).map(safeStringify).join(' ');
+      terminalHistory.push(message);
+      if (terminalHistory.length > TERMINAL_HISTORY_MAX) terminalHistory.shift();
+      io.sockets.emit('terminal_output', message);
     } catch(e) { /* ignore broadcast errors */ }
   };
 }
@@ -323,6 +331,8 @@ function armIdleShutdown() {
 
 // socket system... 
 io.sockets.on('connection', function (socket) {
+      socket.emit('terminal_history', terminalHistory);
+
       everHadClient = true;
       cancelIdleShutdown();
       socket.on('new_user', function(name_user){
@@ -450,19 +460,31 @@ io.sockets.on('connection', function (socket) {
 // Use configuration from config.yaml
 var port = serverConfig.port;
 var host = serverConfig.host;
+// 0.0.0.0 (or ::) means "listen on every interface", not a place to go:
+// Linux browsers tolerate it, Windows ones refuse it. Browse to 127.0.0.1
+// rather than localhost: Windows resolves localhost to ::1 first, which an
+// IPv4 listener refuses, and it waits ~2 s before falling back, per request.
+var browseHost = (host === '0.0.0.0' || host === '::') ? '127.0.0.1' : host
+var addr = 'https://{}'.format(browseHost) + ':{}/'.format(port)
 server.listen(port, host, function() {
-    // 0.0.0.0 (or ::) means "listen on every interface", not a place to go:
-    // Linux browsers tolerate it, Windows ones refuse it. Browse to 127.0.0.1
-    // rather than localhost: Windows resolves localhost to ::1 first, which an
-    // IPv4 listener refuses, and it waits ~2 s before falling back, per request.
-    var browseHost = (host === '0.0.0.0' || host === '::') ? '127.0.0.1' : host
-    var addr = 'https://{}'.format(browseHost) + ':{}/'.format(port)
     console.log('Server running at {}'.format(addr));
     console.log('Port: {} | Host: {}'.format(port, host));
     open(addr);
 });
+// The port already taken is most often Straptoc itself, left running. Started
+// from a launcher there is no window to report it in: open the running one,
+// and stop this second server rather than leave it alive and useless.
 server.on('error', function(err) {
     console.error('[server] Server error:', err.message);
+    if (err.code !== 'EADDRINUSE') return;
+    https.get(addr, { rejectUnauthorized: false }, function(res) {
+        res.resume();
+        console.log('Straptoc seems to be running already on port {}: opening it.'.format(port));
+        open(addr).then(function() { process.exit(0) }, function() { process.exit(0) });
+    }).on('error', function() {
+        console.error('Port {} is taken and does not answer: Straptoc cannot start.'.format(port));
+        process.exit(1);
+    });
 });
 
 // Start reminder system

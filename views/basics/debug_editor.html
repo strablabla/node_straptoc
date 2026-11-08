@@ -275,12 +275,12 @@
 
         <!-- Tab buttons -->
         <div class="debug-tab-buttons">
-            <button class="debug-tab-button active" data-tab="console">Console</button>
-            <button class="debug-tab-button" data-tab="terminal">Terminal</button>
+            <button class="debug-tab-button active" data-tab="terminal">Terminal</button>
+            <button class="debug-tab-button" data-tab="console">Console</button>
         </div>
 
         <!-- Tab: Console -->
-        <div id="debug-tab-console" class="debug-tab-content active">
+        <div id="debug-tab-console" class="debug-tab-content">
             <div id="console_container">
                 <div id="console_toolbar">
                     <button id="console_clear_btn">Clear</button>
@@ -294,7 +294,7 @@
         </div>
 
         <!-- Tab: Terminal -->
-        <div id="debug-tab-terminal" class="debug-tab-content">
+        <div id="debug-tab-terminal" class="debug-tab-content active">
             <div id="terminal_container">
                 <div id="terminal_toolbar">
                     <button id="terminal_clear_btn">Clear</button>
@@ -470,8 +470,13 @@ interceptConsole();
 
 var terminalMessages = [];
 
-// Listen for terminal messages from server
+// Listen for terminal messages from server. The history comes at each
+// connection and replaces the list, so a reconnection adds no duplicates.
 if (typeof socket !== 'undefined') {
+    socket.on('terminal_history', function(lines) {
+        terminalMessages = lines.slice();
+        renderTerminal();
+    });
     socket.on('terminal_output', function(data) {
         addTerminalMessage(data);
     });

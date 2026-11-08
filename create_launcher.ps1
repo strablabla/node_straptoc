@@ -1,6 +1,7 @@
 # --- create_launcher.ps1 ---
 # Windows counterpart of create_launcher.sh: puts a "Straptoc" shortcut on
-# the Desktop that runs start_straptoc.bat.
+# the Desktop that starts the server without a window (start_straptoc.vbs).
+# Its messages: Ctrl+Shift+D in the page, or logs\server.log.
 # Run with:  powershell -ExecutionPolicy Bypass -File create_launcher.ps1
 
 $AppName = "Straptoc"
@@ -11,7 +12,8 @@ $Link    = Join-Path $Desktop "$AppName.lnk"
 
 $Shell    = New-Object -ComObject WScript.Shell
 $Shortcut = $Shell.CreateShortcut($Link)
-$Shortcut.TargetPath       = Join-Path $AppDir "start_straptoc.bat"
+$Shortcut.TargetPath       = Join-Path $env:WINDIR "System32\wscript.exe"
+$Shortcut.Arguments        = '"' + (Join-Path $AppDir "start_straptoc.vbs") + '"'
 $Shortcut.WorkingDirectory = $AppDir
 $Shortcut.Description      = "Launch the Straptoc Node.js application"
 # without it, Windows shows the generic gears of a .bat file

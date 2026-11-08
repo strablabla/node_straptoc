@@ -119,6 +119,11 @@ node html_app.js
    - Windows: double-click `create_launcher.bat` (a shortcut appears on the
      Desktop), or double-click `start_straptoc.bat` directly.
 
+   The launcher starts the server with no window. Its messages are in the
+   page (**Ctrl+Shift+D**, Terminal tab) and in `logs/server.log`. To stop it,
+   use the power button of the page, or close the tabs: it stops by itself.
+   `start_straptoc.bat` keeps a window, to look into a server that does not start.
+
 7. **Access the application**:
    - Open your browser and navigate to `https://localhost:3001` (or your configured port)
    - Accept the self-signed certificate warning (for development)

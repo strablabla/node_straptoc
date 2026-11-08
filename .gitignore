@@ -57,3 +57,6 @@ public/epubs/Tanger_sous_la_pluie_Grolleau_de_Bruxelles.epub
 
 # Offline copies of NAS documents (see lib/offline.js)
 offline/
+
+# Output of the server started from a launcher
+logs/server.log
