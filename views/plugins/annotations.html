@@ -1564,6 +1564,17 @@ window.reloadPDFAnnotations = reloadPDFAnnotations;
 window.closeAnnotationPanel = closeAnnotationPanel;
 window.toggleAnnotationMode = toggleAnnotationMode;
 
+// Alt+A toggles annotation mode. keyCode rather than code: 65 is the letter A
+// whatever the keyboard layout, azerty included. Namespaced and unbound first:
+// this file can be included twice in a page, and two handlers would toggle the
+// mode on and straight off again.
+$(document).off('keydown.annotations_alt_a').on('keydown.annotations_alt_a', function(e) {
+    if (e.altKey && !e.ctrlKey && !e.shiftKey && e.keyCode === 65 && !e.originalEvent.repeat) {
+        e.preventDefault();
+        toggleAnnotationMode();
+    }
+});
+
 //===========================================
 // EPUB.js Viewer Integration (CFI-anchored)
 //===========================================
