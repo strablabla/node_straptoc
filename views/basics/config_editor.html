@@ -1121,6 +1121,11 @@
                     <input type="text" id="server_ssl_cert" placeholder="server.crt">
                 </div>
 
+                <div class="server-field">
+                    <label for="server_idle_shutdown" title="The server stops by itself once no page has been open for this many seconds. 0 = never. Takes effect at the next start.">Stop when no page is open for (s, 0 = never):</label>
+                    <input type="number" id="server_idle_shutdown" min="0" placeholder="120">
+                </div>
+
                 <button id="save_server_button">Save Server Config</button>
             </div>
         </div>
@@ -2160,22 +2165,32 @@ function renderServerConfig() {
     $('#server_host').val(serverConfigData.host || '0.0.0.0');
     $('#server_ssl_key').val(serverConfigData.ssl && serverConfigData.ssl.key ? serverConfigData.ssl.key : 'key.pem');
     $('#server_ssl_cert').val(serverConfigData.ssl && serverConfigData.ssl.cert ? serverConfigData.ssl.cert : 'server.crt');
+    $('#server_idle_shutdown').val(serverConfigData.idle_shutdown_sec === undefined ? 120 : serverConfigData.idle_shutdown_sec);
 }
 
 // Save server config
 function saveServerConfig() {
-    var config = {
+    // Start from what config.yaml holds: the server replaces the whole
+    // section, so a key this form does not show would otherwise be lost.
+    var config = $.extend(true, {}, serverConfigData, {
         port: parseInt($('#server_port').val()) || 3001,
         host: $('#server_host').val().trim() || '0.0.0.0',
         ssl: {
             key: $('#server_ssl_key').val().trim() || 'key.pem',
             cert: $('#server_ssl_cert').val().trim() || 'server.crt'
         }
-    };
+    });
+
+    var idle = $('#server_idle_shutdown').val().trim();
+    config.idle_shutdown_sec = idle === '' ? 120 : parseInt(idle, 10);
 
     // Validate port number
     if (config.port < 1 || config.port > 65535) {
         showNotification('Port must be between 1 and 65535', 'error');
+        return;
+    }
+    if (isNaN(config.idle_shutdown_sec) || config.idle_shutdown_sec < 0) {
+        showNotification('The idle delay must be a number of seconds, 0 or more', 'error');
         return;
     }
 
@@ -2210,7 +2225,7 @@ $(document).ready(function() {
     });
 
     // Enable Enter key for all server input fields
-    $('#server_port, #server_host, #server_ssl_key, #server_ssl_cert').keypress(function(e) {
+    $('#server_port, #server_host, #server_ssl_key, #server_ssl_cert, #server_idle_shutdown').keypress(function(e) {
         if (e.which === 13) { // Enter key
             saveServerConfig();
         }
