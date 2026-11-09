@@ -1138,15 +1138,15 @@
         <div id="tab-exportimport" class="tab-content">
             <div class="export-import-section">
                 <h3>Export</h3>
-                <p style="font-size: 13px; color: #666;">Télécharge un zip contenant tous les fichiers markdown et les données (agenda, tableaux, config, annotations).</p>
-                <button id="export_notes_btn" class="export-btn">📥 Télécharger l'archive</button>
+                <p style="font-size: 13px; color: #666;">Exports a zip holding every markdown file and the data (agenda, tables, config, annotations).</p>
+                <button id="export_notes_btn" class="export-btn">📥 Export the archive</button>
             </div>
 
             <div class="export-import-section" style="margin-top: 30px;">
                 <h3>Import</h3>
-                <p style="font-size: 13px; color: #666;">⚠️ Importer un zip <strong>remplacera</strong> les fichiers existants portant le même nom.</p>
+                <p style="font-size: 13px; color: #666;">⚠️ Importing a zip <strong>replaces</strong> the existing files of the same name.</p>
                 <input type="file" id="import_notes_input" accept=".zip" style="display:none;">
-                <button id="import_notes_btn" class="import-btn">📤 Choisir un zip à importer</button>
+                <button id="import_notes_btn" class="import-btn">📤 Choose a zip to import</button>
                 <div id="import_status" style="margin-top: 10px; font-size: 13px;"></div>
             </div>
         </div>
@@ -1633,7 +1633,7 @@ function setupEventHandlers() {
     $('#import_notes_input').change(function(e){
         var file = e.target.files[0];
         if (!file) return;
-        customConfirm('Importer "' + file.name + '" ? Les fichiers existants seront remplacés.', function(confirmed){
+        customConfirm('Import "' + file.name + '"? Existing files of the same name will be replaced.', function(confirmed){
             if (!confirmed) return;
             var reader = new FileReader();
             reader.onload = function(evt){
@@ -1642,7 +1642,7 @@ function setupEventHandlers() {
                 var binary = '';
                 for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
                 var base64 = btoa(binary);
-                $('#import_status').text('Import en cours...').css('color', '#666');
+                $('#import_status').text('Importing...').css('color', '#666');
                 socket.emit('import_notes', JSON.stringify({ zip: base64 }));
             };
             reader.readAsArrayBuffer(file);
@@ -1652,9 +1652,9 @@ function setupEventHandlers() {
     socket.on('import_done', function(msg){
         var result = JSON.parse(msg);
         if (result.success){
-            $('#import_status').html('✅ ' + result.files.length + ' fichiers importés. <strong>Rechargez la page</strong> pour voir les changements.').css('color', '#4CAF50');
+            $('#import_status').html('✅ ' + result.files.length + ' files imported. <strong>Reload the page</strong> to see the changes.').css('color', '#4CAF50');
         } else {
-            $('#import_status').text('❌ Erreur: ' + result.error).css('color', '#c0392b');
+            $('#import_status').text('❌ Error: ' + result.error).css('color', '#c0392b');
         }
     });
 
