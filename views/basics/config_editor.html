@@ -21,10 +21,14 @@
     padding: 20px;
     border: 1px solid #888;
     border-radius: 8px;
-    width: 40%;
-    max-width: 450px;
+    width: min(40%, 450px);
     max-height: 80vh;
     overflow-y: auto;
+    /* resizable from its bottom-right corner; the size is remembered */
+    resize: both;
+    min-width: 320px;
+    min-height: 200px;
+    max-width: 95vw;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     font-size: 13px;
 }
@@ -2118,7 +2122,47 @@ function toggleModal() {
     }
 }
 
+// The window can be resized from its bottom-right corner (CSS resize). Two
+// adjustments: centred by margin:auto, it would grow on both sides and its
+// corner would drift away from the mouse, so it is pinned at its current left
+// edge when a press starts; and it may then grow past the 80vh it opens with.
+// Its size is kept in localStorage for the next opening.
+var MODAL_SIZE_KEY = 'straptoc_config_modal_size';
+
+function restoreModalSize() {
+    var $c = $('#color_tags_modal_content').css('margin-left', '');
+    try {
+        var size = JSON.parse(localStorage.getItem(MODAL_SIZE_KEY));
+        if (size && size.w && size.h) {
+            $c.css({ width: size.w + 'px', height: size.h + 'px', 'max-height': '95vh' });
+        }
+    } catch (e) { /* no or bad saved size: keep the default */ }
+}
+
+$(document).ready(function() {
+    var el = document.getElementById('color_tags_modal_content');
+    if (!el) return;
+    $(el).on('mousedown', function() {
+        $(el).css({ 'margin-left': el.offsetLeft + 'px', 'max-height': '95vh' });
+    });
+    if (window.ResizeObserver) {
+        var saveTimer = null;
+        new ResizeObserver(function() {
+            if (!el.style.width && !el.style.height) return;   // never resized by hand
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(function() {
+                if (!el.offsetWidth) return;                  // hidden: nothing to save
+                // style.width, not offsetWidth: it is what the resize wrote and
+                // what restoreModalSize sets back, whatever the box-sizing
+                var w = parseFloat(el.style.width), h = parseFloat(el.style.height);
+                if (w && h) localStorage.setItem(MODAL_SIZE_KEY, JSON.stringify({ w: w, h: h }));
+            }, 300);
+        }).observe(el);
+    }
+});
+
 function openModal() {
+    restoreModalSize();
     $('#color_tags_modal').fadeIn(300);
     modalOpen = true;
 
