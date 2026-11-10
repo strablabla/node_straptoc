@@ -575,6 +575,34 @@ $('#content').append(pan_day)
 // Make panel draggable after it's added to the DOM
 $('#pan_day').draggable()
 
+//---------------------- Weekday names above the columns
+
+/*
+The 1st of the month always sits in the first column and rows run by 7, so
+column i holds days i, i+7, i+14...: they all share the weekday of day i,
+which changes from one month to the next.
+*/
+
+var weekday_names = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
+
+for (i=1; i < 8; i++){
+    var weekday = new Date(new Date().getFullYear(), selected_month - 1, i).getDay()
+    var weekday_head = $('<div/>').text(weekday_names[weekday])
+                                  .addClass('agenda_weekday')
+                                  .css({
+                                        'position': 'absolute',
+                                        'top': step_cell_v + offset_top - 25 + 'px',   // just above the first row, below the month
+                                        'left': i*step_cell_h + offset_left + 'px',
+                                        'width': size_cell_w + 'px',
+                                        'text-align': 'center',
+                                        'font-size': '13px',
+                                        'font-family': 'apple_garamond',
+                                        'color': (weekday == 0 || weekday == 6) ? '#b33c00' : '#666',
+                                        'z-index': '4'
+                                      })
+    $('#agenda_panel').append(weekday_head)
+}
+
 //---------------------- Make day cells for a month..
 
 for (i=1; i < 8; i++){
