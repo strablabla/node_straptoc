@@ -108,6 +108,13 @@ butt_save_new_page.click(function(){            // send note to server the name 
 
 })
 
+input_name.on('keydown', function(e){           // Enter does the same as the save button
+      if (e.key === 'Enter') {
+            e.preventDefault()
+            butt_save_new_page.click()
+      }
+})
+
 socket.on('load_new_page',function(){
 
       console.log("New page created, requesting updated pages data...")
