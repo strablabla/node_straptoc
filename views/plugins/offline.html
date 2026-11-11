@@ -21,15 +21,17 @@
 /* States sit on the group itself, not on its <li>: a book's <li> is nested
    in its author's, and an "li:not(...) ..." rule would match through the
    outer one. rs-title-hover: pointer on the title line. rs-has-copy: a copy
-   exists, so its circle stays in sight. */
+   exists, so its arrow stays in sight. */
 .reading-status-buttons .rs-offline:not(.rs-has-local):not(.rs-copying) {
     visibility: hidden;
 }
 .reading-status-buttons.rs-title-hover .rs-btn.rs-offline {   /* outranks the rule above */
     visibility: visible;
 }
+/* A copy here: a small black arrow, filled, unlike the outlined grey one
+   that offers to make it. */
 .reading-status-buttons .rs-btn.rs-offline.rs-has-local {
-    color: #4a7fc1;
+    color: #000;
 }
 .reading-status-buttons.rs-title-hover,
 .reading-status-buttons.rs-has-copy {
@@ -68,7 +70,7 @@ window._offline_files = window._offline_files || {}     // key -> 'available' | 
 var OFFLINE_ICONS = {
     absent: '<svg viewBox="0 0 16 16"><path style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" d="M8 2v8M4.5 6.5 8 10l3.5-3.5M3 13.5h10"/></svg>',
     copying: '<svg viewBox="0 0 16 16"><path style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round" d="M8 2a6 6 0 1 1-6 6"/></svg>',
-    available: '<svg viewBox="0 0 16 16"><circle style="fill:none;stroke:currentColor;stroke-width:1.8;cursor:pointer" cx="8" cy="8" r="6.5"/></svg>'
+    available: '<svg viewBox="0 0 16 16"><path style="fill:currentColor;stroke:none;cursor:pointer" d="M6.6 2h2.8v6.2h3.1L8 13.5 3.5 8.2h3.1z"/></svg>'
 }
 
 // The URL path a document is fetched from, without its leading slash; null
