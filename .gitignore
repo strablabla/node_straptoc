@@ -60,3 +60,4 @@ offline/
 
 # Output of the server started from a launcher
 logs/server.log
+logs/second_start.log
